@@ -39,6 +39,7 @@ import { deepCopy } from "#utils/data";
 import { getEnumValues } from "#utils/enums";
 import { getPokemonTypeLocaleKey } from "#utils/i18n";
 import { toCamelCase } from "#utils/strings";
+import type { ValueHolder } from "#utils/value-holder";
 import i18next from "i18next";
 
 /** A constant for the default max cost of the starting party before a run */
@@ -519,6 +520,25 @@ export abstract class Challenge {
    * @returns Whether this modification was applied
    */
   public applyModifyEvolutions(pokemon: Pokemon, evos: SpeciesFormEvolution[]): boolean {
+    return false;
+  }
+
+  /**
+   * Modifies a Pokemon's moveset after generation during a Mystery Encounter
+   * @param pokemon - The Pokemon whose moveset is being modified
+   * @returns Whether this modification was applied
+   */
+  public applyMysteryEncounterMovesetModify(pokemon: Pokemon): boolean {
+    return false;
+  }
+
+  /**
+   * Modifies the ability to relearn egg moves via Memory Mushroom for player Pokemon.
+   * @param pokemon - The {@linkcode Pokemon} to set egg move legality for
+   * @param isAvailable - A holder used to set egg move legality
+   * @returns Whether this modification was applied
+   */
+  public applyEggMoveRelearnAvailability(pokemon: Pokemon, isAvailable: ValueHolder<boolean>): boolean {
     return false;
   }
 
@@ -1031,7 +1051,13 @@ export class FreshStartChallenge extends Challenge {
     return true;
   }
 
-  override getDifficulty(): number {
+  public override applyEggMoveRelearnAvailability(_pokemon: Pokemon, isAvailable: ValueHolder<boolean>): boolean {
+    isAvailable.value = false;
+
+    return true;
+  }
+
+  public override getDifficulty(): number {
     return 0;
   }
 
@@ -1341,8 +1367,11 @@ export class PassivesChallenge extends Challenge {
 }
 
 export class MovesetRandomizerChallenge extends Challenge {
+  // Challenge values
+  // 1: Randomize movesets, no compensation for move-based evos
+  // 2: Remove move requirement from move evos
   constructor() {
-    super(Challenges.MOVESET_RANDOMIZER, 1);
+    super(Challenges.MOVESET_RANDOMIZER, 2);
   }
 
   public override get category(): ChallengeCategory {
@@ -1354,14 +1383,14 @@ export class MovesetRandomizerChallenge extends Challenge {
     // it's necessary to do it this way due to the static variable
     // being initialized before the `allMoves` array is
     if (!MovesetRandomizerChallenge._validMoveIds) {
-      const disallowedMoves = [MoveId.NONE, MoveId.SPLASH, MoveId.HOLD_HANDS];
+      const disallowedMoves = [MoveId.NONE, MoveId.SPLASH, MoveId.HOLD_HANDS, MoveId.STRUGGLE];
       MovesetRandomizerChallenge._validMoveIds = getEnumValues(MoveId) //
         .filter(m => !disallowedMoves.includes(m) && !allMoves[m].isUnimplemented);
     }
-    return MovesetRandomizerChallenge._validMoveIds;
+    return [...MovesetRandomizerChallenge._validMoveIds];
   }
 
-  private static _globalTmList: MoveId[] = Object.keys(tmPoolTiers).map(m => Number(m));
+  private static readonly _globalTmList: MoveId[] = Object.keys(tmPoolTiers).map(m => Number(m));
   private get globalTmList(): MoveId[] {
     // cloned so that the original list doesn't get mutated by `randSeedShuffle`
     return [...MovesetRandomizerChallenge._globalTmList];
@@ -1527,7 +1556,31 @@ export class MovesetRandomizerChallenge extends Challenge {
     return true;
   }
 
-  public override applyModifyEvolutions(_pokemon: Pokemon, evos: SpeciesFormEvolution[]): boolean {
+  public override applyModifyEvolutions(pokemon: Pokemon, evos: SpeciesFormEvolution[]): boolean {
+    if (this.value <= 1) {
+      return false;
+    }
+
+    if (pokemon.species.speciesId === SpeciesId.TYROGUE) {
+      if (pokemon.moveset.some(pm => [MoveId.LOW_SWEEP, MoveId.MACH_PUNCH, MoveId.RAPID_SPIN].includes(pm.moveId))) {
+        return false;
+      }
+
+      let tyrogueEvo!: SpeciesId;
+      globalScene.executeWithSeedOffset(
+        () => (tyrogueEvo = randSeedItem([SpeciesId.HITMONCHAN, SpeciesId.HITMONLEE, SpeciesId.HITMONTOP])),
+        pokemon.id,
+      );
+
+      for (const evo of evos) {
+        if (evo.speciesId === tyrogueEvo) {
+          evo.condition = null;
+        }
+      }
+
+      return true;
+    }
+
     if (!evos.some(e => e.condition?.data.some(c => c.key === EvoCondKey.MOVE))) {
       return false;
     }
@@ -1549,6 +1602,40 @@ export class MovesetRandomizerChallenge extends Challenge {
     }
 
     return modified;
+  }
+
+  public override applyMysteryEncounterMovesetModify(pokemon: Pokemon): boolean {
+    const encounters: readonly MysteryEncounterType[] = [
+      MysteryEncounterType.ABSOLUTE_AVARICE,
+      MysteryEncounterType.CLOWNING_AROUND,
+      MysteryEncounterType.MYSTERIOUS_CHEST,
+      MysteryEncounterType.THE_EXPERT_POKEMON_BREEDER,
+      MysteryEncounterType.THE_STRONG_STUFF,
+      MysteryEncounterType.THE_WINSTRATE_CHALLENGE,
+      MysteryEncounterType.TRASH_TO_TREASURE,
+    ];
+
+    const encounterType = globalScene.currentBattle.mysteryEncounter?.encounterType;
+    if (encounters.includes(encounterType!)) {
+      globalScene.executeWithSeedOffset(() => {
+        pokemon.moveset = [];
+        const shuffledMoves = randSeedShuffle(this.validMoveIds);
+        for (let i = 0; i < 4; i++) {
+          pokemon.moveset.push(new PokemonMove(shuffledMoves[i]));
+        }
+        pokemon.summonData.moveset = pokemon.moveset;
+      }, pokemon.id);
+
+      return true;
+    }
+
+    return false;
+  }
+
+  public override applyEggMoveRelearnAvailability(_pokemon: Pokemon, isAvailable: ValueHolder<boolean>): boolean {
+    isAvailable.value = false;
+
+    return true;
   }
 
   public static override loadChallenge(source: Challenge | any): Challenge {

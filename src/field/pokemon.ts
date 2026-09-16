@@ -1116,16 +1116,15 @@ export abstract class Pokemon extends Phaser.GameObjects.Container {
    */
   public canTransformInto(target: Pokemon): boolean {
     return !(
-      // Neither pokemon can be already transformed
-      (
-        this.isTransformed()
-        || target.isTransformed() // Neither pokemon can be behind an illusion
-        || target.summonData.illusion
-        || this.summonData.illusion // The target cannot be behind a substitute
-        || target.getTag(BattlerTagType.SUBSTITUTE) // Transforming to/from fusion pokemon causes various problems (crashes, etc.) // TODO: Consider lifting restriction once bug is fixed
-        || this.isFusion()
-        || target.isFusion()
-      )
+      this.isTransformed()
+      || target.isTransformed()
+      || target.summonData.illusion
+      || this.summonData.illusion
+      || target.getTag(BattlerTagType.SUBSTITUTE)
+      // Transforming to/from fusion pokemon causes various problems (crashes, etc.)
+      // TODO: Consider lifting restriction once bug is fixed
+      || this.isFusion()
+      || target.isFusion()
     );
   }
 
@@ -1937,7 +1936,10 @@ export abstract class Pokemon extends Phaser.GameObjects.Container {
       includeRelearnerMoves: true,
     });
 
-    if (this.metBiome === -1 && !globalScene.gameMode.isFreshStartChallenge() && !globalScene.gameMode.isDaily) {
+    const allowEggMoves = new ValueHolder(true);
+    applyChallenges(ChallengeType.EGG_MOVE_RELEARN_AVAILABILITY, this, allowEggMoves);
+
+    if (this.metBiome === -1 && allowEggMoves.value && !globalScene.gameMode.isDaily) {
       const eggMoves: LearnableLevelMoves = this.getUnlockedEggMoves().map(em => [null, em, LearnableMoveSource.EGG]);
       learnableMoves.push(...eggMoves);
     }
@@ -2419,7 +2421,9 @@ export abstract class Pokemon extends Phaser.GameObjects.Container {
       weightRemoved = 100 * autotomizedTag.autotomizeCount;
     }
     const minWeight = 0.1;
-    const weight = new NumberHolder(this.species.weight - weightRemoved);
+    const formIndex: number = this.formIndex;
+    const formWeight = this.species.forms.length > 0 ? this.species.forms[formIndex].weight : this.species.weight;
+    const weight = new NumberHolder(formWeight - weightRemoved);
 
     // This will trigger the ability overlay so only call this function when necessary
     applyAbAttrs("WeightMultiplierAbAttr", { pokemon: this, weight });
@@ -2534,7 +2538,7 @@ export abstract class Pokemon extends Phaser.GameObjects.Container {
       return true;
     }
 
-    if (this.isOfType(PokemonType.GHOST)) {
+    if (this.isOfType(PokemonType.GHOST) || this.hasAbility(AbilityId.RUN_AWAY)) {
       return false;
     }
 

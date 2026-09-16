@@ -14,6 +14,7 @@ import type { DexEntry } from "#types/dex-data";
 import type { LevelMoves } from "#types/level-moves";
 import type { DexAttrProps, StarterDataEntry } from "#types/save-data";
 import type { StarterSpeciesId } from "#types/starter-species-id";
+import type { ValueHolder } from "#utils/value-holder";
 import { BooleanHolder, type NumberHolder } from "./common";
 
 /**
@@ -355,6 +356,27 @@ export function applyChallenges(
   evos: SpeciesFormEvolution[],
 ): boolean;
 
+/**
+ * Apply all challenges that modify a Pokemon's moveset after generation during a Mystery Encounter
+ * @param challengeType - {@linkcode ChallengeType.ME_MOVESET_MODIFY}
+ * @param pokemon - The Pokemon whose moveset is being modified
+ * @returns Whether any challenge was sucessfully applied
+ */
+export function applyChallenges(challengeType: ChallengeType.ME_MOVESET_MODIFY, pokemon: Pokemon): boolean;
+
+/**
+ * Apply all challenges that modify the ability to relearn egg moves via Memory Mushroom for player Pokemon.
+ * @param challengeType - {@linkcode ChallengeType.EGG_MOVE_RELEARN_AVAILABILITY}
+ * @param pokemon - The {@linkcode Pokemon} to set egg move legality for
+ * @param isAvailable - A holder used to set egg move legality
+ * @returns Whether any challenge was sucessfully applied
+ */
+export function applyChallenges(
+  challengeType: ChallengeType.EGG_MOVE_RELEARN_AVAILABILITY,
+  pokemon: Pokemon,
+  isAvailable: ValueHolder<boolean>,
+): boolean;
+
 export function applyChallenges(challengeType: ChallengeType, ...args: any[]): boolean {
   let ret = false;
   globalScene.gameMode.challenges.forEach(c => {
@@ -449,6 +471,12 @@ export function applyChallenges(challengeType: ChallengeType, ...args: any[]): b
           break;
         case ChallengeType.MODIFY_EVOLUTIONS:
           ret ||= c.applyModifyEvolutions(args[0], args[1]);
+          break;
+        case ChallengeType.ME_MOVESET_MODIFY:
+          ret ||= c.applyMysteryEncounterMovesetModify(args[0]);
+          break;
+        case ChallengeType.EGG_MOVE_RELEARN_AVAILABILITY:
+          ret ||= c.applyEggMoveRelearnAvailability(args[0], args[1]);
           break;
         default:
           challengeType satisfies never;
