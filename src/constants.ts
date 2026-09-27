@@ -25,33 +25,10 @@ export const TYPE_BOOST_ITEM_BOOST_PERCENT = 20;
  * The default species that a new player can choose from
  */
 export const defaultStarterSpecies: readonly StarterSpeciesId[] = [
-  SpeciesId.BULBASAUR,
-  SpeciesId.CHARMANDER,
-  SpeciesId.SQUIRTLE,
-  SpeciesId.CHIKORITA,
-  SpeciesId.CYNDAQUIL,
-  SpeciesId.TOTODILE,
-  SpeciesId.TREECKO,
-  SpeciesId.TORCHIC,
-  SpeciesId.MUDKIP,
-  SpeciesId.TURTWIG,
-  SpeciesId.CHIMCHAR,
-  SpeciesId.PIPLUP,
-  SpeciesId.SNIVY,
-  SpeciesId.TEPIG,
-  SpeciesId.OSHAWOTT,
-  SpeciesId.CHESPIN,
+  SpeciesId.ZORUA,
   SpeciesId.FENNEKIN,
-  SpeciesId.FROAKIE,
-  SpeciesId.ROWLET,
-  SpeciesId.LITTEN,
-  SpeciesId.POPPLIO,
-  SpeciesId.GROOKEY,
-  SpeciesId.SCORBUNNY,
-  SpeciesId.SOBBLE,
-  SpeciesId.SPRIGATITO,
-  SpeciesId.FUECOCO,
-  SpeciesId.QUAXLY,
+  SpeciesId.BULBASAUR,
+  SpeciesId.MAREEP,
 ];
 
 export const saveKey = "x0i2O7WRiANTqPmZ"; // Temporary; secure encryption is not yet necessary

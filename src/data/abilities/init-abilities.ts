@@ -2209,6 +2209,130 @@ export function initAbilities() {
       )
       .ignorable()
       .build(),
+    new AbBuilder(AbilityId.ILLUSION_Z, 5) //
+      .uncopiable()
+      .unimplemented() // TODO: reimplement Illusion properly
+      .build(),
+    new AbBuilder(AbilityId.ILLUSION_A, 5) //
+      .uncopiable()
+      .unimplemented() // TODO: reimplement Illusion properly
+      .build(),
+    new AbBuilder(AbilityId.ILLUSION_B, 5) //
+      .uncopiable()
+      .unimplemented() // TODO: reimplement Illusion properly
+      .build(),
+    new AbBuilder(AbilityId.ILLUSION_C, 5) //
+      .uncopiable()
+      .unimplemented() // TODO: reimplement Illusion properly
+      .build(),
+    new AbBuilder(AbilityId.ILLUSION_D, 5) //
+      .uncopiable()
+      .unimplemented() // TODO: reimplement Illusion properly
+      .build(),
+    new AbBuilder(AbilityId.BLAZE_A, 3) //
+      .attr(LowHpMoveTypePowerBoostAbAttr, PokemonType.FIRE)
+      .build(),
+    new AbBuilder(AbilityId.BLAZE_B, 3) //
+      .attr(LowHpMoveTypePowerBoostAbAttr, PokemonType.FIRE)
+      .build(),
+    new AbBuilder(AbilityId.BLAZE_C, 3) //
+      .attr(LowHpMoveTypePowerBoostAbAttr, PokemonType.FIRE)
+      .build(),
+    new AbBuilder(AbilityId.BLAZE_D, 3) //
+      .attr(LowHpMoveTypePowerBoostAbAttr, PokemonType.FIRE)
+      .build(),
+    new AbBuilder(AbilityId.MAGICIAN_A, 6) //
+      .attr(LowHpMoveTypePowerBoostAbAttr, PokemonType.FIRE)
+      .build(),
+    new AbBuilder(AbilityId.MAGICIAN_B, 6) //
+      .attr(LowHpMoveTypePowerBoostAbAttr, PokemonType.FIRE)
+      .build(),
+    new AbBuilder(AbilityId.MAGICIAN_C, 6) //
+      .attr(LowHpMoveTypePowerBoostAbAttr, PokemonType.FIRE)
+      .build(),
+    new AbBuilder(AbilityId.MAGICIAN_D, 6) //
+      .attr(LowHpMoveTypePowerBoostAbAttr, PokemonType.FIRE)
+      .build(),
+    new AbBuilder(AbilityId.OVERGROW_A, 3) //
+      .attr(LowHpMoveTypePowerBoostAbAttr, PokemonType.GRASS)
+      .build(),
+    new AbBuilder(AbilityId.OVERGROW_B, 3) //
+      .attr(LowHpMoveTypePowerBoostAbAttr, PokemonType.GRASS)
+      .build(),
+    new AbBuilder(AbilityId.OVERGROW_C, 3) //
+      .attr(LowHpMoveTypePowerBoostAbAttr, PokemonType.GRASS)
+      .build(),
+    new AbBuilder(AbilityId.OVERGROW_D, 3) //
+      .attr(LowHpMoveTypePowerBoostAbAttr, PokemonType.GRASS)
+      .build(),
+    new AbBuilder(AbilityId.CHLOROPHYLL_A, 3) //
+      .attr(LowHpMoveTypePowerBoostAbAttr, PokemonType.GRASS)
+      .build(),
+    new AbBuilder(AbilityId.CHLOROPHYLL_B, 3) //
+      .attr(LowHpMoveTypePowerBoostAbAttr, PokemonType.GRASS)
+      .build(),
+    new AbBuilder(AbilityId.CHLOROPHYLL_C, 3) //
+      .attr(LowHpMoveTypePowerBoostAbAttr, PokemonType.GRASS)
+      .build(),
+    new AbBuilder(AbilityId.CHLOROPHYLL_D, 3) //
+      .attr(LowHpMoveTypePowerBoostAbAttr, PokemonType.GRASS)
+      .build(),
+    new AbBuilder(AbilityId.STATIC_A, 3) //
+      .attr(PostDefendApplyStatusEffectAbAttr, 30, true, StatusEffect.PARALYSIS)
+      .bypassFaint()
+      .build(),
+    new AbBuilder(AbilityId.STATIC_B, 3) //
+      .attr(PostDefendApplyStatusEffectAbAttr, 30, true, StatusEffect.PARALYSIS)
+      .bypassFaint()
+      .build(),
+    new AbBuilder(AbilityId.STATIC_C, 3) //
+      .attr(PostDefendApplyStatusEffectAbAttr, 30, true, StatusEffect.PARALYSIS)
+      .bypassFaint()
+      .build(),
+    new AbBuilder(AbilityId.STATIC_D, 3) //
+      .attr(PostDefendApplyStatusEffectAbAttr, 30, true, StatusEffect.PARALYSIS)
+      .bypassFaint()
+      .build(),
+    new AbBuilder(AbilityId.PLUS_A, 3) //
+      .conditionalAttr(
+        p =>
+          globalScene.currentBattle.double
+          && [AbilityId.PLUS, AbilityId.MINUS].some(a => p.getAlly()?.hasAbility(a) ?? false),
+        StatMultiplierAbAttr,
+        Stat.SPATK,
+        1.5,
+      )
+      .build(),
+    new AbBuilder(AbilityId.PLUS_B, 3) //
+      .conditionalAttr(
+        p =>
+          globalScene.currentBattle.double
+          && [AbilityId.PLUS, AbilityId.MINUS].some(a => p.getAlly()?.hasAbility(a) ?? false),
+        StatMultiplierAbAttr,
+        Stat.SPATK,
+        1.5,
+      )
+      .build(),
+    new AbBuilder(AbilityId.PLUS_C, 3) //
+      .conditionalAttr(
+        p =>
+          globalScene.currentBattle.double
+          && [AbilityId.PLUS, AbilityId.MINUS].some(a => p.getAlly()?.hasAbility(a) ?? false),
+        StatMultiplierAbAttr,
+        Stat.SPATK,
+        1.5,
+      )
+      .build(),
+    new AbBuilder(AbilityId.PLUS_D, 3) //
+      .conditionalAttr(
+        p =>
+          globalScene.currentBattle.double
+          && [AbilityId.PLUS, AbilityId.MINUS].some(a => p.getAlly()?.hasAbility(a) ?? false),
+        StatMultiplierAbAttr,
+        Stat.SPATK,
+        1.5,
+      )
+      .build(),
   );
 }
 
