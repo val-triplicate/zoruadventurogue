@@ -1,10 +1,7 @@
 import { isDev } from "#constants/app-constants";
 import { BattleStyle } from "#enums/battle-style";
-import { CandyUpgradeDisplayMode } from "#enums/candy-upgrade-display-mode";
-import { CandyUpgradeNotificationMode } from "#enums/candy-upgrade-notification-mode";
 import { DamageNumbersMode } from "#enums/damage-numbers-mode";
 import { EaseType } from "#enums/ease-type";
-import { EggSkipPreference } from "#enums/egg-skip-preference";
 import { ExpGainsSpeed } from "#enums/exp-gains-speed";
 import { ExpNotification } from "#enums/exp-notification";
 import { GameSpeed } from "#enums/game-speed";
@@ -16,7 +13,6 @@ import { ShopCursorTarget } from "#enums/shop-cursor-target";
 import { SpriteSet } from "#enums/sprite-set";
 import { TypeHints } from "#enums/type-hints";
 import { UiTheme } from "#enums/ui-theme";
-import { SUPPORTED_LANGUAGE_ENTRIES } from "#system/supported-languages";
 import type {
   AudioSettingsKey,
   DisplaySettingsKey,
@@ -135,15 +131,6 @@ export const generalSettingsUiItems: SettingsUiItem<GeneralSettingsKey>[] = [
     options: useOnOffOptions(),
   },
   {
-    key: "eggSkipPreference",
-    label: t("settings:eggSkip"),
-    options: [
-      { value: EggSkipPreference.NEVER, label: t("settings:never") },
-      { value: EggSkipPreference.ASK, label: t("settings:ask") },
-      { value: EggSkipPreference.ALWAYS, label: t("settings:always") },
-    ],
-  },
-  {
     key: "battleStyle",
     label: t("settings:battleStyle"),
     options: [
@@ -159,11 +146,6 @@ export const generalSettingsUiItems: SettingsUiItem<GeneralSettingsKey>[] = [
   {
     key: "enableRetries",
     label: t("settings:enableRetries"),
-    options: useOnOffOptions(),
-  },
-  {
-    key: "hideIvScanner",
-    label: t("settings:hideIvs"),
     options: useOnOffOptions(),
   },
   {
@@ -237,21 +219,6 @@ if (isDev) {
 /** UI items for display settings */
 export const displaySettingUiItems: SettingsUiItem<DisplaySettingsKey>[] = [
   {
-    key: "language",
-    label: t("settings:language"),
-    options: [
-      {
-        label: SUPPORTED_LANGUAGE_ENTRIES[i18next.resolvedLanguage ?? "en"]?.label ?? "English",
-        value: 0,
-      },
-      {
-        label: t("settings:change"),
-        value: 1,
-      },
-    ],
-    requiresReload: true,
-  },
-  {
     key: "uiTheme",
     label: t("settings:uiTheme"),
     options: [
@@ -291,24 +258,6 @@ export const displaySettingUiItems: SettingsUiItem<DisplaySettingsKey>[] = [
     key: "showStatsOnLevelUp",
     label: t("settings:showStatsOnLevelUp"),
     options: useOnOffOptions(),
-  },
-  {
-    key: "candyUpgradeNotificationMode",
-    label: t("settings:candyUpgradeNotification"),
-    options: [
-      { value: CandyUpgradeNotificationMode.OFF, label: t("settings:off") },
-      { value: CandyUpgradeNotificationMode.PASSIVES_ONLY, label: t("settings:passivesOnly") },
-      { value: CandyUpgradeNotificationMode.ON, label: t("settings:on") },
-    ],
-  },
-  {
-    key: "candyUpgradeDisplayMode",
-    label: t("settings:candyUpgradeDisplay"),
-    options: [
-      { value: CandyUpgradeDisplayMode.ICON, label: t("settings:icon") },
-      { value: CandyUpgradeDisplayMode.ANIMATION, label: t("settings:animation") },
-    ],
-    requiresReload: true,
   },
   {
     key: "enableMoveInfo",
@@ -353,11 +302,6 @@ export const displaySettingUiItems: SettingsUiItem<DisplaySettingsKey>[] = [
       },
     ],
     requiresReload: true,
-  },
-  {
-    key: "enableFusionPaletteSwaps",
-    label: t("settings:fusionPaletteSwaps"),
-    options: useOnOffOptions(),
   },
   {
     key: "typeHintsMode",
