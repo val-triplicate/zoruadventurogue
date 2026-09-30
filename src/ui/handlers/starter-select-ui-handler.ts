@@ -5,15 +5,12 @@ import { settings } from "#app/global-settings-manager";
 import { speciesDataRegistry } from "#app/global-species-data-registry";
 import { handleTutorial, Tutorial } from "#app/tutorial";
 import { speciesEggMoves } from "#balance/egg-moves";
-import { POKERUS_STARTER_COUNT } from "#balance/starters";
 import { allMoves } from "#data/data-lists";
 import { getNatureName } from "#data/nature";
 import type { PokemonSpecies } from "#data/pokemon-species";
 import { AbilityAttr } from "#enums/ability-attr";
 import { AbilityId } from "#enums/ability-id";
 import { Button } from "#enums/buttons";
-import { CandyUpgradeDisplayMode } from "#enums/candy-upgrade-display-mode";
-import { CandyUpgradeNotificationMode } from "#enums/candy-upgrade-notification-mode";
 import { Challenges } from "#enums/challenges";
 import { DexAttr } from "#enums/dex-attr";
 import { DropDownColumn } from "#enums/drop-down-column";
@@ -61,9 +58,7 @@ import {
   getStarterDexAttrPropsFromPreferences,
   getStarterMoves,
   isPassiveAvailable,
-  isSameSpeciesEggAvailable,
   isStarterValidForChallenge,
-  isValueReductionAvailable,
   sortStarterSpecies,
 } from "#ui/starter-select-ui-utils";
 import { StarterSummary } from "#ui/starter-summary";
@@ -72,7 +67,6 @@ import { addWindow } from "#ui/ui-theme";
 import { checkStarterValidForChallenge } from "#utils/challenge-utils";
 import { fixedInt, getLocalizedSpriteKey } from "#utils/common";
 import { deepCopy, loadStarterPreferences, saveStarterPreferences } from "#utils/data";
-import { getPokerusStarters } from "#utils/pokemon-utils";
 import i18next from "i18next";
 import type { GameObjects } from "phaser";
 
@@ -140,7 +134,6 @@ export class StarterSelectUiHandler extends MessageUiHandler {
   private starterContainers: StarterContainer[] = [];
   public cursorObj: Phaser.GameObjects.Image;
   private starterCursorObjs: Phaser.GameObjects.Image[];
-  private pokerusCursorObjs: Phaser.GameObjects.Image[];
   private starterSelectScrollBar: ScrollBar;
   private scrollCursor: number;
   private filteredStarterIds: StarterSpeciesId[] = [];
@@ -179,7 +172,6 @@ export class StarterSelectUiHandler extends MessageUiHandler {
   private moveInfoOverlay: MoveInfoOverlay;
 
   private starterMoveset: StarterMoveset | null;
-  private pokerusSpeciesIds: StarterSpeciesId[] = [];
   private readonly canCycle: CanCycle = {
     ability: false,
     form: false,
@@ -241,16 +233,6 @@ export class StarterSelectUiHandler extends MessageUiHandler {
     this.starterSelectScrollBar = new ScrollBar(161, 12, 5, 155, 9);
 
     starterBoxContainer.add(this.starterSelectScrollBar);
-
-    this.pokerusCursorObjs = [];
-    for (let i = 0; i < POKERUS_STARTER_COUNT; i++) {
-      const cursorObj = globalScene.add //
-        .image(0, 0, "select_cursor_pokerus")
-        .setVisible(false)
-        .setOrigin(0);
-      starterBoxContainer.add(cursorObj);
-      this.pokerusCursorObjs.push(cursorObj);
-    }
 
     this.starterCursorObjs = [];
     for (let i = 0; i < 6; i++) {
@@ -429,20 +411,10 @@ export class StarterSelectUiHandler extends MessageUiHandler {
       new DropDownLabel(i18next.t("filterBar:hasHiddenAbility"), undefined, DropDownState.ON),
       new DropDownLabel(i18next.t("filterBar:noHiddenAbility"), undefined, DropDownState.EXCLUDE),
     ];
-    const eggLabels = [
-      new DropDownLabel(i18next.t("filterBar:egg"), undefined, DropDownState.OFF),
-      new DropDownLabel(i18next.t("filterBar:eggPurchasable"), undefined, DropDownState.ON),
-    ];
-    const pokerusLabels = [
-      new DropDownLabel(i18next.t("filterBar:pokerus"), undefined, DropDownState.OFF),
-      new DropDownLabel(i18next.t("filterBar:hasPokerus"), undefined, DropDownState.ON),
-    ];
     const miscOptions = [
       new DropDownOption("FAVORITE", favoriteLabels),
       new DropDownOption("WIN", winLabels),
       new DropDownOption("HIDDEN_ABILITY", hiddenAbilityLabels),
-      new DropDownOption("EGG", eggLabels),
-      new DropDownOption("POKERUS", pokerusLabels),
     ];
     filterBar.addFilter(
       DropDownColumn.MISC,
@@ -550,7 +522,6 @@ export class StarterSelectUiHandler extends MessageUiHandler {
 
   public override show(args: any[]): boolean {
     this.moveInfoOverlay.clear(); // clear this when removing a menu; the cancel button doesn't seem to trigger this automatically on controllers
-    this.pokerusSpeciesIds = getPokerusStarters();
 
     this.allowTera = Object.hasOwn(globalScene.gameData.achvUnlocks, achvs.TERASTALLIZE.id);
 
@@ -767,23 +738,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
    */
   protected setUpgradeAnimation(starter: StarterContainer): void {
     const icon = starter.icon;
-    const species = starter.species;
-
-    // Skip animations if they are disabled
-    if (
-      settings.display.candyUpgradeDisplayMode === CandyUpgradeDisplayMode.ICON
-      || species.speciesId !== species.getRootSpeciesId(false)
-    ) {
-      this.iconAnimHandler.addOrUpdate(icon, PokemonIconAnimMode.NONE); // TODO: Check that this does not interfere with setting mode to ACTIVE.
-      return;
-    }
-
-    const shouldJump =
-      isPassiveAvailable(species.speciesId)
-      || (settings.display.candyUpgradeNotificationMode === CandyUpgradeNotificationMode.ON
-        && (isValueReductionAvailable(species.speciesId) || isSameSpeciesEggAvailable(species.speciesId)));
-
-    this.iconAnimHandler.addOrUpdate(icon, shouldJump ? PokemonIconAnimMode.JUMP : PokemonIconAnimMode.NONE);
+    this.iconAnimHandler.addOrUpdate(icon, PokemonIconAnimMode.NONE);
   }
 
   private showRandomCursor(): void {
@@ -1929,7 +1884,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
       passive: !(starterDataEntry.passiveAttr ^ (PassiveAttr.ENABLED | PassiveAttr.UNLOCKED)),
       nature,
       moveset,
-      pokerus: this.pokerusSpeciesIds.includes(starterId),
+      pokerus: false,
       nickname: this.starterPreferences[starterId]?.nickname,
       teraType,
       ivs: dexEntry.ivs,
@@ -2141,10 +2096,8 @@ export class StarterSelectUiHandler extends MessageUiHandler {
 
     this.starterSelectScrollBar.setScrollCursor(this.scrollCursor);
 
-    this.pokerusCursorObjs.forEach(cursor => cursor.setVisible(false));
     this.starterCursorObjs.forEach(cursor => cursor.setVisible(false));
 
-    let pokerusCursorIndex = 0;
     this.starterContainers.forEach((container, i) => {
       const offset_i = i + onScreenFirstIndex;
       if (offset_i >= this.filteredStarterIds.length) {
@@ -2176,11 +2129,6 @@ export class StarterSelectUiHandler extends MessageUiHandler {
         container.icon.setTint(0x808080);
       } else {
         container.icon.setTint(0);
-      }
-
-      if (this.pokerusSpeciesIds.includes(starterId)) {
-        this.pokerusCursorObjs[pokerusCursorIndex].setPosition(container.x - 1, container.y + 1).setVisible(true);
-        pokerusCursorIndex++;
       }
 
       if (this.partyStarterIds.includes(starterId)) {
@@ -2321,12 +2269,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
 
     if (dexEntry?.caughtAttr) {
       this.setStarterDetails(starterId, false);
-
       this.startIconAnimation(this.cursor);
-
-      if (this.pokerusSpeciesIds.includes(starterId)) {
-        handleTutorial(Tutorial.POKERUS);
-      }
     } else {
       this.resetStarterDetails();
     }
