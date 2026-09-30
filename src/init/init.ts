@@ -6,6 +6,7 @@ import { initSettingsManager } from "#app/global-settings-manager";
 import { initChallenges } from "#data/challenge";
 import { initTrainerTypeDialogue } from "#data/dialogue";
 import { initSpeciesDataRegistry } from "#data/species-data-registry";
+import { initTeamDataRegistry } from "#data/team-data-registry";
 import { initBiomeBgmLoopPoints } from "#init/init-biome-bgm-loop-points";
 import { initBiomeDepths } from "#init/init-biome-depths";
 import { initBiomes } from "#init/init-biomes";
@@ -24,6 +25,7 @@ export async function initializeGame(): Promise<void> {
   initBiomeBgmLoopPoints();
   await initSettingsManager();
   initSpeciesDataRegistry();
+  initTeamDataRegistry();
   await initGlobalAudioManager();
   initModifierTypes();
   initModifierPools();

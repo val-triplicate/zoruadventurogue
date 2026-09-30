@@ -1,10 +1,15 @@
 import type { SpeciesFormEvolution } from "#balance/pokemon-evolutions";
+import type { Gender } from "#data/gender";
 import type { SpeciesFormChange } from "#data/pokemon-forms";
 import type { PokemonSpecies } from "#data/pokemon-species";
 import type { AbilityId } from "#enums/ability-id";
 import type { EggTier } from "#enums/egg-type";
 import type { MoveId } from "#enums/move-id";
+import type { Nature } from "#enums/nature";
+import type { Origin } from "#enums/origin";
 import type { SpeciesId } from "#enums/species-id";
+import type { TeamId } from "#enums/team-id";
+import type { TeamMemberId } from "#enums/team-member-id";
 import type { LevelMoves } from "./level-moves";
 import type { StarterSpeciesId } from "./starter-species-id";
 
@@ -45,7 +50,28 @@ export interface PokemonSpeciesData {
   formTms?: SpeciesFormTmMoves;
 }
 
+export interface TeamData {
+  teamId: TeamId;
+  name?: string | undefined;
+  leader: TeamMemberId;
+  follower: TeamMemberId;
+  origin: Origin;
+}
+
+export interface TeamMemberData {
+  teamMemberId: TeamMemberId;
+  name?: string | undefined;
+  gender?: Gender | undefined;
+  species: SpeciesId;
+  nature?: Nature | undefined;
+  moves?: MoveId[] | undefined;
+  abilities?: AbilityId[] | undefined;
+}
+
 export type SpeciesDataMap = Record<SpeciesId, PokemonSpeciesData>;
+export type TeamMemberDataMap = Record<TeamMemberId, TeamMemberData>;
+export type TeamDataMap = Record<TeamId, TeamData>;
+
 /**
  * The `prevolution` field is set on load based on the evolutions of the starter and doesn't need to be configured
  */

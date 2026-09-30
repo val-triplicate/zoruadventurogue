@@ -28,6 +28,7 @@ export interface SystemSaveData {
   gender: PlayerGender;
   dexData: DexData;
   starterData: StarterData;
+  teamSaveData: TeamSaveData;
   gameStats: GameStats;
   unlocks: Unlocks;
   achvUnlocks: AchvUnlocks;
@@ -160,8 +161,18 @@ export interface StarterDataEntry {
   classicWinCount: number;
 }
 
+export interface TeamSaveDataEntry {
+  boss1WinCount: number;
+  boss2WinCount: number;
+  boss3WinCount: number;
+}
+
 export interface StarterData {
   [key: number]: StarterDataEntry;
+}
+
+export interface TeamSaveData {
+  [key: number]: TeamSaveDataEntry;
 }
 
 // TODO: Rework into a bitmask

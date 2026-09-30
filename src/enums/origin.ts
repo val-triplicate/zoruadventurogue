@@ -1,0 +1,7 @@
+export enum Origin {
+  THE_VAPOREON_CYCLE = 1,
+  ZORUADVENTURE,
+  BLIND_PI,
+  VILLAIN_VENUS,
+  MANY_MOONS,
+}

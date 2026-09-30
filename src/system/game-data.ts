@@ -1,11 +1,12 @@
 import { pokerogueApi } from "#api/api";
 import { clientSessionId, getSessionDataLocalStorageKey, loggedInUser, updateUserInfo } from "#app/account";
-import { defaultStarterSpecies, saveKey } from "#app/constants";
+import { defaultStarterSpecies, defaultTeams, saveKey } from "#app/constants";
 import { getGameMode } from "#app/game-mode";
 import { audioManager } from "#app/global-audio-manager";
 import { globalScene } from "#app/global-scene";
 import { settings } from "#app/global-settings-manager";
 import { speciesDataRegistry } from "#app/global-species-data-registry";
+import { teamDataRegistry } from "#app/global-team-data-registry";
 import { activeOverrides } from "#app/overrides";
 import { isIos } from "#app/touch-controls";
 import { Tutorial } from "#app/tutorial";
@@ -51,7 +52,7 @@ import { RibbonData } from "#system/ribbon-data";
 import { TrainerData } from "#system/trainer-data";
 import { applySessionVersionMigration, applySystemVersionMigration } from "#system/version-converter";
 import { vouchers } from "#system/voucher";
-import type { DexData, DexEntry } from "#types/dex-data";
+import type { DexData, DexEntry, TeamDexData } from "#types/dex-data";
 import type {
   AchvUnlocks,
   AppliedMigrators,
@@ -61,6 +62,7 @@ import type {
   SessionSaveData,
   StarterData,
   SystemSaveData,
+  TeamSaveData,
   TutorialFlags,
   Unlocks,
   VoucherCounts,
@@ -94,6 +96,7 @@ export class GameData {
   private defaultDexData: DexData | null;
 
   public starterData: StarterData;
+  public teamSaveData: TeamSaveData;
 
   public gameStats: GameStats;
   public runHistory: RunHistoryData;
@@ -155,6 +158,7 @@ export class GameData {
       gender: settings.general.playerGender,
       dexData: this.dexData,
       starterData: this.starterData,
+      teamSaveData: this.teamSaveData,
       gameStats: this.gameStats,
       unlocks: this.unlocks,
       achvUnlocks: this.achvUnlocks,
@@ -1497,6 +1501,7 @@ export class GameData {
 
   private initDexData(): void {
     const data: DexData = {};
+    const teamData: TeamDexData = {};
 
     for (const species of speciesDataRegistry.getAllSpecies()) {
       data[species.speciesId] = {
@@ -1508,6 +1513,16 @@ export class GameData {
         hatchedCount: 0,
         ivs: [0, 0, 0, 0, 0, 0],
         ribbons: new RibbonData(0),
+      };
+    }
+
+    for (const team of teamDataRegistry.getAllTeams()) {
+      teamData[team.teamId] = {
+        isUnlocked: false,
+        abilitiesUnlocked: false,
+        passivesUnlocked: false,
+        runCount: 0n,
+        winCount: 0n,
       };
     }
 
@@ -1535,6 +1550,10 @@ export class GameData {
       for (const i in entry.ivs) {
         entry.ivs[i] = 15;
       }
+    }
+
+    for (const teamId of defaultTeams) {
+      teamData[teamId].isUnlocked = true;
     }
 
     this.defaultDexData = { ...data };

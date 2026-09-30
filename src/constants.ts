@@ -1,4 +1,5 @@
 import { SpeciesId } from "#enums/species-id";
+import { TeamId } from "#enums/team-id";
 import type { StarterSpeciesId } from "#types/starter-species-id";
 
 /** The maximum size of the player's party */
@@ -30,6 +31,11 @@ export const defaultStarterSpecies: readonly StarterSpeciesId[] = [
   SpeciesId.BULBASAUR,
   SpeciesId.MAREEP,
 ];
+
+/**
+ * The default teams that a new player can choose from
+ */
+export const defaultTeams: readonly TeamId[] = [TeamId.VAPOREON_MAWILE, TeamId.DIA_SILVER];
 
 export const saveKey = "x0i2O7WRiANTqPmZ"; // Temporary; secure encryption is not yet necessary
 
