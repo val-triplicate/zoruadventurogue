@@ -20,10 +20,11 @@ import type { Nature } from "#enums/nature";
 import { Passive as PassiveAttr } from "#enums/passive";
 import { PokemonIconAnimMode } from "#enums/pokemon-icon-anim-mode";
 import { PokemonType } from "#enums/pokemon-type";
+import type { TeamMemberId } from "#enums/team-member-id";
 import { TextStyle } from "#enums/text-style";
 import { UiMode } from "#enums/ui-mode";
 import type { Variant } from "#sprites/variant";
-import { getVariantIcon, getVariantTint } from "#sprites/variant";
+import { getVariantTint } from "#sprites/variant";
 import { achvs } from "#system/achv";
 import { RibbonData } from "#system/ribbons/ribbon-data";
 import type {
@@ -138,6 +139,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
   private scrollCursor: number;
   private filteredStarterIds: StarterSpeciesId[] = [];
   private lastStarterId: StarterSpeciesId;
+  private lastTeamMemberId: TeamMemberId;
 
   private partyColumn: GameObjects.Container;
   private partyIcons: Phaser.GameObjects.Sprite[];
@@ -333,30 +335,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
       new DropDown(0, 0, typeOptions, () => this.updateStarters(), DropDownType.HYBRID, 0.5),
     );
 
-    // caught filter
-    const shiny1Sprite = globalScene.add
-      .sprite(0, 0, "shiny_icons")
-      .setOrigin(0.15, 0.2)
-      .setScale(0.6)
-      .setFrame(getVariantIcon(0))
-      .setTint(getVariantTint(0));
-    const shiny2Sprite = globalScene.add
-      .sprite(0, 0, "shiny_icons")
-      .setOrigin(0.15, 0.2)
-      .setScale(0.6)
-      .setFrame(getVariantIcon(1))
-      .setTint(getVariantTint(1));
-    const shiny3Sprite = globalScene.add
-      .sprite(0, 0, "shiny_icons")
-      .setOrigin(0.15, 0.2)
-      .setScale(0.6)
-      .setFrame(getVariantIcon(2))
-      .setTint(getVariantTint(2));
-
     const caughtOptions = [
-      new DropDownOption("SHINY3", new DropDownLabel("", shiny3Sprite)),
-      new DropDownOption("SHINY2", new DropDownLabel("", shiny2Sprite)),
-      new DropDownOption("SHINY", new DropDownLabel("", shiny1Sprite)),
       new DropDownOption("NORMAL", new DropDownLabel(i18next.t("filterBar:normal"))),
       new DropDownOption("UNCAUGHT", new DropDownLabel(i18next.t("filterBar:uncaught"))),
     ];
@@ -1325,12 +1304,23 @@ export class StarterSelectUiHandler extends MessageUiHandler {
       case Button.DOWN:
         if (currentRow < numOfRows - 1 && this.cursor + 9 < this.filteredStarterIds.length) {
           // This is not the last row of starters
+
+          const movingToLastRow = currentRow === numOfRows - 2;
+          const xPos = this.cursor % 9;
+          const lastXPosInLastRow = (numberOfStarters - 1) % 9;
+
           if (currentRow - this.scrollCursor === 8) {
             // This is the last visible row, but there are more rows underneath, so we need to scroll
             this.scrollCursor++;
             this.updateScroll();
-            this.setCursor(this.cursor);
+            if (movingToLastRow && xPos > lastXPosInLastRow) {
+              this.setCursor(onScreenLastIndex - 8 + lastXPosInLastRow);
+            } else {
+              this.setCursor(this.cursor);
+            }
             success = true;
+          } else if (movingToLastRow && xPos > lastXPosInLastRow) {
+            success = this.setCursor(onScreenLastIndex);
           } else {
             success = this.setCursor(this.cursor + 9);
           }
@@ -2004,6 +1994,9 @@ export class StarterSelectUiHandler extends MessageUiHandler {
 
       const species = speciesDataRegistry.getSpecies(starterId);
 
+      const { dexEntry } = getStarterData(starterId);
+      const caughtAttr = dexEntry?.caughtAttr ?? BigInt(0);
+
       // First, ensure you have the caught attributes for the species else default to bigint 0
       const { starterDataEntry: starterData } = getStarterData(starterId);
       const isStarterProgressable = Object.hasOwn(speciesEggMoves, starterId);
@@ -2015,6 +2008,19 @@ export class StarterSelectUiHandler extends MessageUiHandler {
       const fitsType = this.filterBar
         .getVals(DropDownColumn.TYPES)
         .some(type => species.isOfType((type as number) - 1));
+
+      // Caught / Shiny filter
+      const isNonShinyCaught = !!(caughtAttr & DexAttr.NON_SHINY);
+      const isUncaught = !isNonShinyCaught;
+      const fitsCaught = this.filterBar.getVals(DropDownColumn.CAUGHT).some(caught => {
+        if (caught === "NORMAL") {
+          return isNonShinyCaught;
+        }
+        if (caught === "UNCAUGHT") {
+          return isUncaught;
+        }
+        return false;
+      });
 
       // Passive Filter
       const isPassiveUnlocked = starterData.passiveAttr > 0;
@@ -2084,7 +2090,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
         return false;
       });
 
-      if (fitsGen && fitsType && fitsPassive && fitsFavorite && fitsWin && fitsHA) {
+      if (fitsGen && fitsType && fitsCaught && fitsPassive && fitsFavorite && fitsWin && fitsHA) {
         return true;
       }
       return false;
