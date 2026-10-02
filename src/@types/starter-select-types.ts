@@ -1,3 +1,4 @@
+import type { Gender } from "#data/gender";
 import type { PokemonType } from "#enums/pokemon-type";
 import type { Variant } from "#sprites/variant";
 import type { SetNonNullable } from "type-fest";
@@ -5,7 +6,7 @@ import type { SetNonNullable } from "type-fest";
 export interface SpeciesDetails {
   shiny?: boolean | undefined;
   formIndex?: number | undefined;
-  female?: boolean | undefined;
+  gender?: Gender | undefined;
   variant?: Variant | undefined;
   abilityIndex?: number | undefined;
   natureIndex?: number | undefined;
