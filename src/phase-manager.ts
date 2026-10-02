@@ -27,9 +27,6 @@ import { CommonAnimPhase } from "#phases/common-anim-phase";
 import { DamageAnimPhase } from "#phases/damage-anim-phase";
 import { DancerPhase } from "#phases/dancer-phase";
 import { DynamicPhaseMarker } from "#phases/dynamic-phase-marker";
-import { EggHatchPhase } from "#phases/egg-hatch-phase";
-import { EggLapsePhase } from "#phases/egg-lapse-phase";
-import { EggSummaryPhase } from "#phases/egg-summary-phase";
 import { EncounterPhase } from "#phases/encounter-phase";
 import { EndCardPhase } from "#phases/end-card-phase";
 import { EndEvolutionPhase } from "#phases/end-evolution-phase";
@@ -137,9 +134,6 @@ const PHASES = Object.freeze({
   DancerPhase,
   DamageAnimPhase,
   DynamicPhaseMarker,
-  EggHatchPhase,
-  EggLapsePhase,
-  EggSummaryPhase,
   EncounterPhase,
   EndCardPhase,
   EndEvolutionPhase,
