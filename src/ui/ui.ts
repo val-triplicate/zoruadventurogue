@@ -21,10 +21,6 @@ import { ChangePasswordFormUiHandler } from "#ui/change-password-form-ui-handler
 import { CommandUiHandler } from "#ui/command-ui-handler";
 import { ConfirmUiHandler } from "#ui/confirm-ui-handler";
 import { SettingsDisplayUiHandler } from "#ui/display-settings-ui-handler";
-import { EggGachaUiHandler } from "#ui/egg-gacha-ui-handler";
-import { EggHatchSceneUiHandler } from "#ui/egg-hatch-scene-ui-handler";
-import { EggListUiHandler } from "#ui/egg-list-ui-handler";
-import { EggSummaryUiHandler } from "#ui/egg-summary-ui-handler";
 import { EvolutionSceneUiHandler } from "#ui/evolution-scene-ui-handler";
 import { FightUiHandler } from "#ui/fight-ui-handler";
 import { GameStatsUiHandler } from "#ui/game-stats-ui-handler";
@@ -42,9 +38,6 @@ import { ModifierSelectUiHandler } from "#ui/modifier-select-ui-handler";
 import { MysteryEncounterUiHandler } from "#ui/mystery-encounter-ui-handler";
 import { OptionSelectUiHandler } from "#ui/option-select-ui-handler";
 import { PartyUiHandler } from "#ui/party-ui-handler";
-import { PokedexPageUiHandler } from "#ui/pokedex-page-ui-handler";
-import { PokedexScanUiHandler } from "#ui/pokedex-scan-ui-handler";
-import { PokedexUiHandler } from "#ui/pokedex-ui-handler";
 import { RegistrationFormUiHandler } from "#ui/registration-form-ui-handler";
 import { RenameFormUiHandler } from "#ui/rename-form-ui-handler";
 import { RenameRunFormUiHandler } from "#ui/rename-run-ui-handler";
@@ -145,8 +138,6 @@ export class UI extends Phaser.GameObjects.Container {
       new SummaryUiHandler(),
       new StarterSelectUiHandler(),
       new EvolutionSceneUiHandler(),
-      new EggHatchSceneUiHandler(),
-      new EggSummaryUiHandler(),
       new ConfirmUiHandler(),
       new OptionSelectUiHandler(),
       new MenuUiHandler(),
@@ -162,11 +153,6 @@ export class UI extends Phaser.GameObjects.Container {
       // end settings
       new AchvsUiHandler(),
       new GameStatsUiHandler(),
-      new EggListUiHandler(),
-      new EggGachaUiHandler(),
-      new PokedexUiHandler(),
-      new PokedexScanUiHandler(),
-      new PokedexPageUiHandler(),
       new LoginOrRegisterUiHandler(),
       new LoginFormUiHandler(),
       new RegistrationFormUiHandler(),

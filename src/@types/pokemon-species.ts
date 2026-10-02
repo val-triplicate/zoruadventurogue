@@ -60,12 +60,13 @@ export interface TeamData {
 
 export interface TeamMemberData {
   teamMemberId: TeamMemberId;
+  shinyAttr?: bigint | undefined;
   name?: string | undefined;
   gender?: Gender | undefined;
-  species: SpeciesId;
+  speciesId: SpeciesId;
   nature?: Nature | undefined;
-  moves?: MoveId[] | undefined;
-  abilities?: AbilityId[] | undefined;
+  moves: MoveId[];
+  abilities: { first?: AbilityId; second?: AbilityId; hidden?: AbilityId; passive?: AbilityId };
 }
 
 export type SpeciesDataMap = Record<SpeciesId, PokemonSpeciesData>;

@@ -14,8 +14,6 @@ import { SettingsGamepadUiHandler } from "#ui/gamepad-settings-ui-handler";
 import { GeneralSettingsUiHandler } from "#ui/general-settings-ui-handler";
 import { SettingsKeyboardUiHandler } from "#ui/keyboard-settings-ui-handler";
 import type { MessageUiHandler } from "#ui/message-ui-handler";
-import { PokedexPageUiHandler } from "#ui/pokedex-page-ui-handler";
-import { PokedexUiHandler } from "#ui/pokedex-ui-handler";
 import { RunInfoUiHandler } from "#ui/run-info-ui-handler";
 import { StarterSelectUiHandler } from "#ui/starter-select-ui-handler";
 import type Phaser from "phaser";
@@ -161,7 +159,7 @@ export class UiInputs {
   }
 
   buttonGoToFilter(button: Button): void {
-    const whitelist = [StarterSelectUiHandler, PokedexUiHandler, PokedexPageUiHandler];
+    const whitelist = [StarterSelectUiHandler];
     const uiHandler = globalScene.ui?.getHandler();
     if (whitelist.some(handler => uiHandler instanceof handler)) {
       globalScene.ui.processInput(button);
@@ -216,8 +214,6 @@ export class UiInputs {
   buttonCycleOption(button: Button): void {
     const whitelist = [
       StarterSelectUiHandler,
-      PokedexUiHandler,
-      PokedexPageUiHandler,
       GameChallengesUiHandler,
       GeneralSettingsUiHandler,
       RunInfoUiHandler,
