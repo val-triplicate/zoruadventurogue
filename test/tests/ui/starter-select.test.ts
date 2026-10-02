@@ -565,8 +565,8 @@ describe.todo("UI - Starter select", () => {
       });
     });
 
-    expect(starterSelectUiHandler?.partyStarterIds.length).toBe(1);
-    const starterId = starterSelectUiHandler?.partyStarterIds[0];
+    expect(starterSelectUiHandler?.partyTeamMemberIds.length).toBe(1);
+    const starterId = starterSelectUiHandler?.partyTeamMemberIds[0];
     const starterSpecies = speciesDataRegistry.getSpecies(starterId!);
     expect(starterSpecies.generation).toBe(1);
     expect(starterSpecies.speciesId).toBe(32);

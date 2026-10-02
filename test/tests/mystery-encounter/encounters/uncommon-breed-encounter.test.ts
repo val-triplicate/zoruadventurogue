@@ -1,6 +1,6 @@
 import type { BattleScene } from "#app/battle-scene";
 import { speciesDataRegistry } from "#app/global-species-data-registry";
-import { speciesEggMoves } from "#balance/moves/egg-moves";
+import { teamMemberMoveOptions } from "#balance/moves/egg-moves";
 import { modifierTypes } from "#data/data-lists";
 import { AbilityId } from "#enums/ability-id";
 import { BerryType } from "#enums/berry-type";
@@ -124,7 +124,8 @@ describe("Uncommon Breed - Mystery Encounter", () => {
       // Should have used its egg move pre-battle
       const movePhases = phaseSpy.mock.calls.filter(p => p[0] instanceof MovePhase).map(p => p[0]);
       expect(movePhases.length).toBe(1);
-      const eggMoves: MoveId[] = speciesEggMoves[speciesDataRegistry.getSpecies(speciesToSpawn).getRootSpeciesId()];
+      const eggMoves: MoveId[] =
+        teamMemberMoveOptions[speciesDataRegistry.getSpecies(speciesToSpawn).getRootSpeciesId()];
       const usedMove = (movePhases[0] as MovePhase).move.moveId;
       expect(eggMoves.includes(usedMove)).toBe(true);
     });
@@ -151,7 +152,8 @@ describe("Uncommon Breed - Mystery Encounter", () => {
       // Should have used its egg move pre-battle
       const movePhases = phaseSpy.mock.calls.filter(p => p[0] instanceof MovePhase).map(p => p[0]);
       expect(movePhases.length).toBe(1);
-      const eggMoves: MoveId[] = speciesEggMoves[speciesDataRegistry.getSpecies(speciesToSpawn).getRootSpeciesId()];
+      const eggMoves: MoveId[] =
+        teamMemberMoveOptions[speciesDataRegistry.getSpecies(speciesToSpawn).getRootSpeciesId()];
       const usedMove = (movePhases[0] as MovePhase).move.moveId;
       expect(eggMoves.includes(usedMove)).toBe(true);
     });

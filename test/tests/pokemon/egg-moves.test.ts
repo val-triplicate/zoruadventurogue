@@ -1,5 +1,5 @@
 import { speciesDataRegistry } from "#app/global-species-data-registry";
-import { speciesEggMoves } from "#balance/moves/egg-moves";
+import { teamMemberMoveOptions } from "#balance/moves/egg-moves";
 import { SpeciesId } from "#enums/species-id";
 import { describe, expect, it } from "vitest";
 
@@ -9,8 +9,8 @@ describe("Egg Moves Definitions", () => {
       if (speciesId === SpeciesId.PIKACHU) {
         continue;
       }
-      expect(speciesEggMoves).toHaveProperty(String(speciesId));
-      expect(speciesEggMoves[speciesId]).toHaveLength(4);
+      expect(teamMemberMoveOptions).toHaveProperty(String(speciesId));
+      expect(teamMemberMoveOptions[speciesId]).toHaveLength(4);
     }
   });
 });
