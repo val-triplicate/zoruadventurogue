@@ -1,33 +1,29 @@
 import { globalScene } from "#app/global-scene";
-import { settings } from "#app/global-settings-manager";
 import { speciesDataRegistry } from "#app/global-species-data-registry";
-import { speciesEggMoves } from "#balance/egg-moves";
+import { teamMemberDataRegistry } from "#app/global-team-member-data-registry";
+import { teamMemberMoveOptions } from "#balance/egg-moves";
 import { allAbilities, allMoves } from "#data/data-lists";
 import { GrowthRate, getGrowthRateColor } from "#data/exp";
 import { Gender, getGenderColor, getGenderSymbol } from "#data/gender";
 import { getNatureName } from "#data/nature";
 import type { PokemonSpecies } from "#data/pokemon-species";
-import { Challenges } from "#enums/challenges";
 import { Passive } from "#enums/passive";
 import { PokemonType } from "#enums/pokemon-type";
 import { SpeciesId } from "#enums/species-id";
+import type { TeamMemberId } from "#enums/team-member-id";
 import { TextStyle } from "#enums/text-style";
 import { getVariantIcon, getVariantTint, type Variant } from "#sprites/variant";
 import { achvs } from "#system/achv";
-import type { StarterMoveset, StarterPreferences } from "#types/save-data";
+import type { TeamMemberMoveset, TeamMemberPreferences } from "#types/save-data";
 import type { DefinedSpeciesDetails } from "#types/starter-select-types";
-import type { StarterSpeciesId } from "#types/starter-species-id";
 import {
   getDexAttrFromPreferences,
-  getFriendship,
-  getStarterData,
   getStarterSelectTextSettings,
+  getTeamMemberDataEntry,
 } from "#ui/starter-select-ui-utils";
 import { StatsContainer } from "#ui/stats-container";
-import { addBBCodeTextObject, addTextObject, getTextColor, updateCandyCountTextStyle } from "#ui/text";
-import { argbFromRgba, rgbHexToRgba } from "#utils/color-utils";
+import { addBBCodeTextObject, addTextObject, getTextColor } from "#ui/text";
 import { getLocalizedSpriteKey, padInt, truncateString } from "#utils/common";
-import { getStarterColors } from "#utils/pokemon-utils";
 import { toCamelCase, toTitleCase } from "#utils/strings";
 import i18next from "i18next";
 import type { GameObjects } from "phaser";
@@ -62,16 +58,7 @@ export class StarterSummary extends Phaser.GameObjects.Container {
   private readonly pokemonEggMoveContainers: Phaser.GameObjects.Container[];
   private readonly pokemonEggMoveBgs: Phaser.GameObjects.NineSlice[];
   private readonly pokemonEggMoveLabels: Phaser.GameObjects.Text[];
-  private pokemonCandyContainer: Phaser.GameObjects.Container;
-  private pokemonCandyIcon: Phaser.GameObjects.Sprite;
-  private pokemonCandyDarknessOverlay: Phaser.GameObjects.Sprite;
-  private pokemonCandyOverlayIcon: Phaser.GameObjects.Sprite;
-  private pokemonCandyCountText: Phaser.GameObjects.Text;
-  private pokemonCaughtHatchedContainer: Phaser.GameObjects.Container;
-  private pokemonCaughtCountText: Phaser.GameObjects.Text;
   private pokemonFormText: Phaser.GameObjects.Text;
-  private pokemonHatchedIcon: Phaser.GameObjects.Sprite;
-  private pokemonHatchedCountText: Phaser.GameObjects.Text;
   private pokemonShinyIcon: Phaser.GameObjects.Sprite;
   private pokemonPassiveDisabledIcon: Phaser.GameObjects.Sprite;
   private pokemonPassiveLockedIcon: Phaser.GameObjects.Sprite;
@@ -94,7 +81,8 @@ export class StarterSummary extends Phaser.GameObjects.Container {
   /** Container for everything that's a preference (abilities, nature, form...) */
   private readonly pokemonPreferencesContainer: GameObjects.Container;
 
-  private speciesId: StarterSpeciesId;
+  private speciesId: SpeciesId;
+  private teamMemberId: TeamMemberId;
 
   constructor(x: number, y: number) {
     super(globalScene, x, y);
@@ -370,79 +358,25 @@ export class StarterSummary extends Phaser.GameObjects.Container {
     const pokemonStatisticsContainer = globalScene.add.container(0, 0);
 
     // Candy icon and count
-    this.pokemonCandyContainer = globalScene.add
-      .container(settings.isLegacyTheme ? 7 : 4.5, 18)
-      .setInteractive(new Phaser.Geom.Rectangle(0, 0, 30, 20), Phaser.Geom.Rectangle.Contains);
-    this.pokemonCandyIcon = globalScene.add //
-      .sprite(0, 0, "candy")
-      .setScale(0.5)
-      .setOrigin(0);
-    this.pokemonCandyOverlayIcon = globalScene.add //
-      .sprite(0, 0, "candy_overlay")
-      .setScale(0.5)
-      .setOrigin(0);
-    this.pokemonCandyDarknessOverlay = globalScene.add
-      .sprite(0, 0, "candy")
-      .setScale(0.5)
-      .setOrigin(0)
-      .setTint(0x000000)
-      .setAlpha(0.5);
 
-    this.pokemonCandyCountText = addTextObject(9.5, 0, "x0", TextStyle.WINDOW_ALT, { fontSize: "56px" }) //
-      .setOrigin(0);
-    this.pokemonCandyContainer.add([
-      this.pokemonCandyIcon,
-      this.pokemonCandyOverlayIcon,
-      this.pokemonCandyDarknessOverlay,
-      this.pokemonCandyCountText,
-    ]);
-
-    this.pokemonCaughtHatchedContainer = globalScene.add //
-      .container(settings.isLegacyTheme ? 4.5 : 2, 25)
-      .setScale(0.5);
-
-    const pokemonCaughtIcon = globalScene.add //
-      .sprite(1, 0, "items", "pb")
-      .setOrigin(0)
-      .setScale(0.75);
-
-    this.pokemonCaughtCountText = addTextObject(24, 4, "0", TextStyle.WINDOW_ALT) //
-      .setOrigin(0);
-    this.pokemonHatchedIcon = globalScene.add //
-      .sprite(1, 14, "egg_icons")
-      .setOrigin(0.15, 0.2)
-      .setScale(0.8);
-    this.pokemonHatchedCountText = addTextObject(24, 19, "0", TextStyle.WINDOW_ALT) //
-      .setOrigin(0);
     this.pokemonMovesContainer = globalScene.add //
       .container(102, 16)
       .setScale(0.375);
-    this.pokemonCaughtHatchedContainer.add([
-      pokemonCaughtIcon,
-      this.pokemonCaughtCountText,
-      this.pokemonHatchedIcon,
-      this.pokemonHatchedCountText,
-    ]);
-
-    pokemonStatisticsContainer.add([this.pokemonCandyContainer, this.pokemonCaughtHatchedContainer]);
 
     return pokemonStatisticsContainer;
   }
 
   public applyChallengeVisibility(): void {
     // TODO: this should not be handled this way
-    const notFreshStart = !globalScene.gameMode.hasChallenge(Challenges.FRESH_START);
-    const notMovesetRandomizer = !globalScene.gameMode.hasChallenge(Challenges.MOVESET_RANDOMIZER);
-
     for (const container of this.pokemonEggMoveContainers) {
-      container.setVisible(notFreshStart && notMovesetRandomizer);
+      container.setVisible(true);
     }
-    this.eggMovesLabel.setVisible(notFreshStart && notMovesetRandomizer);
+    this.eggMovesLabel.setVisible(true);
     // This is not enough, we need individual checks in setStarterSpecies too! :)
-    this.pokemonPassiveDisabledIcon.setVisible(notFreshStart);
-    this.pokemonPassiveLabelText.setVisible(notFreshStart);
-    this.pokemonPassiveLockedIcon.setVisible(notFreshStart);
-    this.pokemonPassiveText.setVisible(notFreshStart);
+    this.pokemonPassiveDisabledIcon.setVisible(true);
+    this.pokemonPassiveLabelText.setVisible(true);
+    this.pokemonPassiveLockedIcon.setVisible(true);
+    this.pokemonPassiveText.setVisible(true);
   }
 
   public updateName(name: string): void {
@@ -450,16 +384,11 @@ export class StarterSummary extends Phaser.GameObjects.Container {
     this.truncateName();
   }
 
-  public updateCandyCount(count: number): void {
-    this.pokemonCandyCountText.setText(`×${count}`);
-    updateCandyCountTextStyle(this.pokemonCandyCountText, count);
-  }
-
-  private setNameAndNumber(species: PokemonSpecies, starterPreferences: StarterPreferences): void {
+  private setNameAndNumber(species: PokemonSpecies, teamMemberPreferences: TeamMemberPreferences): void {
     this.pokemonNumberText.setText(padInt(species.speciesId, 4));
 
-    if (starterPreferences?.nickname) {
-      const name = decodeURIComponent(escape(atob(starterPreferences.nickname)));
+    if (teamMemberPreferences?.nickname) {
+      const name = decodeURIComponent(escape(atob(teamMemberPreferences.nickname)));
       this.pokemonNameText.setText(name);
     } else {
       this.pokemonNameText.setText(species.name);
@@ -502,14 +431,16 @@ export class StarterSummary extends Phaser.GameObjects.Container {
     this.cleanStarterSprite();
   }
 
-  public setStarter(starterId: StarterSpeciesId, starterPreferences: StarterPreferences): void {
+  public setTeamMember(teamMemberId: TeamMemberId, teamMemberPreferences: TeamMemberPreferences): void {
     // Checking here to ensure achievements are loaded, and updated if unlocked while playing
     this.allowTera = Object.hasOwn(globalScene.gameData.achvUnlocks, achvs.TERASTALLIZE.id);
 
-    this.speciesId = starterId;
-    const species = speciesDataRegistry.getSpecies(starterId);
+    const teamMemberData = teamMemberDataRegistry.getTeamMember(teamMemberId);
+    this.speciesId = teamMemberData.speciesId;
+    this.teamMemberId = teamMemberId;
+    const species = speciesDataRegistry.getSpecies(this.speciesId);
 
-    const { dexEntry } = getStarterData(starterId);
+    const { dexEntry } = getTeamMemberDataEntry(teamMemberId);
 
     this.pokemonAbilityText.off("pointerover");
     this.pokemonPassiveText.off("pointerover");
@@ -524,16 +455,13 @@ export class StarterSummary extends Phaser.GameObjects.Container {
     }
 
     if (dexEntry.caughtAttr) {
-      this.setNameAndNumber(species, starterPreferences);
-
-      const colorScheme = getStarterColors(species.speciesId);
-
+      this.setNameAndNumber(species, teamMemberPreferences);
       this.pokemonUncaughtText.setVisible(false);
       this.pokemonPermanentInfoContainer.setVisible(true);
       this.pokemonStatisticsContainer.setVisible(true);
 
       const luck = globalScene.gameData.getDexAttrLuck(dexEntry.caughtAttr);
-      const luckDisabled = !!luck && globalScene.gameMode.hasChallenge(Challenges.FRESH_START);
+      const luckDisabled = !!luck;
       this.pokemonLuckText
         .setVisible(!!luck)
         .setText(luckDisabled ? i18next.t("starterSelectUiHandler:disabled") : luck.toString())
@@ -550,48 +478,12 @@ export class StarterSummary extends Phaser.GameObjects.Container {
         .setColor(getGrowthRateColor(species.growthRate))
         .setShadowColor(getGrowthRateColor(species.growthRate, true));
 
-      this.pokemonCaughtCountText.setText(`${dexEntry.caughtCount}`);
-      if (species.speciesId === SpeciesId.MANAPHY || species.speciesId === SpeciesId.PHIONE) {
-        this.pokemonHatchedIcon.setFrame("manaphy");
-      } else {
-        this.pokemonHatchedIcon.setFrame(speciesDataRegistry.getEggTier(species.speciesId));
-      }
-      this.pokemonHatchedCountText.setText(`${dexEntry.hatchedCount}`);
-
-      const defaultDexAttr = getDexAttrFromPreferences(starterId, starterPreferences);
-
-      if (speciesDataRegistry.hasPrevolution(species.speciesId)) {
-        this.pokemonCaughtHatchedContainer.setVisible(false);
-        this.pokemonShinyIcon.setY(104);
-        this.pokemonFormText.setY(25);
-      } else {
-        this.pokemonCaughtHatchedContainer.setVisible(true);
-        this.pokemonShinyIcon.setY(86);
-        this.pokemonCandyIcon.setTint(argbFromRgba(rgbHexToRgba(colorScheme[0])));
-        this.pokemonCandyOverlayIcon.setTint(argbFromRgba(rgbHexToRgba(colorScheme[1])));
-        this.updateCandyCount(globalScene.gameData.starterData[species.speciesId].candyCount);
-        this.pokemonFormText.setY(42);
-        this.pokemonHatchedIcon.setVisible(true);
-        this.pokemonHatchedCountText.setVisible(true);
-
-        const { currentFriendship, friendshipCap } = getFriendship(species.speciesId as StarterSpeciesId);
-        const candyCropY = 16 - 16 * (currentFriendship / friendshipCap);
-        this.pokemonCandyDarknessOverlay.setCrop(0, 0, 16, candyCropY);
-
-        this.pokemonCandyContainer
-          .setVisible(true)
-          .on("pointerover", () => {
-            globalScene.ui.showTooltip("", `${currentFriendship}/${friendshipCap}`, true);
-            this.activeTooltip = "CANDY";
-          })
-          .on("pointerout", () => {
-            globalScene.ui.hideTooltip();
-            this.activeTooltip = undefined;
-          });
-      }
+      const defaultDexAttr = getDexAttrFromPreferences(teamMemberId, teamMemberPreferences);
+      this.pokemonShinyIcon.setY(104);
+      this.pokemonFormText.setY(25);
 
       const props = globalScene.gameData.getDexAttrProps(defaultDexAttr);
-      props.formIndex = starterPreferences?.formIndex ?? props.formIndex;
+      props.formIndex = teamMemberPreferences?.formIndex ?? props.formIndex;
       const speciesForm = speciesDataRegistry.getPokemonSpeciesForm(species.speciesId, props.formIndex);
       this.setTypeIcons(speciesForm.type1, speciesForm.type2);
 
@@ -601,9 +493,9 @@ export class StarterSummary extends Phaser.GameObjects.Container {
 
     this.cleanStarterSprite(species, !!dexEntry.seenAttr);
 
-    const { female, formIndex, shiny, variant } = globalScene.gameData.getSpeciesDefaultDexAttrProps(starterId);
+    const { gender, formIndex, shiny, variant } = globalScene.gameData.getTeamMemberDefaultDexAttrProps(teamMemberId);
 
-    this.updateSprite(species, female, formIndex, shiny, variant);
+    this.updateSprite(species, gender ?? Gender.NONBINARY, formIndex, shiny, variant);
     this.pokemonSprite //
       .setVisible(true)
       .setTint(dexEntry.seenAttr ? 0x808080 : 0x000000);
@@ -642,12 +534,10 @@ export class StarterSummary extends Phaser.GameObjects.Container {
     this.pokemonAdditionalMoveCountLabel.setVisible(false);
   }
 
-  public setStarterDetails(starterId: StarterSpeciesId, options: DefinedSpeciesDetails): void {
-    const { shiny, formIndex, female, variant, abilityIndex, natureIndex, teraType } = options;
+  public setStarterDetails(teamMemberId: TeamMemberId, options: DefinedSpeciesDetails): void {
+    const { shiny, formIndex, gender, variant, abilityIndex, natureIndex, teraType } = options;
 
-    const species = speciesDataRegistry.getSpecies(starterId);
-
-    this.updateCandyTooltip();
+    const species = teamMemberDataRegistry.getSpecies(teamMemberId);
 
     this.pokemonSprite.setVisible(false);
     this.teraIcon.setVisible(false);
@@ -664,12 +554,11 @@ export class StarterSummary extends Phaser.GameObjects.Container {
 
     this.setShinyIcon(shiny, variant);
 
-    this.updateSprite(species, female, formIndex, shiny, variant);
+    this.updateSprite(species, gender ?? Gender.NONBINARY, formIndex, shiny, variant);
 
     if (species.malePercent === null) {
       this.pokemonGenderText.setText("");
     } else {
-      const gender = female ? Gender.FEMALE : Gender.MALE;
       this.pokemonGenderText
         .setText(getGenderSymbol(gender))
         .setColor(getGenderColor(gender))
@@ -701,11 +590,11 @@ export class StarterSummary extends Phaser.GameObjects.Container {
       });
     }
 
-    this.updatePassiveDisplay(starterId, formIndex);
+    this.updatePassiveDisplay(teamMemberId, formIndex);
 
     this.pokemonNatureText.setText(getNatureName(natureIndex, true, true, false));
 
-    const speciesForm = speciesDataRegistry.getPokemonSpeciesForm(starterId, formIndex);
+    const speciesForm = teamMemberDataRegistry.getPokemonSpeciesForm(teamMemberId, formIndex);
     const formText = species.getFormNameToDisplay(formIndex);
     this.pokemonFormText.setText(formText);
 
@@ -720,24 +609,24 @@ export class StarterSummary extends Phaser.GameObjects.Container {
   }
 
   protected showStats(): void {
-    const { dexEntry } = getStarterData(this.speciesId);
+    const { dexEntry } = getTeamMemberDataEntry(this.teamMemberId);
     this.statsContainer //
       .setVisible(true)
       .updateIvs(dexEntry.ivs);
   }
 
-  private updatePassiveDisplay(starterId: StarterSpeciesId, formIndex = 0): void {
+  private updatePassiveDisplay(teamMemberId: TeamMemberId, formIndex = 0): void {
     this.pokemonPassiveLabelText.setVisible(false);
     this.pokemonPassiveText.setVisible(false);
     this.pokemonPassiveDisabledIcon.setVisible(false);
     this.pokemonPassiveLockedIcon.setVisible(false);
 
-    const isFreshStartChallenge = globalScene.gameMode.hasChallenge(Challenges.FRESH_START);
-
-    const { starterDataEntry } = getStarterData(starterId);
+    const { starterDataEntry } = getTeamMemberDataEntry(teamMemberId);
 
     const passiveAttr = starterDataEntry.passiveAttr;
-    const passiveAbility = allAbilities[speciesDataRegistry.getSpecies(starterId).getPassiveAbility(formIndex)];
+    const defaultPassiveAbility = teamMemberDataRegistry.getSpecies(teamMemberId).getPassiveAbility(formIndex);
+    const customAbilities = teamMemberDataRegistry.getTeamMember(teamMemberId).abilities;
+    const passiveAbility = customAbilities ? customAbilities[3] : defaultPassiveAbility;
 
     if (!passiveAbility) {
       if (this.activeTooltip === "PASSIVE") {
@@ -753,11 +642,11 @@ export class StarterSummary extends Phaser.GameObjects.Container {
     const textAlpha = isUnlocked && isEnabled ? 1 : 0.5;
 
     this.pokemonPassiveLabelText
-      .setVisible(!isFreshStartChallenge)
+      .setVisible(true)
       .setColor(getTextColor(TextStyle.SUMMARY_ALT))
       .setShadowColor(getTextColor(TextStyle.SUMMARY_ALT, true));
     this.pokemonPassiveText
-      .setVisible(!isFreshStartChallenge)
+      .setVisible(true)
       .setText(passiveAbility.name)
       .setColor(getTextColor(textStyle))
       .setAlpha(textAlpha)
@@ -782,45 +671,28 @@ export class StarterSummary extends Phaser.GameObjects.Container {
       x: this.pokemonPassiveText.x + this.pokemonPassiveText.displayWidth + 1,
       y: this.pokemonPassiveText.y + this.pokemonPassiveText.displayHeight / 2,
     };
-    this.pokemonPassiveDisabledIcon
-      .setVisible(isUnlocked && !isEnabled && !isFreshStartChallenge)
-      .setPosition(iconPosition.x, iconPosition.y);
-    this.pokemonPassiveLockedIcon
-      .setVisible(!isUnlocked && !isFreshStartChallenge)
-      .setPosition(iconPosition.x, iconPosition.y);
+    this.pokemonPassiveDisabledIcon.setVisible(isUnlocked && !isEnabled).setPosition(iconPosition.x, iconPosition.y);
+    this.pokemonPassiveLockedIcon.setVisible(!isUnlocked).setPosition(iconPosition.x, iconPosition.y);
   }
 
   private updateSprite(
     species: PokemonSpecies,
-    female: boolean,
+    gender: Gender,
     formIndex: number,
     shiny: boolean,
     variant: Variant,
   ): void {
-    species.loadAssets(female, formIndex, shiny, variant, true).then(() => {
+    species.loadAssets(gender, formIndex, shiny, variant, true).then(() => {
       this.pokemonSprite
-        .play(species.getSpriteKey(female, formIndex, shiny, variant))
+        .play(species.getSpriteKey(gender, formIndex, shiny, variant))
         .setPipelineData("shiny", shiny)
         .setPipelineData("variant", variant)
-        .setPipelineData("spriteKey", species.getSpriteKey(female, formIndex, shiny, variant))
+        .setPipelineData("spriteKey", species.getSpriteKey(gender, formIndex, shiny, variant))
         .setVisible(!this.statsMode);
     });
   }
 
-  private updateCandyTooltip(): void {
-    if (this.activeTooltip !== "CANDY") {
-      return;
-    }
-
-    if (this.speciesId && this.pokemonCandyContainer.visible) {
-      const { currentFriendship, friendshipCap } = getFriendship(this.speciesId);
-      globalScene.ui.editTooltip("", `${currentFriendship}/${friendshipCap}`);
-    } else {
-      globalScene.ui.hideTooltip();
-    }
-  }
-
-  public updateMoveset(starterMoveset: StarterMoveset, totalMoves: number): void {
+  public updateMoveset(starterMoveset: TeamMemberMoveset, totalMoves: number): void {
     for (let m = 0; m < 4; m++) {
       const move = m < starterMoveset.length ? allMoves[starterMoveset[m]] : null;
       this.pokemonMoveBgs[m].setFrame(PokemonType[move ? move.type : PokemonType.UNKNOWN].toString().toLowerCase());
@@ -833,7 +705,7 @@ export class StarterSummary extends Phaser.GameObjects.Container {
 
   public updateEggMoves(eggMoves: number): void {
     for (let em = 0; em < 4; em++) {
-      const eggMove = allMoves[speciesEggMoves[this.speciesId][em]];
+      const eggMove = allMoves[teamMemberMoveOptions[this.speciesId][em]];
       const eggMoveUnlocked = eggMove && eggMoves & (1 << em);
       this.pokemonEggMoveBgs[em].setFrame(
         PokemonType[eggMove ? eggMove.type : PokemonType.UNKNOWN].toString().toLowerCase(),
