@@ -1,12 +1,15 @@
 import { globalScene } from "#app/global-scene";
-import { speciesDataRegistry } from "#app/global-species-data-registry";
+import { teamMemberDataRegistry } from "#app/global-team-member-data-registry";
+import { Gender } from "#data/gender";
 import type { PokemonSpecies } from "#data/pokemon-species";
-import type { SpeciesId } from "#enums/species-id";
+import type { TeamMemberId } from "#enums/team-member-id";
 import { TextStyle } from "#enums/text-style";
+import type { TeamMemberData } from "#types/pokemon-species";
 import type { DexAttrProps } from "#types/save-data";
 import { addTextObject } from "#ui/text";
 
 export class StarterContainer extends Phaser.GameObjects.Container {
+  public teamMemberId: TeamMemberId;
   public species: PokemonSpecies;
   public icon: Phaser.GameObjects.Sprite;
   public shinyIcons: Phaser.GameObjects.Image[] = [];
@@ -15,16 +18,14 @@ export class StarterContainer extends Phaser.GameObjects.Container {
   public hiddenAbilityIcon: Phaser.GameObjects.Image;
   public favoriteIcon: Phaser.GameObjects.Image;
   public classicWinIcon: Phaser.GameObjects.Image;
-  public candyUpgradeIcon: Phaser.GameObjects.Image;
-  public candyUpgradeOverlayIcon: Phaser.GameObjects.Image;
   public cost = 0;
 
-  constructor(speciesId: SpeciesId) {
+  constructor(teamMemberData: TeamMemberData) {
     super(globalScene, 0, 0);
 
-    const defaultProps = globalScene.gameData.getSpeciesDefaultDexAttrProps(speciesId);
+    const defaultProps = globalScene.gameData.getTeamMemberDefaultDexAttrProps(teamMemberData.teamMemberId);
 
-    this.setSpecies(speciesId, defaultProps);
+    this.setTeamMember(teamMemberData.teamMemberId, defaultProps);
 
     const starterPassiveBg = globalScene.add.image(2, 5, "passive_bg");
     starterPassiveBg.setOrigin(0, 0);
@@ -69,26 +70,14 @@ export class StarterContainer extends Phaser.GameObjects.Container {
     classicWinIcon.setVisible(false);
     this.add(classicWinIcon);
     this.classicWinIcon = classicWinIcon;
-
-    const candyUpgradeIcon = globalScene.add.image(12, 12, "candy");
-    candyUpgradeIcon.setOrigin(0, 0);
-    candyUpgradeIcon.setScale(0.25);
-    candyUpgradeIcon.setVisible(false);
-    this.add(candyUpgradeIcon);
-    this.candyUpgradeIcon = candyUpgradeIcon;
-
-    const candyUpgradeOverlayIcon = globalScene.add.image(12, 12, "candy_overlay");
-    candyUpgradeOverlayIcon.setOrigin(0, 0);
-    candyUpgradeOverlayIcon.setScale(0.25);
-    candyUpgradeOverlayIcon.setVisible(false);
-    this.add(candyUpgradeOverlayIcon);
-    this.candyUpgradeOverlayIcon = candyUpgradeOverlayIcon;
   }
 
-  public setSpecies(speciesId: SpeciesId, props: DexAttrProps) {
-    this.species = speciesDataRegistry.getSpecies(speciesId);
+  public setTeamMember(teamMemberId: TeamMemberId, props: DexAttrProps) {
+    this.species = teamMemberDataRegistry.getSpecies(teamMemberId);
 
-    const { shiny, formIndex, female, variant } = props;
+    let { shiny, formIndex, gender, variant } = props;
+
+    gender = gender ?? Gender.NONBINARY;
 
     if (this.icon) {
       this.remove(this.icon);
@@ -99,20 +88,12 @@ export class StarterContainer extends Phaser.GameObjects.Container {
       .sprite(-2, 2, this.species.getIconAtlasKey(formIndex, shiny, variant))
       .setScale(0.5)
       .setOrigin(0)
-      .setFrame(this.species.getIconId(female, formIndex, shiny, variant))
+      .setFrame(this.species.getIconId(gender, formIndex, shiny, variant))
       .setTint(0);
-    this.checkIconId(female, formIndex, shiny, variant);
+    this.checkIconId(gender, formIndex, shiny, variant);
     this.add(this.icon);
 
-    [
-      this.label,
-      ...this.shinyIcons,
-      this.hiddenAbilityIcon,
-      this.favoriteIcon,
-      this.classicWinIcon,
-      this.candyUpgradeIcon,
-      this.candyUpgradeOverlayIcon,
-    ].forEach(icon => {
+    [this.label, ...this.shinyIcons, this.hiddenAbilityIcon, this.favoriteIcon, this.classicWinIcon].forEach(icon => {
       if (icon) {
         this.bringToTop(icon);
       }
