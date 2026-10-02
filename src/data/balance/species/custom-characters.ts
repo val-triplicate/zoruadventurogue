@@ -1,41 +1,37 @@
 import { Gender } from "#data/gender";
+import { MoveId } from "#enums/move-id";
 import { Nature } from "#enums/nature";
 import { SpeciesId } from "#enums/species-id";
 import { TeamMemberId } from "#enums/team-member-id";
-import type { TeamMemberDataMapConfig } from "#types/pokemon-species";
+import type { TeamMemberDataMap } from "#types/pokemon-species";
 
-export function initTeamMemmbers(): TeamMemberDataMapConfig {
-  const teamMemberData: TeamMemberDataMapConfig = {} as TeamMemberDataMapConfig;
+function addTeamMember(
+  map: TeamMemberDataMap,
+  teamMemberId: TeamMemberId,
+  speciesId: SpeciesId,
+  gender?: Gender,
+  nature?: Nature,
+) {
+  const moves = [
+    MoveId.SPLASH,
+    MoveId.SPLASH,
+    MoveId.SPLASH,
+    MoveId.SPLASH,
+    MoveId.SPLASH,
+    MoveId.SPLASH,
+    MoveId.SPLASH,
+    MoveId.SPLASH,
+  ];
+  map[teamMemberId] = { teamMemberId, speciesId, gender, nature, moves, abilities: {} };
+}
 
-  teamMemberData[TeamMemberId.VM_VAPOREON] = {
-    gender: Gender.FEMALE,
-    species: SpeciesId.VAPOREON,
-    nature: Nature.RASH,
-  };
-  teamMemberData[TeamMemberId.VM_MAWILE] = {
-    gender: Gender.FEMALE,
-    species: SpeciesId.MAWILE,
-    nature: Nature.CAREFUL,
-  };
-  teamMemberData[TeamMemberId.ES_ESPEON] = {
-    gender: Gender.FEMALE,
-    species: SpeciesId.ESPEON,
-    nature: Nature.HASTY,
-  };
-  teamMemberData[TeamMemberId.ES_SPIDOPS] = {
-    gender: Gender.FEMALE,
-    species: SpeciesId.SPIDOPS,
-    nature: Nature.SERIOUS,
-  };
-  teamMemberData[TeamMemberId.DS_DIA] = {
-    gender: Gender.FEMALE,
-    species: SpeciesId.ESPEON,
-    nature: Nature.CALM,
-  };
-  teamMemberData[TeamMemberId.DS_SILVER] = {
-    gender: Gender.NONBINARY,
-    species: SpeciesId.UMBREON,
-    nature: Nature.LONELY,
-  };
-  return teamMemberData;
+export function initTeamMembers(): TeamMemberDataMap {
+  const map: TeamMemberDataMap = {} as TeamMemberDataMap;
+  addTeamMember(map, TeamMemberId.VM_VAPOREON, SpeciesId.VAPOREON, Gender.FEMALE, Nature.RASH);
+  addTeamMember(map, TeamMemberId.VM_MAWILE, SpeciesId.MAWILE, Gender.FEMALE, Nature.CAREFUL);
+  addTeamMember(map, TeamMemberId.ES_ESPEON, SpeciesId.ESPEON, Gender.FEMALE, Nature.HASTY);
+  addTeamMember(map, TeamMemberId.ES_SPIDOPS, SpeciesId.SPIDOPS, Gender.FEMALE, Nature.SERIOUS);
+  addTeamMember(map, TeamMemberId.DS_DIA, SpeciesId.ESPEON, Gender.FEMALE, Nature.SERIOUS);
+  addTeamMember(map, TeamMemberId.DS_SILVER, SpeciesId.UMBREON, Gender.NONBINARY, Nature.SERIOUS);
+  return map;
 }

@@ -7,33 +7,30 @@ import { globalScene } from "#app/global-scene";
 import { settings } from "#app/global-settings-manager";
 import { speciesDataRegistry } from "#app/global-species-data-registry";
 import { teamDataRegistry } from "#app/global-team-data-registry";
+import { teamMemberDataRegistry } from "#app/global-team-member-data-registry";
 import { activeOverrides } from "#app/overrides";
 import { isIos } from "#app/touch-controls";
 import { Tutorial } from "#app/tutorial";
-import { speciesEggMoves } from "#balance/egg-moves";
+import { teamMemberMoveOptions } from "#balance/egg-moves";
 import { bypassLogin, isBeta, isDev, systemSaveShortKeyMap } from "#constants/app-constants";
-import { MAX_STARTER_CANDY_COUNT } from "#constants/game-constants";
 import { EntryHazardTag } from "#data/arena-tag";
-import { getSerializedDailyRunConfig, parseDailySeed } from "#data/daily-seed-utils";
 import { allMoves } from "#data/data-lists";
-import type { Egg } from "#data/egg";
+import { Gender } from "#data/gender";
 import type { PokemonSpecies } from "#data/pokemon-species";
 import { loadPositionalTag } from "#data/positional-tags/load-positional-tag";
 import { AbilityAttr } from "#enums/ability-attr";
 import { BattleType } from "#enums/battle-type";
-import { ChallengeType } from "#enums/challenge-type";
 import type { Device } from "#enums/devices";
 import { DexAttr } from "#enums/dex-attr";
 import { GameDataType } from "#enums/game-data-type";
-import { GameModes } from "#enums/game-modes";
 import { Nature } from "#enums/nature";
 import { PlayerGender } from "#enums/player-gender";
 import { SpeciesId } from "#enums/species-id";
 import { StatusEffect } from "#enums/status-effect";
+import type { TeamMemberId } from "#enums/team-member-id";
 import { TrainerVariant } from "#enums/trainer-variant";
 import { UiMode } from "#enums/ui-mode";
 import { Unlockables } from "#enums/unlockables";
-import { VoucherType } from "#enums/voucher-type";
 import { ArenaTagAddedEvent, TerrainChangedEvent, WeatherChangedEvent } from "#events/arena";
 import type { EnemyPokemon, PlayerPokemon, Pokemon } from "#field/pokemon";
 // biome-ignore lint/performance/noNamespaceImport: Something weird is going on here and I don't want to touch it
@@ -43,15 +40,12 @@ import { version } from "#package.json";
 import type { Variant } from "#sprites/variant";
 import { achvs } from "#system/achv";
 import { ArenaData, type SerializedArenaData } from "#system/arena-data";
-import { ChallengeData } from "#system/challenge-data";
-import { EggData } from "#system/egg-data";
 import { GameStats } from "#system/game-stats";
 import { ModifierData as PersistentModifierData } from "#system/modifier-data";
 import { PokemonData } from "#system/pokemon-data";
 import { RibbonData } from "#system/ribbon-data";
 import { TrainerData } from "#system/trainer-data";
 import { applySessionVersionMigration, applySystemVersionMigration } from "#system/version-converter";
-import { vouchers } from "#system/voucher";
 import type { DexData, DexEntry, TeamDexData } from "#types/dex-data";
 import type {
   AchvUnlocks,
@@ -65,15 +59,11 @@ import type {
   TeamSaveData,
   TutorialFlags,
   Unlocks,
-  VoucherCounts,
-  VoucherUnlocks,
 } from "#types/save-data";
 import type { ConfirmModeConfig } from "#types/ui-types";
 import { RUN_HISTORY_LIMIT } from "#ui/run-history-ui-handler";
-import { applyChallenges } from "#utils/challenge-utils";
-import { fixedInt, NumberHolder, randInt, randSeedItem } from "#utils/common";
+import { fixedInt, randInt, randSeedItem } from "#utils/common";
 import { decrypt, encrypt, getDataTypeKey, isValidJSON } from "#utils/data";
-import { getEnumKeys } from "#utils/enums";
 import { compareVersions } from "#utils/migrator-utils";
 import { toCamelCase } from "#utils/strings";
 import { AES, enc } from "crypto-js";
@@ -104,11 +94,6 @@ export class GameData {
   public unlocks: Unlocks;
 
   public achvUnlocks: AchvUnlocks;
-
-  public voucherUnlocks: VoucherUnlocks;
-  public voucherCounts: VoucherCounts;
-  public eggs: Egg[];
-  public eggPity: number[];
   public unlockPity: number[];
 
   public appliedMigrators: AppliedMigrators = {};
@@ -136,15 +121,6 @@ export class GameData {
       [Unlockables.EVIOLITE]: false,
     };
     this.achvUnlocks = {};
-    this.voucherUnlocks = {};
-    this.voucherCounts = {
-      [VoucherType.REGULAR]: 0,
-      [VoucherType.PLUS]: 0,
-      [VoucherType.PREMIUM]: 0,
-      [VoucherType.GOLDEN]: 0,
-    };
-    this.eggs = [];
-    this.eggPity = [0, 0, 0, 0];
     this.unlockPity = [0, 0, 0, 0];
     this.initDexData();
     this.initStarterData();
@@ -162,12 +138,8 @@ export class GameData {
       gameStats: this.gameStats,
       unlocks: this.unlocks,
       achvUnlocks: this.achvUnlocks,
-      voucherUnlocks: this.voucherUnlocks,
-      voucherCounts: this.voucherCounts,
-      eggs: this.eggs.map(e => new EggData(e)),
       gameVersion: globalScene.game.config.gameVersion,
       timestamp: Date.now(),
-      eggPity: this.eggPity.slice(0),
       unlockPity: this.unlockPity.slice(0),
       appliedMigrators: this.appliedMigrators,
     };
@@ -372,26 +344,6 @@ export class GameData {
       }
     }
 
-    if (systemData.voucherUnlocks) {
-      for (const v of Object.keys(systemData.voucherUnlocks)) {
-        if (Object.hasOwn(vouchers, v)) {
-          this.voucherUnlocks[v] = systemData.voucherUnlocks[v];
-        }
-      }
-    }
-
-    if (systemData.voucherCounts) {
-      for (const key of getEnumKeys(VoucherType)) {
-        const index = VoucherType[key];
-        this.voucherCounts[index] = systemData.voucherCounts[index] ?? 0;
-      }
-    }
-
-    this.eggs = systemData.eggs?.map(e => e.toEgg()) ?? [];
-
-    this.eggPity = systemData.eggPity?.slice(0) ?? [0, 0, 0, 0];
-    this.unlockPity = systemData.unlockPity?.slice(0) ?? [0, 0, 0, 0];
-
     this.dexData = Object.assign(this.dexData, systemData.dexData);
     this.consolidateDexData(this.dexData);
     this.defaultDexData = null;
@@ -511,20 +463,9 @@ export class GameData {
 
   // TODO: Why is this static
   static parseSystemData(dataStr: string): SystemSaveData {
-    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: necessary
     const parsedData = JSON.parse(dataStr, (k: string, v: any) => {
       if (k === "gameStats") {
         return new GameStats(v);
-      }
-      if (k === "eggs") {
-        const ret: EggData[] = [];
-        if (v === null) {
-          v = [];
-        }
-        for (const e of v) {
-          ret.push(new EggData(e));
-        }
-        return ret;
       }
       if (k === "ribbons") {
         return RibbonData.fromJSON(v);
@@ -762,7 +703,6 @@ export class GameData {
       seed: globalScene.seed,
       playTime: globalScene.sessionPlayTime,
       gameMode: globalScene.gameMode.modeId,
-      dailyConfig: getSerializedDailyRunConfig(),
       party: globalScene.getPlayerParty().map(p => new PokemonData(p)),
       enemyParty: globalScene.getEnemyParty().map(p => new PokemonData(p)),
       modifiers: globalScene.findModifiers(() => true).map(m => new PersistentModifierData(m, true)),
@@ -779,7 +719,6 @@ export class GameData {
           : null,
       gameVersion: globalScene.game.config.gameVersion,
       timestamp: Date.now(),
-      challenges: globalScene.gameMode.challenges.map(c => new ChallengeData(c)),
       mysteryEncounterType: globalScene.currentBattle.mysteryEncounter?.encounterType ?? -1,
       mysteryEncounterSaveData: globalScene.mysteryEncounterSaveData,
       playerFaints: globalScene.arena.playerFaints,
@@ -883,17 +822,12 @@ export class GameData {
       }
     }
 
-    globalScene.gameMode = getGameMode(fromSession.gameMode || GameModes.CLASSIC);
-    if (fromSession.challenges) {
-      globalScene.gameMode.challenges = fromSession.challenges.map(c => c.toChallenge());
-    }
+    globalScene.gameMode = getGameMode();
 
     globalScene.setSeed(fromSession.seed || globalScene.game.config.seed[0]);
     globalScene.resetSeed();
 
     console.log("Seed:", globalScene.seed);
-
-    globalScene.gameMode.trySetCustomDailyConfig(JSON.stringify(fromSession.dailyConfig));
 
     globalScene.sessionPlayTime = fromSession.playTime || 0;
     globalScene.lastSavePlayTime = 0;
@@ -1048,10 +982,7 @@ export class GameData {
   // TODO: Explain what this boolean return is supposed to signify inside game-over-phase.ts
   async offlineNewClear(): Promise<boolean> {
     const sessionData = this.getSessionSaveData();
-    const { seed, gameMode } = sessionData;
-    if (gameMode !== GameModes.DAILY) {
-      return true;
-    }
+    const { seed } = sessionData;
 
     const prevDailies = localStorage.getItem("daily");
     if (!prevDailies) {
@@ -1156,21 +1087,8 @@ export class GameData {
           rawData[k] = new ArenaData(v as SerializedArenaData);
           continue;
 
-        case "challenges": {
-          const ret: ChallengeData[] = [];
-          for (const c of v ?? []) {
-            ret.push(new ChallengeData(c));
-          }
-          rawData[k] = ret;
-          continue;
-        }
-
         case "mysteryEncounterSaveData":
           rawData[k] = new MysteryEncounterSaveData(v);
-          continue;
-        case "dailyConfig":
-          // make sure the config is valid
-          rawData[k] = parseDailySeed(JSON.stringify(v));
           continue;
       }
     }
@@ -1700,9 +1618,7 @@ export class GameData {
     dexEntry.natureAttr |= 1 << (pokemon.nature + 1);
 
     const prevolution = speciesDataRegistry.getPrevolution(species.speciesId);
-    const hasPrevolution = prevolution != null;
     const newCatch = !caughtAttr;
-    const hasNewAttr = (caughtAttr & dexAttr) !== dexAttr;
 
     if (incrementCount) {
       if (fromEgg) {
@@ -1731,13 +1647,6 @@ export class GameData {
         if (pokemon.isShiny()) {
           this.gameStats.shinyPokemonCaught++;
         }
-      }
-
-      if (!hasPrevolution && (!globalScene.gameMode.isDaily || hasNewAttr || fromEgg)) {
-        // TODO: remove `?? 0`, `pokemon.variant` shouldn't be able to be nullish
-        const shinyBonus = pokemon.isShiny() ? 5 * Math.pow(2, pokemon.variant ?? 0) : 1;
-        const eggOrBossBonus = fromEgg || pokemon.isBoss() ? 2 : 1;
-        this.addStarterCandy(species.speciesId, shinyBonus * eggOrBossBonus);
       }
     }
 
@@ -1816,27 +1725,6 @@ export class GameData {
   }
 
   /**
-   * Adds candy to the player's game data for a given {@linkcode PokemonSpecies}.
-   * @remarks
-   * Will not increase the candy count past {@linkcode MAX_STARTER_CANDY_COUNT}.
-   * @param speciesId - The species ID of the Pokémon to increment candy for
-   * @param numCandiesToAdd - The number of candies to add to the Pokémon
-   * @returns Whether the candy count was incremented
-   */
-  public addStarterCandy(speciesId: SpeciesId, numCandiesToAdd: number): boolean {
-    const { candyCount } = this.starterData[speciesId];
-
-    if (candyCount >= MAX_STARTER_CANDY_COUNT) {
-      return false;
-    }
-
-    this.starterData[speciesId].candyCount = Math.min(candyCount + numCandiesToAdd, MAX_STARTER_CANDY_COUNT);
-    globalScene.candyBar.showStarterSpeciesCandy(speciesId, numCandiesToAdd);
-
-    return true;
-  }
-
-  /**
    * @param showMessage - (Default `true`) Whether to display a message for the unlocked egg move
    * @param prependSpeciesToMessage - (Default `false`) Whether to change the message from "X Egg Move Unlocked!" to "Bulbasaur X Egg Move Unlocked!"
    */
@@ -1847,7 +1735,7 @@ export class GameData {
     prependSpeciesToMessage = false,
   ): Promise<boolean> {
     const { speciesId } = species;
-    if (!Object.hasOwn(speciesEggMoves, speciesId) || !speciesEggMoves[speciesId][eggMoveIndex]) {
+    if (!Object.hasOwn(teamMemberMoveOptions, speciesId) || !teamMemberMoveOptions[speciesId][eggMoveIndex]) {
       return false;
     }
 
@@ -1866,7 +1754,7 @@ export class GameData {
       return true;
     }
     audioManager.playSound("se/level_up_fanfare");
-    const moveName = allMoves[speciesEggMoves[speciesId][eggMoveIndex]].name;
+    const moveName = allMoves[teamMemberMoveOptions[speciesId][eggMoveIndex]].name;
     let message = prependSpeciesToMessage ? species.getName() + " " : "";
     message +=
       eggMoveIndex === 3
@@ -1936,10 +1824,11 @@ export class GameData {
     return starterCount;
   }
 
-  getSpeciesDefaultDexAttrProps(speciesId: SpeciesId, defaultIsShiny = true): DexAttrProps {
-    const dexAttr = this.dexData[speciesId].caughtAttr;
+  getTeamMemberDefaultDexAttrProps(teamMemberId: TeamMemberId, defaultIsShiny = true): DexAttrProps {
+    const teamMember = teamMemberDataRegistry.getTeamMember(teamMemberId);
+    const dexAttr = teamMember.shinyAttr || 1n;
     // Default is female only for species where malePercent is not null but 0
-    const female = speciesDataRegistry.getSpecies(speciesId).malePercent === 0;
+    const gender = teamMember.gender;
     const formIndex = 0;
     let variant: Variant = 0;
     let shiny = false;
@@ -1957,7 +1846,7 @@ export class GameData {
 
     return {
       shiny,
-      female,
+      gender,
       variant,
       formIndex,
     };
@@ -1971,7 +1860,7 @@ export class GameData {
    */
   getDexAttrProps(dexAttr: bigint): DexAttrProps {
     const shiny = !(dexAttr & DexAttr.NON_SHINY);
-    const female = !(dexAttr & DexAttr.MALE);
+    const gender = Gender.GENDERLESS; // TODO: Uh-oh!
     let variant: Variant = 0;
     if (dexAttr & DexAttr.DEFAULT_VARIANT) {
       variant = 0;
@@ -1984,7 +1873,7 @@ export class GameData {
 
     return {
       shiny,
-      female,
+      gender,
       variant,
       formIndex,
     };
@@ -2024,38 +1913,6 @@ export class GameData {
   public checkSpeciesNatureUnlocked(species: PokemonSpecies, nature: Nature): boolean {
     const dexEntry = this.dexData[species.speciesId];
     return !!(dexEntry.natureAttr & (1 << (nature + 1)));
-  }
-
-  /**
-   * Obtain the value of a particular starter by SpeciesID
-   * @param speciesId - The {@linkcode SpeciesId} of the starter
-   * @param valueReduction - The applied value reduction; defaults to the value stored in `this.starterData[speciesId].valueReduction`
-   * @returns The value/cost of the starter
-   * @privateRemarks
-   * `valueReduction` only needs to be provided when testing a value reduction other than the one currently unlocked
-   */
-  getSpeciesStarterValue(speciesId: SpeciesId, valueReduction?: number): number {
-    const baseValue = speciesDataRegistry.getStarterCost(speciesId);
-    const reduction = valueReduction ?? this.starterData[speciesId].valueReduction;
-    let value = baseValue as number;
-
-    const decrementValue = (v: number) => {
-      if (v > 1) {
-        v--;
-      } else {
-        v /= 2;
-      }
-      return v;
-    };
-
-    for (let v = 0; v < reduction; v++) {
-      value = decrementValue(value);
-    }
-
-    const cost = new NumberHolder(value);
-    applyChallenges(ChallengeType.STARTER_COST, speciesId, cost);
-
-    return cost.value;
   }
 
   getFormIndex(attr: bigint): number {
