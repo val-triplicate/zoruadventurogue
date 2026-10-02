@@ -1,5 +1,6 @@
 import type { PokeballCounts } from "#app/battle-scene";
 import type { Tutorial } from "#app/tutorial";
+import type { Gender } from "#data/gender";
 import type { BattleType } from "#enums/battle-type";
 import type { GameModes } from "#enums/game-modes";
 import type { MoveId } from "#enums/move-id";
@@ -8,16 +9,14 @@ import type { Nature } from "#enums/nature";
 import type { PlayerGender } from "#enums/player-gender";
 import type { PokemonType } from "#enums/pokemon-type";
 import type { SpeciesId } from "#enums/species-id";
+import type { TeamMemberId } from "#enums/team-member-id";
 import type { MysteryEncounterSaveData } from "#mystery-encounters/mystery-encounter-save-data";
 import type { Variant } from "#sprites/variant";
 import type { ArenaData } from "#system/arena-data";
-import type { ChallengeData } from "#system/challenge-data";
-import type { EggData } from "#system/egg-data";
 import type { GameStats } from "#system/game-stats";
 import type { ModifierData } from "#system/modifier-data";
 import type { PokemonData } from "#system/pokemon-data";
 import type { TrainerData } from "#system/trainer-data";
-import type { SerializedDailyRunConfig } from "./daily-run";
 import type { DexData } from "./dex-data";
 
 export type AppliedMigrators = { [key: string]: number };
@@ -32,12 +31,8 @@ export interface SystemSaveData {
   gameStats: GameStats;
   unlocks: Unlocks;
   achvUnlocks: AchvUnlocks;
-  voucherUnlocks: VoucherUnlocks;
-  voucherCounts: VoucherCounts;
-  eggs: EggData[];
   gameVersion: string;
   timestamp: number;
-  eggPity: number[];
   unlockPity: number[];
   appliedMigrators: AppliedMigrators;
 }
@@ -46,7 +41,6 @@ export interface SessionSaveData {
   seed: string;
   playTime: number;
   gameMode: GameModes;
-  dailyConfig?: SerializedDailyRunConfig;
   party: PokemonData[];
   enemyParty: PokemonData[];
   modifiers: ModifierData[];
@@ -65,7 +59,6 @@ export interface SessionSaveData {
   /** The player-chosen name of the run */
   name: string;
   timestamp: number;
-  challenges: ChallengeData[];
   // TODO: Change default value to `undefined` to both save space and ease nullishness checks
   mysteryEncounterType: MysteryEncounterType | -1; // Only defined when current wave is ME,
   // TODO: This can be `undefined` - reflect that in the type signature
@@ -92,14 +85,18 @@ export interface VoucherCounts {
   [type: string]: number;
 }
 
-export type StarterMoveset = [MoveId] | [MoveId, MoveId] | [MoveId, MoveId, MoveId] | [MoveId, MoveId, MoveId, MoveId];
+export type TeamMemberMoveset =
+  | [MoveId]
+  | [MoveId, MoveId]
+  | [MoveId, MoveId, MoveId]
+  | [MoveId, MoveId, MoveId, MoveId];
 
-export interface StarterFormMoveData {
-  [key: number]: StarterMoveset;
+export interface TeamMemberFormMoveData {
+  [key: number]: TeamMemberMoveset;
 }
 
-export interface StarterMoveData {
-  [key: number]: StarterMoveset | StarterFormMoveData;
+export interface TeamMemberMoveData {
+  [key: number]: TeamMemberMoveset | TeamMemberFormMoveData;
 }
 
 /** The starter's current attributes (such as selected nature, nickname, etc). */
@@ -115,11 +112,24 @@ export interface StarterPreferences {
   variant?: Variant | undefined;
 }
 
-export type AllStarterPreferences = Partial<Record<SpeciesId, StarterPreferences | undefined>>;
+/** The team member's current attributes (such as selected nature, nickname, etc). */
+export interface TeamMemberPreferences {
+  abilityIndex?: number | undefined;
+  favorite?: boolean | undefined;
+  gender?: Gender;
+  formIndex?: number | undefined;
+  nature?: number | undefined;
+  nickname?: string | undefined;
+  shiny?: boolean | undefined;
+  tera?: PokemonType | undefined;
+  variant?: Variant | undefined;
+}
+
+export type AllTeamMemberPreferences = Partial<Record<TeamMemberId, TeamMemberPreferences | undefined>>;
 
 export interface DexAttrProps {
   shiny: boolean;
-  female: boolean;
+  gender?: Gender | undefined;
   variant: Variant;
   formIndex: number;
 }
@@ -133,7 +143,7 @@ export interface Starter {
   abilityIndex: number;
   passive: boolean;
   nature: Nature;
-  moveset?: StarterMoveset | undefined;
+  moveset?: TeamMemberMoveset | undefined;
   pokerus: boolean;
   nickname?: string | undefined;
   teraType?: PokemonType | undefined;
@@ -151,7 +161,7 @@ export interface RunEntry {
 }
 
 export interface StarterDataEntry {
-  moveset: StarterMoveset | StarterFormMoveData | null;
+  moveset: TeamMemberMoveset | TeamMemberFormMoveData | null;
   eggMoves: number;
   candyCount: number;
   friendship: number;
@@ -162,6 +172,7 @@ export interface StarterDataEntry {
 }
 
 export interface TeamSaveDataEntry {
+  unlocked: boolean;
   boss1WinCount: number;
   boss2WinCount: number;
   boss3WinCount: number;

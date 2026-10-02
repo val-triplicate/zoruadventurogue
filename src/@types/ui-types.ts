@@ -1,10 +1,10 @@
 import type { BattlerIndex } from "#enums/battler-index";
 import type { TextStyle } from "#enums/text-style";
 import type { UiMode } from "#enums/ui-mode";
-import type { Starter } from "#types/save-data";
 import type { BaseOptionSelectUiHandler } from "#ui/base-option-select-ui-handler";
 import type Phaser from "phaser";
 import type InputText from "phaser3-rex-plugins/plugins/gameobjects/dom/inputtext/InputText";
+import type { TeamMemberData } from "./pokemon-species";
 
 export interface TextStyleOptions {
   scale: number;
@@ -23,7 +23,7 @@ export interface FormModalConfig extends ModalConfig {
 }
 
 export type SaveSlotSelectCallback = (cursor: number) => void;
-export type StarterSelectCallback = (starters: Starter[]) => void;
+export type TeamMemberSelectCallback = (starters: TeamMemberData[]) => void;
 export type TargetSelectCallback = (targets: BattlerIndex[]) => void;
 
 // TODO: Strongly type the index signature aside from simply being `string`

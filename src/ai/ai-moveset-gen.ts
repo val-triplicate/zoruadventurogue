@@ -9,7 +9,7 @@
 import { EVOLVE_MOVE, RELEARN_MOVE } from "#app/constants";
 import { globalScene } from "#app/global-scene";
 import { speciesDataRegistry } from "#app/global-species-data-registry";
-import { speciesEggMoves } from "#balance/egg-moves";
+import { teamMemberMoveOptions } from "#balance/egg-moves";
 import { FORBIDDEN_SINGLES_MOVES, FORBIDDEN_TM_MOVES, LEVEL_BASED_DENYLIST } from "#balance/forbidden-moves";
 import {
   BASE_LEVEL_WEIGHT_OFFSET,
@@ -44,7 +44,6 @@ import { IS_TEST, isBeta, isDev } from "#constants/app-constants";
 import { allMoves } from "#data/data-lists";
 import { AbilityId } from "#enums/ability-id";
 import { BattlerTagType } from "#enums/battler-tag-type";
-import { ChallengeType } from "#enums/challenge-type";
 import { ModifierTier } from "#enums/modifier-tier";
 import { MoveCategory } from "#enums/move-category";
 import { MoveFlags } from "#enums/move-flags";
@@ -61,7 +60,6 @@ import { PokemonMove } from "#moves/pokemon-move";
 import type { LevelMovesWithSource } from "#types/level-moves";
 import type { Move, StatStageChangeAttr } from "#types/move-types";
 import type { StarterSpeciesId } from "#types/starter-species-id";
-import { applyChallenges } from "#utils/challenge-utils";
 import { NumberHolder, randSeedInt, randSeedItem } from "#utils/common";
 import { deepCopy } from "#utils/data";
 import { willTerastallize } from "#utils/pokemon-utils";
@@ -172,7 +170,6 @@ function getTmPoolForSpecies(
   const [allowCommon, allowGreat, allowUltra] = allowedTiers;
   const species = speciesDataRegistry.getSpecies(speciesId);
   const tms = species.getTms(formKey);
-  applyChallenges(ChallengeType.ENEMY_TM_COMPATIBILITY, species, tms);
 
   for (const tm of tms) {
     if (FORBIDDEN_TM_MOVES.has(tm) || levelPool.has(tm) || eggPool.has(tm) || tmPool.has(tm)) {
@@ -219,11 +216,6 @@ function getAndWeightTmMoves(
 
   const form = pokemon.species.forms[pokemon.formIndex]?.formKey ?? "";
   getTmPoolForSpecies(pokemon.species.speciesId, level, form, currentPool, eggPool, tmPool, allowedTiers);
-  const fusionFormKey = pokemon.getFusionFormKey();
-  const fusionSpecies = pokemon.fusionSpecies?.speciesId;
-  if (fusionSpecies != null && fusionFormKey != null && fusionFormKey !== "") {
-    getTmPoolForSpecies(fusionSpecies, level, fusionFormKey, currentPool, eggPool, tmPool, allowedTiers);
-  }
 }
 
 /**
@@ -272,7 +264,7 @@ function getEggPoolForSpecies(
   excludeRare: boolean,
   rareEggMoveWeight = 0,
 ): void {
-  const eggMoves = speciesEggMoves[rootSpeciesId as Exclude<StarterSpeciesId, SpeciesId.PIKACHU>];
+  const eggMoves = teamMemberMoveOptions[rootSpeciesId as Exclude<StarterSpeciesId, SpeciesId.PIKACHU>];
   if (eggMoves == null) {
     return;
   }
@@ -282,7 +274,6 @@ function getEggPoolForSpecies(
     }
     eggPool.set(moveId, Math.max(eggPool.get(moveId) ?? 0, idx === 3 ? rareEggMoveWeight : eggMoveWeight));
   }
-  applyChallenges(ChallengeType.AI_MOVE_GENERATION_EGG_POOL, rootSpeciesId, eggPool);
 }
 
 /**
@@ -319,11 +310,6 @@ function getAndWeightEggMoves(
     excludeRare,
     rareEggMoveWeight,
   );
-
-  const fusionSpecies = pokemon.fusionSpecies?.getRootSpeciesId();
-  if (fusionSpecies != null) {
-    getEggPoolForSpecies(fusionSpecies, levelPool, eggPool, eggMoveWeight, excludeRare, rareEggMoveWeight);
-  }
 }
 
 /**
@@ -334,7 +320,6 @@ function getAndWeightEggMoves(
 function filterSupercededMoves(pool: Map<MoveId, number>, ...otherPools: Map<MoveId, number>[]): void {
   const currentMoves = new Set<MoveId>(pool.keys());
   const supercededMoves = deepCopy(SUPERCEDED_MOVES);
-  applyChallenges(ChallengeType.AI_MOVE_GENERATION_SUPERCEDED_MAP, supercededMoves);
 
   for (const otherPool of otherPools) {
     for (const moveId of otherPool.keys()) {
