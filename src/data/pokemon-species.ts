@@ -1,16 +1,14 @@
 import { determineEnemySpecies } from "#ai/ai-species-gen";
-import type { GameMode } from "#app/game-mode";
 import { audioManager } from "#app/global-audio-manager";
 import { timedEventManager } from "#app/global-event-manager";
 import { globalScene } from "#app/global-scene";
 import { settings } from "#app/global-settings-manager";
 import { speciesDataRegistry } from "#app/global-species-data-registry";
 import type { AnySound } from "#audio/audio-manager";
-import { speciesEggMoves } from "#balance/egg-moves";
+import { teamMemberMoveOptions } from "#balance/egg-moves";
 import type { GrowthRate } from "#data/exp";
 import { Gender } from "#data/gender";
 import { AbilityId } from "#enums/ability-id";
-import { ChallengeType } from "#enums/challenge-type";
 import { DexAttr } from "#enums/dex-attr";
 import { EvoLevelThresholdKind } from "#enums/evo-level-threshold-kind";
 import type { MoveId } from "#enums/move-id";
@@ -26,13 +24,10 @@ import type { Variant, VariantSet } from "#sprites/variant";
 import { populateVariantColorCache, variantColorCache, variantData } from "#sprites/variant";
 import type { LevelMoves } from "#types/level-moves";
 import type { Localizable } from "#types/locales";
-import type { StarterMoveset } from "#types/save-data";
+import type { TeamMemberMoveset } from "#types/save-data";
 import type { EvolutionLevel, EvolutionLevelWithThreshold } from "#types/species-gen-types";
-import { applyChallenges } from "#utils/challenge-utils";
-import { argbFromRgba, rgbaFromArgb } from "#utils/color-utils";
 import { randSeedFloat } from "#utils/common";
 import { toCamelCase, toPascalCase } from "#utils/strings";
-import { QuantizerCelebi } from "@material/material-color-utilities";
 import i18next from "i18next";
 
 export enum Region {
@@ -222,7 +217,6 @@ export abstract class PokemonSpeciesForm {
    */
   public getLevelMoves(form?: string | number): LevelMoves {
     const levelMoves = speciesDataRegistry.getLevelMoves(this.speciesId, form);
-    applyChallenges(ChallengeType.LEVEL_UP_MOVESET, this, levelMoves);
     return levelMoves.sort((a, b) => a[0] - b[0]);
   }
 
@@ -346,12 +340,12 @@ export abstract class PokemonSpeciesForm {
 
   abstract getFormKey(formIndex?: number): string;
 
-  getSpriteAtlasPath(female: boolean, formIndex?: number, shiny?: boolean, variant?: number, back?: boolean): string {
-    const spriteId = this.getSpriteId(female, formIndex, shiny, variant, back).replace(/_{2}/g, "/");
+  getSpriteAtlasPath(gender: Gender, formIndex?: number, shiny?: boolean, variant?: number, back?: boolean): string {
+    const spriteId = this.getSpriteId(gender, formIndex, shiny, variant, back).replace(/_{2}/g, "/");
     return `${/_[1-3]$/.test(spriteId) ? "variant/" : ""}${spriteId}`;
   }
 
-  getBaseSpriteKey(female: boolean, formIndex?: number): string {
+  getBaseSpriteKey(gender: Gender, formIndex?: number): string {
     if (formIndex === undefined || this instanceof PokemonForm) {
       formIndex = this.formIndex;
     }
@@ -359,7 +353,7 @@ export abstract class PokemonSpeciesForm {
     const formSpriteKey = this.getFormSpriteKey(formIndex);
     const showGenderDiffs =
       this.genderDiffs
-      && female
+      && gender === Gender.FEMALE
       && ![
         SpeciesFormKey.MEGA,
         SpeciesFormKey.MEGA_X,
@@ -383,7 +377,7 @@ export abstract class PokemonSpeciesForm {
 
       const replacementShowGenderDiffs =
         speciesDataRegistry.getSpecies(replacement.speciesId).genderDiffs
-        && female
+        && gender === Gender.FEMALE
         && ![
           SpeciesFormKey.MEGA,
           SpeciesFormKey.MEGA_X,
@@ -404,8 +398,8 @@ export abstract class PokemonSpeciesForm {
   }
 
   /** Compute the sprite ID of the pokemon form. */
-  getSpriteId(female: boolean, formIndex?: number, shiny?: boolean, variant = 0, back = false): string {
-    const baseSpriteKey = this.getBaseSpriteKey(female, formIndex);
+  getSpriteId(gender: Gender, formIndex?: number, shiny?: boolean, variant = 0, back = false): string {
+    const baseSpriteKey = this.getBaseSpriteKey(gender, formIndex);
 
     let config = variantData;
     `${back ? "back__" : ""}${baseSpriteKey}`.split("__").map(p => (config ? (config = config[p]) : null));
@@ -414,8 +408,8 @@ export abstract class PokemonSpeciesForm {
     return `${back ? "back__" : ""}${shiny && (!variantSet || (!variant && !variantSet[variant || 0])) ? "shiny__" : ""}${baseSpriteKey}${shiny && variantSet && variantSet[variant] === 2 ? `_${variant + 1}` : ""}`;
   }
 
-  getSpriteKey(female: boolean, formIndex?: number, shiny?: boolean, variant?: number, back?: boolean): string {
-    return `pkmn__${this.getSpriteId(female, formIndex, shiny, variant, back)}`;
+  getSpriteKey(gender: Gender, formIndex?: number, shiny?: boolean, variant?: number, back?: boolean): string {
+    return `pkmn__${this.getSpriteId(gender, formIndex, shiny, variant, back)}`;
   }
 
   abstract getFormSpriteKey(formIndex?: number): string;
@@ -461,7 +455,7 @@ export abstract class PokemonSpeciesForm {
     return `pokemon_icons_${generation}${isVariant ? "v" : ""}`;
   }
 
-  getIconId(female: boolean, formIndex?: number, shiny?: boolean, variant?: number): string {
+  getIconId(gender: Gender, formIndex?: number, shiny?: boolean, variant?: number): string {
     if (formIndex === undefined) {
       formIndex = this.formIndex;
     }
@@ -494,7 +488,7 @@ export abstract class PokemonSpeciesForm {
       case SpeciesId.UNFEZANT:
       case SpeciesId.FRILLISH:
       case SpeciesId.JELLICENT:
-        ret += female ? "-f" : "";
+        ret += gender === Gender.FEMALE ? "-f" : "";
         break;
       case SpeciesId.MEGANIUM:
       case SpeciesId.BLAZIKEN:
@@ -502,7 +496,7 @@ export abstract class PokemonSpeciesForm {
       case SpeciesId.PYROAR: {
         const formKey = this.getFormKey();
         if (formKey !== SpeciesFormKey.MEGA && formKey !== SpeciesFormKey.MEGA_Z) {
-          ret += female ? "-f" : "";
+          ret += gender === Gender.FEMALE ? "-f" : "";
         }
         break;
       }
@@ -636,13 +630,13 @@ export abstract class PokemonSpeciesForm {
     return `cry/${ret}`;
   }
 
-  validateStarterMoveset(moveset: StarterMoveset, eggMoves: number): boolean {
+  validateStarterMoveset(moveset: TeamMemberMoveset, eggMoves: number): boolean {
     const rootSpeciesId = this.getRootSpeciesId();
     for (const moveId of moveset) {
-      if (Object.hasOwn(speciesEggMoves, rootSpeciesId)) {
+      if (Object.hasOwn(teamMemberMoveOptions, rootSpeciesId)) {
         // TODO: Review typing of `speciesEggMoves` - asserting `rootSpeciesId` is `keyof typeof speciesEggMoves` results in `never[]`
         // due to incompatible tuple intersections
-        const eggMoveIndex = speciesEggMoves[rootSpeciesId].indexOf(moveId);
+        const eggMoveIndex = teamMemberMoveOptions[rootSpeciesId].indexOf(moveId);
         if (eggMoveIndex > -1 && eggMoves & (1 << eggMoveIndex)) {
           continue;
         }
@@ -666,12 +660,12 @@ export abstract class PokemonSpeciesForm {
    */
   async loadVariantColors(
     spriteKey: string,
-    female: boolean,
+    gender: Gender,
     variant: Variant,
     back = false,
     formIndex?: number,
   ): Promise<void> {
-    let baseSpriteKey = this.getBaseSpriteKey(female, formIndex);
+    let baseSpriteKey = this.getBaseSpriteKey(gender, formIndex);
     if (back) {
       baseSpriteKey = "back__" + baseSpriteKey;
     }
@@ -695,7 +689,7 @@ export abstract class PokemonSpeciesForm {
   }
 
   async loadAssets(
-    female: boolean,
+    gender: Gender,
     formIndex?: number,
     shiny = false,
     variant?: Variant,
@@ -703,11 +697,11 @@ export abstract class PokemonSpeciesForm {
     back = false,
   ): Promise<void> {
     // We need to populate the color cache for this species' variant
-    const spriteKey = this.getSpriteKey(female, formIndex, shiny, variant, back);
-    globalScene.loadPokemonAtlas(spriteKey, this.getSpriteAtlasPath(female, formIndex, shiny, variant, back));
+    const spriteKey = this.getSpriteKey(gender, formIndex, shiny, variant, back);
+    globalScene.loadPokemonAtlas(spriteKey, this.getSpriteAtlasPath(gender, formIndex, shiny, variant, back));
     globalScene.load.audio(this.getCryKey(formIndex), `audio/${this.getCryKey(formIndex)}.m4a`);
     if (variant != null) {
-      await this.loadVariantColors(spriteKey, female, variant, back, formIndex);
+      await this.loadVariantColors(spriteKey, gender, variant, back, formIndex);
     }
     return new Promise<void>(resolve => {
       globalScene.load.once(Phaser.Loader.Events.COMPLETE, () => {
@@ -725,13 +719,13 @@ export abstract class PokemonSpeciesForm {
           globalScene.anims.get(spriteKey).frameRate = 10;
         } else {
           globalScene.anims.create({
-            key: this.getSpriteKey(female, formIndex, shiny, variant, back),
+            key: this.getSpriteKey(gender, formIndex, shiny, variant, back),
             frames: frameNames,
             frameRate: 10,
             repeat: -1,
           });
         }
-        const spritePath = this.getSpriteAtlasPath(female, formIndex, shiny, variant, back)
+        const spritePath = this.getSpriteAtlasPath(gender, formIndex, shiny, variant, back)
           .replace("variant/", "")
           .replace(/_[1-3]$/, "");
         if (variant != null) {
@@ -759,70 +753,6 @@ export abstract class PokemonSpeciesForm {
       cry.stop();
     }
     return cry;
-  }
-
-  generateCandyColors(): number[][] {
-    const sourceTexture = globalScene.textures.get(this.getSpriteKey(false));
-
-    const sourceFrame = sourceTexture.frames[sourceTexture.firstFrame];
-    const sourceImage = sourceTexture.getSourceImage() as HTMLImageElement;
-
-    const canvas = document.createElement("canvas");
-
-    const spriteColors: number[][] = [];
-
-    const context = canvas.getContext("2d");
-    const frame = sourceFrame;
-    canvas.width = frame.width;
-    canvas.height = frame.height;
-    context?.drawImage(sourceImage, frame.cutX, frame.cutY, frame.width, frame.height, 0, 0, frame.width, frame.height);
-    const imageData = context?.getImageData(frame.cutX, frame.cutY, frame.width, frame.height);
-    const pixelData = imageData?.data;
-    const pixelColors: number[] = [];
-
-    if (pixelData?.length !== undefined) {
-      for (let i = 0; i < pixelData.length; i += 4) {
-        if (pixelData[i + 3]) {
-          const pixel = pixelData.slice(i, i + 4);
-          const [r, g, b, a] = pixel;
-          if (!spriteColors.find(c => c[0] === r && c[1] === g && c[2] === b)) {
-            spriteColors.push([r, g, b, a]);
-          }
-        }
-      }
-
-      for (let i = 0; i < pixelData.length; i += 4) {
-        const total = pixelData.slice(i, i + 3).reduce((total: number, value: number) => total + value, 0);
-        if (!total) {
-          continue;
-        }
-        pixelColors.push(
-          argbFromRgba({
-            r: pixelData[i],
-            g: pixelData[i + 1],
-            b: pixelData[i + 2],
-            a: pixelData[i + 3],
-          }),
-        );
-      }
-    }
-
-    let paletteColors: Map<number, number> = new Map();
-
-    const originalRandom = Math.random;
-    Math.random = randSeedFloat;
-
-    globalScene.executeWithSeedOffset(
-      () => {
-        paletteColors = QuantizerCelebi.quantize(pixelColors, 2);
-      },
-      0,
-      "This result should not vary",
-    );
-
-    Math.random = originalRandom;
-
-    return Array.from(paletteColors.keys()).map(c => Object.values(rgbaFromArgb(c)) as number[]);
   }
 }
 
@@ -1057,12 +987,12 @@ export class PokemonSpecies extends PokemonSpeciesForm implements Localizable {
     this.category = i18next.t(`pokemonCategory:${toCamelCase(SpeciesId[this.speciesId])}Category`);
   }
 
-  getWildSpeciesForLevel(level: number, allowEvolving: boolean, isBoss: boolean, gameMode: GameMode): SpeciesId {
+  getWildSpeciesForLevel(level: number, allowEvolving: boolean, isBoss: boolean): SpeciesId {
     return this.getSpeciesForLevel(
       level,
       allowEvolving,
       false,
-      (isBoss ? PartyMemberStrength.WEAKER : PartyMemberStrength.AVERAGE) + (gameMode?.isEndless ? 1 : 0),
+      isBoss ? PartyMemberStrength.WEAKER : PartyMemberStrength.AVERAGE,
       isBoss ? EvoLevelThresholdKind.NORMAL : EvoLevelThresholdKind.WILD,
     );
   }

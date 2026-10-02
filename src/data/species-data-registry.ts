@@ -1,5 +1,6 @@
 import { defaultStarterSpecies } from "#app/constants";
 import { setSpeciesDataRegistry } from "#app/global-species-data-registry";
+import { teamMemberDataRegistry } from "#app/global-team-member-data-registry";
 import { initGenerationOne } from "#balance/generation-01";
 import { initGenerationTwo } from "#balance/generation-02";
 import { initGenerationThree } from "#balance/generation-03";
@@ -10,15 +11,14 @@ import { initGenerationSeven } from "#balance/generation-07";
 import { initGenerationEight } from "#balance/generation-08";
 import { initGenerationNine } from "#balance/generation-09";
 import type { SpeciesFormEvolution } from "#balance/pokemon-evolutions";
-import type { StarterCost } from "#balance/starters";
 import { SpeciesFormChangeItemTrigger } from "#data/form-change-triggers";
 import { SpeciesFormChange } from "#data/pokemon-forms";
 import type { PokemonSpecies, PokemonSpeciesForm } from "#data/pokemon-species";
 import type { AbilityId } from "#enums/ability-id";
-import { EggTier } from "#enums/egg-type";
 import type { MoveId } from "#enums/move-id";
 import { SpeciesFormKey } from "#enums/species-form-key";
 import type { SpeciesId } from "#enums/species-id";
+import type { TeamMemberId } from "#enums/team-member-id";
 import type { LevelMoves } from "#types/level-moves";
 import type { PokemonSpeciesData, SpeciesDataMap } from "#types/pokemon-species";
 import type { StarterSpeciesId } from "#types/starter-species-id";
@@ -137,6 +137,15 @@ export class SpeciesDataRegistry {
   }
 
   /**
+   * Get the species data for a given team member ID.
+   * @param teamMemberId - The {@linkcode TeamMemberId} of the team member to get data for
+   * @returns The {@linkcode PokemonSpecies}
+   */
+  public getSpeciesFromTeamMemberId(teamMemberId: TeamMemberId): PokemonSpecies {
+    return this.getSpecies(teamMemberDataRegistry.getTeamMember(teamMemberId).speciesId);
+  }
+
+  /**
    * Get all pokemon species in the registry.
    * @returns An array of all {@linkcode PokemonSpecies}
    */
@@ -202,32 +211,6 @@ export class SpeciesDataRegistry {
   }
 
   /**
-   * Get the egg tier for a given species.
-   * @param speciesId - The {@linkcode SpeciesId} of the species to get the egg tier for
-   * @returns The {@linkcode EggTier} of the species.
-   * Uses the "common" tier if the species doesn't have a defined egg tier (aka it isn't a starter).
-   */
-  public getEggTier(speciesId: SpeciesId): EggTier {
-    const speciesData = this.getSpeciesData(speciesId);
-    return speciesData.eggTier ?? EggTier.COMMON;
-  }
-
-  /**
-   * Get all starter species that belong to a given egg tier.
-   * @param tier - The {@linkcode EggTier} to get starter species for
-   * @returns An array of all starter species that belong to the given egg tier
-   */
-  public getSpeciesForEggTier(tier: EggTier): PokemonSpecies[] {
-    const ret: PokemonSpecies[] = [];
-    for (const speciesData of Object.values(this._data)) {
-      if (speciesData.eggTier === tier) {
-        ret.push(speciesData.species);
-      }
-    }
-    return ret;
-  }
-
-  /**
    * Get the passive ability for a given species and form.
    * @param speciesId - The {@linkcode SpeciesId} of the species to get the passive for
    * @param form - The `formIndex` or `formKey` of the form to get the passive for.
@@ -269,18 +252,6 @@ export class SpeciesDataRegistry {
       return this.isStarter(speciesId) ? speciesData.species : this.getSpecies(speciesData.starter);
     }
     return this.isStarter(speciesId) ? (speciesId as StarterSpeciesId) : speciesData.starter;
-  }
-
-  /**
-   * Get the starter cost for a given species.
-   * @param speciesId - The {@linkcode SpeciesId} of the species to get the starter cost for
-   * @returns The starter cost of the species
-   */
-  // TODO: fix type safety issue (remove method?); this should probably only accept starters?
-  public getStarterCost(speciesId: SpeciesId): StarterCost {
-    const speciesData = this.getSpeciesData(speciesId);
-    // We assume that the starter cost is set if it's a starter
-    return speciesData.starterCost as StarterCost;
   }
 
   /**
