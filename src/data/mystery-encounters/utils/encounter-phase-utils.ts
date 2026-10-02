@@ -7,8 +7,6 @@ import { getPokemonNameWithAffix } from "#app/messages";
 import { BASE_HIDDEN_ABILITY_RATE, BASE_SHINY_CHANCE } from "#balance/rates";
 import { initMoveAnim, loadMoveAnimAssets } from "#data/battle-anims";
 import { modifierTypes } from "#data/data-lists";
-import type { IEggOptions } from "#data/egg";
-import { Egg } from "#data/egg";
 import type { Gender } from "#data/gender";
 import { getNatureName } from "#data/nature";
 import type { CustomPokemonData } from "#data/pokemon-data";
@@ -725,11 +723,7 @@ export function selectOptionThenPokemon(
  * @param eggRewards
  * @param preRewardsCallback - can execute an arbitrary callback before the new phases if necessary (useful for updating items/party/injecting new phases before {@linkcode MysteryEncounterRewardsPhase})
  */
-export function setEncounterRewards(
-  customShopRewards?: CustomModifierSettings,
-  eggRewards?: IEggOptions[],
-  preRewardsCallback?: () => void,
-): void {
+export function setEncounterRewards(customShopRewards?: CustomModifierSettings, preRewardsCallback?: () => void): void {
   globalScene.currentBattle.mysteryEncounter!.doEncounterRewards = () => {
     if (preRewardsCallback) {
       preRewardsCallback();
@@ -739,13 +733,6 @@ export function setEncounterRewards(
       globalScene.phaseManager.unshiftNew("SelectModifierPhase", 0, undefined, customShopRewards);
     } else {
       globalScene.phaseManager.removeAllPhasesOfType("MysteryEncounterRewardsPhase");
-    }
-
-    if (eggRewards) {
-      eggRewards.forEach(eggOptions => {
-        const egg = new Egg(eggOptions);
-        egg.addEggToGameData();
-      });
     }
 
     return true;
@@ -838,7 +825,6 @@ export function handleMysteryEncounterVictory(addHealPhase = false, doNotContinu
   }
   if (encounter.encounterMode === MysteryEncounterMode.NO_BATTLE) {
     globalScene.phaseManager.pushNew("MysteryEncounterRewardsPhase", addHealPhase);
-    globalScene.phaseManager.pushNew("EggLapsePhase");
   } else if (
     !globalScene
       .getEnemyParty()
@@ -849,13 +835,6 @@ export function handleMysteryEncounterVictory(addHealPhase = false, doNotContinu
     globalScene.phaseManager.pushNew("BattleEndPhase", true);
     if (encounter.encounterMode === MysteryEncounterMode.TRAINER_BATTLE) {
       globalScene.phaseManager.pushNew("TrainerVictoryPhase");
-    }
-    if (globalScene.gameMode.isEndless || !globalScene.gameMode.isWaveFinal(globalScene.currentBattle.waveIndex)) {
-      globalScene.phaseManager.pushNew("MysteryEncounterRewardsPhase", addHealPhase);
-      if (!encounter.doContinueEncounter) {
-        // Only lapse eggs once for multi-battle encounters
-        globalScene.phaseManager.pushNew("EggLapsePhase");
-      }
     }
   }
 }
@@ -884,11 +863,6 @@ export function handleMysteryEncounterBattleFailed(addHealPhase = false, doNotCo
   }
 
   globalScene.phaseManager.pushNew("MysteryEncounterRewardsPhase", addHealPhase);
-
-  if (!encounter.doContinueEncounter) {
-    // Only lapse eggs once for multi-battle encounters
-    globalScene.phaseManager.pushNew("EggLapsePhase");
-  }
 }
 
 /**
@@ -1017,7 +991,7 @@ export function getRandomEncounterPokemon(params: RandomEncounterParams): EnemyP
     const eventEncounter = randSeedItem(eventEncounters);
     const levelSpecies = speciesDataRegistry
       .getSpecies(eventEncounter.species)
-      .getWildSpeciesForLevel(level, !eventEncounter.blockEvolution, isBoss, globalScene.gameMode);
+      .getWildSpeciesForLevel(level, !eventEncounter.blockEvolution, isBoss);
     if (params.isEventEncounter) {
       params.isEventEncounter.value = true;
     }

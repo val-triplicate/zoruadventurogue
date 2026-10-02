@@ -27,7 +27,6 @@ import { SceneBase } from "#app/scene-base";
 import { TurnCommandManager } from "#app/turn-command-manager";
 import { UiInputs } from "#app/ui-inputs";
 import { STARTING_WAVE } from "#balance/misc";
-import { FRIENDSHIP_GAIN_FROM_BATTLE } from "#balance/starters";
 import { initCommonAnims, initMoveAnim, loadCommonAnimAssets, loadMoveAnimAssets } from "#data/battle-anims";
 import { getDailyMysteryEncounter } from "#data/daily-run";
 import { allMoves, biomeDepths, modifierTypes } from "#data/data-lists";
@@ -111,8 +110,6 @@ import { achvs, ModifierAchv, MoneyAchv } from "#system/achv";
 import { GameData } from "#system/game-data";
 import { initGameSpeed } from "#system/game-speed";
 import type { PokemonData } from "#system/pokemon-data";
-import type { Voucher } from "#system/voucher";
-import { vouchers } from "#system/voucher";
 import { trainerConfigs } from "#trainers/trainer-config";
 import type { Constructor } from "#types/common";
 import type { SettingsUpdateEventArgs } from "#types/event-bus-types";
@@ -905,10 +902,6 @@ export class BattleScene extends SceneBase {
     }
 
     const pokemon = new EnemyPokemon(species, level, trainerSlot, boss, shinyLock, dataSource, forRival);
-    if (activeOverrides.ENEMY_FUSION_OVERRIDE) {
-      pokemon.generateFusionSpecies();
-    }
-
     if (boss && !dataSource) {
       const secondaryIvs = getIvsFromId(randSeedInt(4294967296));
 
@@ -1002,78 +995,11 @@ export class BattleScene extends SceneBase {
 
     container.add(icon);
 
-    if (pokemon.isFusion(useIllusion)) {
-      const fusionIcon = this.add
-        .sprite(0, 0, pokemon.getFusionIconAtlasKey(ignoreOverride, useIllusion))
-        .setName("sprite-fusion-icon")
-        .setOrigin(0.5, 0)
-        .setFrame(pokemon.getFusionIconId(ignoreOverride, useIllusion));
-
-      const originalWidth = icon.width;
-      const originalHeight = icon.height;
-      const originalFrame = icon.frame;
-
-      const iconHeight = (icon.frame.cutHeight <= fusionIcon.frame.cutHeight ? Math.ceil : Math.floor)(
-        (icon.frame.cutHeight + fusionIcon.frame.cutHeight) / 4,
-      );
-
-      // Inefficient, but for some reason didn't work with only the unique properties as part of the name
-      const iconFrameId = `${icon.frame.name}f${fusionIcon.frame.name}`;
-
-      if (!icon.frame.texture.has(iconFrameId)) {
-        icon.frame.texture.add(
-          iconFrameId,
-          icon.frame.sourceIndex,
-          icon.frame.cutX,
-          icon.frame.cutY,
-          icon.frame.cutWidth,
-          iconHeight,
-        );
-      }
-
-      icon.setFrame(iconFrameId);
-
-      fusionIcon.y = icon.frame.cutHeight;
-
-      const originalFusionFrame = fusionIcon.frame;
-
-      const fusionIconY = fusionIcon.frame.cutY + icon.frame.cutHeight;
-      const fusionIconHeight = fusionIcon.frame.cutHeight - icon.frame.cutHeight;
-
-      // Inefficient, but for some reason didn't work with only the unique properties as part of the name
-      const fusionIconFrameId = `${fusionIcon.frame.name}f${icon.frame.name}`;
-
-      if (!fusionIcon.frame.texture.has(fusionIconFrameId)) {
-        fusionIcon.frame.texture.add(
-          fusionIconFrameId,
-          fusionIcon.frame.sourceIndex,
-          fusionIcon.frame.cutX,
-          fusionIconY,
-          fusionIcon.frame.cutWidth,
-          fusionIconHeight,
-        );
-      }
-      fusionIcon.setFrame(fusionIconFrameId);
-
-      const frameY = (originalFrame.y + originalFusionFrame.y) / 2;
-      icon.frame.y = frameY;
-      fusionIcon.frame.y = frameY;
-
-      container.add(fusionIcon);
-
-      if (originX !== 0.5) {
-        container.x -= originalWidth * (originX - 0.5);
-      }
-      if (originY !== 0) {
-        container.y -= originalHeight * originY;
-      }
-    } else {
-      if (originX !== 0.5) {
-        container.x -= icon.width * (originX - 0.5);
-      }
-      if (originY !== 0) {
-        container.y -= icon.height * originY;
-      }
+    if (originX !== 0.5) {
+      container.x -= icon.width * (originX - 0.5);
+    }
+    if (originY !== 0) {
+      container.y -= icon.height * originY;
     }
 
     return container;
@@ -1241,11 +1167,7 @@ export class BattleScene extends SceneBase {
   }
 
   isNewBiome(currentBattle = this.currentBattle) {
-    const isWaveIndexMultipleOfTen = !(currentBattle.waveIndex % 10);
-    const isEndlessOrDaily = this.gameMode.hasShortBiomes || this.gameMode.isDaily;
-    const isEndlessFifthWave = this.gameMode.hasShortBiomes && currentBattle.waveIndex % 5 === 0;
-    const isWaveIndexMultipleOfFiftyMinusOne = currentBattle.waveIndex % 50 === 49;
-    return isWaveIndexMultipleOfTen || isEndlessFifthWave || (isEndlessOrDaily && isWaveIndexMultipleOfFiftyMinusOne);
+    return !(currentBattle.waveIndex % 10);
   }
 
   /**
@@ -1734,14 +1656,10 @@ export class BattleScene extends SceneBase {
       return 0;
     }
 
-    const isEggPhase =
-      this.phaseManager.getCurrentPhase().is("EggLapsePhase")
-      || this.phaseManager.getCurrentPhase().is("EggHatchPhase");
-
     const isTrainerBattle = this.currentBattle?.battleType === BattleType.TRAINER;
 
     // Give trainers with specialty types an appropriately-typed form for Wormadam, Rotom, Arceus, Oricorio, Silvally, or Paldean Tauros.
-    if (!isEggPhase && isTrainerBattle && this.currentBattle.trainer?.config.hasSpecialtyType()) {
+    if (isTrainerBattle && this.currentBattle.trainer?.config.hasSpecialtyType()) {
       if (species.speciesId === SpeciesId.WORMADAM) {
         switch (this.currentBattle.trainer.config.specialtyType) {
           case PokemonType.GROUND:
@@ -1831,7 +1749,7 @@ export class BattleScene extends SceneBase {
         }
         return randSeedInt(8);
       case SpeciesId.EEVEE:
-        if (isTrainerBattle && this.currentBattle?.waveIndex < 30 && !isEggPhase) {
+        if (isTrainerBattle && this.currentBattle?.waveIndex < 30) {
           return 0; // No Partner Eevee for Wave 12 Preschoolers
         }
         return randSeedInt(2);
@@ -1874,7 +1792,7 @@ export class BattleScene extends SceneBase {
       case SpeciesId.GIMMIGHOUL:
         // In game modes with MEs (currently Classic only),
         // chest form Gimmighoul is only allowed to appear in the Mysterious Chest Encounter
-        if (this.gameMode.hasMysteryEncounters && !isEggPhase) {
+        if (this.gameMode.hasMysteryEncounters) {
           return 1; // Wandering form
         }
         return randSeedInt(species.forms.length);
@@ -3027,20 +2945,6 @@ export class BattleScene extends SceneBase {
     ) {
       this.gameData.achvUnlocks[achv.id] = Date.now();
       this.ui.achvBar.showAchv(achv);
-      if (Object.hasOwn(vouchers, achv.id)) {
-        this.validateVoucher(vouchers[achv.id]);
-      }
-      return true;
-    }
-
-    return false;
-  }
-
-  validateVoucher(voucher: Voucher, args?: unknown[]): boolean {
-    if (!Object.hasOwn(this.gameData.voucherUnlocks, voucher.id) && voucher.validate(args)) {
-      this.gameData.voucherUnlocks[voucher.id] = Date.now();
-      this.ui.achvBar.showAchv(voucher);
-      this.gameData.voucherCounts[voucher.voucherType]++;
       return true;
     }
 
@@ -3223,7 +3127,6 @@ export class BattleScene extends SceneBase {
               },
               shiny: p.isShiny(),
               variant: p.isShiny() ? variantMap[p.getVariant()] : "N/A",
-              isFusion: p.isFusion(),
             }) as PartyInfo satisfies PartyInfo,
         ) ?? [],
     };
@@ -3247,9 +3150,6 @@ export class BattleScene extends SceneBase {
         keys.push(p.getBattleSpriteKey(true, true));
       }
       keys.push(p.species.getCryKey(p.formIndex));
-      if (p.fusionSpecies) {
-        keys.push(p.fusionSpecies.getCryKey(p.fusionFormIndex));
-      }
     }
     return keys;
   }
@@ -3330,7 +3230,6 @@ export class BattleScene extends SceneBase {
         const pId = partyMember.id;
         const participated = participantIds.has(pId);
         if (participated && pokemonDefeated) {
-          partyMember.addFriendship(FRIENDSHIP_GAIN_FROM_BATTLE);
           const machoBraceModifier = partyMember.getHeldItems().find(m => m instanceof PokemonIncrementingStatModifier);
           if (machoBraceModifier && machoBraceModifier.stackCount < machoBraceModifier.getMaxStackCount()) {
             machoBraceModifier.stackCount++;

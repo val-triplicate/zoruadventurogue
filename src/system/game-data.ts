@@ -23,6 +23,7 @@ import { BattleType } from "#enums/battle-type";
 import type { Device } from "#enums/devices";
 import { DexAttr } from "#enums/dex-attr";
 import { GameDataType } from "#enums/game-data-type";
+import { GameModes } from "#enums/game-modes";
 import { Nature } from "#enums/nature";
 import { PlayerGender } from "#enums/player-gender";
 import { SpeciesId } from "#enums/species-id";
@@ -822,7 +823,7 @@ export class GameData {
       }
     }
 
-    globalScene.gameMode = getGameMode();
+    globalScene.gameMode = getGameMode(GameModes.CLASSIC);
 
     globalScene.setSeed(fromSession.seed || globalScene.game.config.seed[0]);
     globalScene.resetSeed();
