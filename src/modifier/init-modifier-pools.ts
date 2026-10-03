@@ -1,16 +1,12 @@
-import { timedEventManager } from "#app/global-event-manager";
 import { globalScene } from "#app/global-scene";
 import { speciesDataRegistry } from "#app/global-species-data-registry";
 import { modifierTypes } from "#data/data-lists";
-import { MAX_PER_TYPE_POKEBALLS } from "#data/pokeball";
 import { AbilityId } from "#enums/ability-id";
 import { BerryType } from "#enums/berry-type";
 import { ModifierTier } from "#enums/modifier-tier";
 import { MoveId } from "#enums/move-id";
-import { PokeballType } from "#enums/pokeball";
 import { SpeciesId } from "#enums/species-id";
 import { StatusEffect } from "#enums/status-effect";
-import { Unlockables } from "#enums/unlockables";
 import type { Pokemon } from "#field/pokemon";
 import {
   BerryModifier,
@@ -63,7 +59,6 @@ function initWildModifierPool() {
  */
 function initCommonModifierPool() {
   modifierPool[ModifierTier.COMMON] = [
-    new WeightedModifierType(modifierTypes.POKEBALL, () => (hasMaximumBalls(PokeballType.POKEBALL) ? 0 : 6), 6),
     new WeightedModifierType(modifierTypes.RARE_CANDY, 2),
     new WeightedModifierType(
       modifierTypes.POTION,
@@ -140,7 +135,6 @@ function initCommonModifierPool() {
  */
 function initGreatModifierPool() {
   modifierPool[ModifierTier.GREAT] = [
-    new WeightedModifierType(modifierTypes.GREAT_BALL, () => (hasMaximumBalls(PokeballType.GREAT_BALL) ? 0 : 6), 6),
     new WeightedModifierType(modifierTypes.PP_UP, 2),
     new WeightedModifierType(
       modifierTypes.FULL_HEAL,
@@ -313,27 +307,6 @@ function initGreatModifierPool() {
         ? 1
         : 0,
     ),
-    new WeightedModifierType(
-      modifierTypes.DNA_SPLICERS,
-      (party: readonly Pokemon[]) => {
-        if (party.filter(p => !p.fusionSpecies).length > 1) {
-          if (globalScene.gameMode.isSplicedOnly) {
-            return 4;
-          }
-          if (globalScene.gameMode.isClassic && timedEventManager.areFusionsBoosted()) {
-            return 2;
-          }
-        }
-        return 0;
-      },
-      4,
-    ),
-    new WeightedModifierType(
-      modifierTypes.VOUCHER,
-      (_party: readonly Pokemon[], rerollCount: number) =>
-        globalScene.gameMode.isDaily ? 0 : Math.max(1 - rerollCount, 0),
-      1,
-    ),
   ].map(m => {
     m.setTier(ModifierTier.GREAT);
     return m;
@@ -345,7 +318,6 @@ function initGreatModifierPool() {
  */
 function initUltraModifierPool() {
   modifierPool[ModifierTier.ULTRA] = [
-    new WeightedModifierType(modifierTypes.ULTRA_BALL, () => (hasMaximumBalls(PokeballType.ULTRA_BALL) ? 0 : 15), 15),
     new WeightedModifierType(modifierTypes.MAX_LURE, lureWeightFunc(30, 4)),
     new WeightedModifierType(modifierTypes.BIG_NUGGET, skipInLastClassicWaveOrDefault(12)),
     new WeightedModifierType(modifierTypes.PP_MAX, 3),
@@ -362,24 +334,16 @@ function initUltraModifierPool() {
     ),
     new WeightedModifierType(modifierTypes.AMULET_COIN, skipInLastClassicWaveOrDefault(3)),
     new WeightedModifierType(modifierTypes.EVIOLITE, (party: Pokemon[]) => {
-      const { gameMode, gameData } = globalScene;
-      if (gameMode.isDaily || (!gameMode.isFreshStartChallenge() && gameData.isUnlocked(Unlockables.EVIOLITE))) {
-        return party.some(p => {
-          // Check if Pokemon's species (or fusion species, if applicable) can evolve or if they're G-Max'd
-          if (
-            !p.isMax()
-            && (speciesDataRegistry.hasEvolutions(p.getSpeciesForm(true).speciesId)
-              || (p.isFusion() && speciesDataRegistry.hasEvolutions(p.getFusionSpeciesForm(true).speciesId)))
-          ) {
-            // Check if Pokemon is already holding an Eviolite
-            return !p.getHeldItems().some(i => i.type.id === "EVIOLITE");
-          }
-          return false;
-        })
-          ? 10
-          : 0;
-      }
-      return 0;
+      return party.some(p => {
+        // Check if Pokemon's species (or fusion species, if applicable) can evolve or if they're G-Max'd
+        if (!p.isMax() && speciesDataRegistry.hasEvolutions(p.getSpeciesForm(true).speciesId)) {
+          // Check if Pokemon is already holding an Eviolite
+          return !p.getHeldItems().some(i => i.type.id === "EVIOLITE");
+        }
+        return false;
+      })
+        ? 10
+        : 0;
     }),
     new WeightedModifierType(modifierTypes.RARE_SPECIES_STAT_BOOSTER, 12),
     new WeightedModifierType(
@@ -390,8 +354,7 @@ function initUltraModifierPool() {
         return party.some(
           p =>
             !p.getHeldItems().some(i => i instanceof SpeciesCritBoosterModifier)
-            && (checkedSpecies.includes(p.getSpeciesForm(true).speciesId)
-              || (p.isFusion() && checkedSpecies.includes(p.getFusionSpeciesForm(true).speciesId))),
+            && checkedSpecies.includes(p.getSpeciesForm(true).speciesId),
         )
           ? 12
           : 0;
@@ -569,7 +532,6 @@ function initUltraModifierPool() {
 
 function initRogueModifierPool() {
   modifierPool[ModifierTier.ROGUE] = [
-    new WeightedModifierType(modifierTypes.ROGUE_BALL, () => (hasMaximumBalls(PokeballType.ROGUE_BALL) ? 0 : 16), 16),
     new WeightedModifierType(modifierTypes.RELIC_GOLD, skipInLastClassicWaveOrDefault(2)),
     new WeightedModifierType(modifierTypes.LEFTOVERS, 3),
     new WeightedModifierType(modifierTypes.SHELL_BELL, 3),
@@ -599,11 +561,6 @@ function initRogueModifierPool() {
       () => Math.min(Math.ceil(globalScene.currentBattle.waveIndex / 50), 4) * 9,
       36,
     ),
-    new WeightedModifierType(
-      modifierTypes.VOUCHER_PLUS,
-      (_party: Pokemon[], rerollCount: number) => (globalScene.gameMode.isDaily ? 0 : Math.max(3 - rerollCount * 1, 0)),
-      3,
-    ),
   ].map(m => {
     m.setTier(ModifierTier.ROGUE);
     return m;
@@ -615,38 +572,10 @@ function initRogueModifierPool() {
  */
 function initMasterModifierPool() {
   modifierPool[ModifierTier.MASTER] = [
-    new WeightedModifierType(modifierTypes.MASTER_BALL, () => (hasMaximumBalls(PokeballType.MASTER_BALL) ? 0 : 24), 24),
     new WeightedModifierType(modifierTypes.SHINY_CHARM, 14),
     new WeightedModifierType(modifierTypes.HEALING_CHARM, 18),
     new WeightedModifierType(modifierTypes.MULTI_LENS, 18),
-    new WeightedModifierType(
-      modifierTypes.VOUCHER_PREMIUM,
-      (_party: Pokemon[], rerollCount: number) =>
-        !globalScene.gameMode.isDaily && !globalScene.gameMode.isEndless && !globalScene.gameMode.isSplicedOnly
-          ? Math.max(5 - rerollCount * 2, 0)
-          : 0,
-      5,
-    ),
-    new WeightedModifierType(
-      modifierTypes.DNA_SPLICERS,
-      (party: Pokemon[]) =>
-        !(globalScene.gameMode.isClassic && timedEventManager.areFusionsBoosted())
-        && !globalScene.gameMode.isSplicedOnly
-        && party.filter(p => !p.fusionSpecies).length > 1
-          ? 24
-          : 0,
-      24,
-    ),
-    new WeightedModifierType(
-      modifierTypes.MINI_BLACK_HOLE,
-      () =>
-        globalScene.gameMode.isDaily
-        || (!globalScene.gameMode.isFreshStartChallenge()
-          && globalScene.gameData.isUnlocked(Unlockables.MINI_BLACK_HOLE))
-          ? 1
-          : 0,
-      1,
-    ),
+    new WeightedModifierType(modifierTypes.MINI_BLACK_HOLE, () => 1, 1),
   ].map(m => {
     m.setTier(ModifierTier.MASTER);
     return m;
@@ -846,13 +775,4 @@ function lureWeightFunc(maxBattles: number, weight: number): WeightedModifierTyp
       ? weight
       : 0;
   };
-}
-
-/**
- * Used to check if the player has max of a given ball type in Classic
- * @param ballType The {@linkcode PokeballType} being checked
- * @returns boolean: true if the player has the maximum of a given ball type
- */
-function hasMaximumBalls(ballType: PokeballType): boolean {
-  return globalScene.gameMode.isClassic && globalScene.pokeballCounts[ballType] >= MAX_PER_TYPE_POKEBALLS;
 }

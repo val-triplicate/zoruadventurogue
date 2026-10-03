@@ -8,11 +8,9 @@ import { activeOverrides } from "#app/overrides";
 import { EvolutionItem } from "#balance/pokemon-evolutions";
 import { getTmNumber, tmPoolTiers } from "#balance/tm-pool-tiers";
 import { getBerryEffectDescription, getBerryName } from "#data/berry";
-import { getDailyEventSeedLuck } from "#data/daily-run";
 import { allMoves, modifierTypes } from "#data/data-lists";
 import { SpeciesFormChangeItemTrigger } from "#data/form-change-triggers";
 import { getNatureName, getNatureStatMultiplier } from "#data/nature";
-import { getPokeballCatchMultiplier, getPokeballName } from "#data/pokeball";
 import { SpeciesFormChangeCondition } from "#data/pokemon-forms";
 import { getStatusEffectDescriptor } from "#data/status-effect";
 import { BattlerTagType } from "#enums/battler-tag-type";
@@ -22,7 +20,6 @@ import { ModifierPoolType } from "#enums/modifier-pool-type";
 import { ModifierTier } from "#enums/modifier-tier";
 import { MoveId } from "#enums/move-id";
 import { Nature } from "#enums/nature";
-import { PokeballType } from "#enums/pokeball";
 import { PokemonType } from "#enums/pokemon-type";
 import { SpeciesFormKey } from "#enums/species-form-key";
 import { SpeciesId } from "#enums/species-id";
@@ -31,7 +28,6 @@ import { getStatKey, Stat, TEMP_BATTLE_STATS } from "#enums/stat";
 import { StatusEffect } from "#enums/status-effect";
 import type { EnemyPokemon, PlayerPokemon, Pokemon } from "#field/pokemon";
 import {
-  AddPokeballModifier,
   AttackTypeBoosterModifier,
   BaseStatModifier,
   BerryModifier,
@@ -298,37 +294,6 @@ export class ModifierTypeGenerator extends ModifierType {
 export interface GeneratedPersistentModifierType {
   getPregenArgs(): any[];
 }
-
-export class AddPokeballModifierType extends ModifierType {
-  private pokeballType: PokeballType;
-  private count: number;
-
-  constructor(iconImage: string, pokeballType: PokeballType, count: number) {
-    super("", iconImage, (_type, _args) => new AddPokeballModifier(this, pokeballType, count), "pb", "se/pb_bounce_1");
-    this.pokeballType = pokeballType;
-    this.count = count;
-  }
-
-  get name(): string {
-    return i18next.t("modifierType:ModifierType.AddPokeballModifierType.name", {
-      modifierCount: this.count,
-      pokeballName: getPokeballName(this.pokeballType),
-    });
-  }
-
-  getDescription(): string {
-    return i18next.t("modifierType:ModifierType.AddPokeballModifierType.description", {
-      modifierCount: this.count,
-      pokeballName: getPokeballName(this.pokeballType),
-      catchRate:
-        getPokeballCatchMultiplier(this.pokeballType) > -1
-          ? `${getPokeballCatchMultiplier(this.pokeballType)}x`
-          : "100%",
-      pokeballAmount: `${globalScene.pokeballCounts[this.pokeballType]}`,
-    });
-  }
-}
-
 export class PokemonModifierType extends ModifierType {
   public selectFilter: PokemonSelectFilter | undefined;
 
@@ -1729,12 +1694,6 @@ export type ModifierOverride = GeneratorModifierOverride | BaseModifierOverride;
 export type ModifierTypeKeys = keyof typeof modifierTypeInitObj;
 
 const modifierTypeInitObj = Object.freeze({
-  POKEBALL: () => new AddPokeballModifierType("pb", PokeballType.POKEBALL, 5),
-  GREAT_BALL: () => new AddPokeballModifierType("gb", PokeballType.GREAT_BALL, 5),
-  ULTRA_BALL: () => new AddPokeballModifierType("ub", PokeballType.ULTRA_BALL, 5),
-  ROGUE_BALL: () => new AddPokeballModifierType("rb", PokeballType.ROGUE_BALL, 5),
-  MASTER_BALL: () => new AddPokeballModifierType("mb", PokeballType.MASTER_BALL, 1),
-
   RARE_CANDY: () => new PokemonLevelIncrementModifierType("modifierType:ModifierType.RARE_CANDY", "rare_candy"),
   RARER_CANDY: () => new AllPokemonLevelIncrementModifierType("modifierType:ModifierType.RARER_CANDY", "rarer_candy"),
 
@@ -1809,10 +1768,6 @@ const modifierTypeInitObj = Object.freeze({
 
   PP_UP: () => new PokemonPpUpModifierType("modifierType:ModifierType.PP_UP", "pp_up", 1),
   PP_MAX: () => new PokemonPpUpModifierType("modifierType:ModifierType.PP_MAX", "pp_max", 3),
-
-  /*REPEL: () => new DoubleBattleChanceBoosterModifierType('Repel', 5),
-  SUPER_REPEL: () => new DoubleBattleChanceBoosterModifierType('Super Repel', 10),
-  MAX_REPEL: () => new DoubleBattleChanceBoosterModifierType('Max Repel', 25),*/
 
   LURE: () => new DoubleBattleChanceBoosterModifierType("modifierType:ModifierType.LURE", "lure", 10),
   SUPER_LURE: () => new DoubleBattleChanceBoosterModifierType("modifierType:ModifierType.SUPER_LURE", "super_lure", 15),
@@ -2814,24 +2769,6 @@ export class ModifierTypeOption {
  * @returns A number between 0 and 14 based on the party's total luck value, or a random number between 0 and 14 if the player is in Daily Run mode.
  */
 export function getPartyLuckValue(party: readonly Pokemon[]): number {
-  if (globalScene.gameMode.isDaily) {
-    const DailyLuck = new NumberHolder(0);
-    globalScene.executeWithSeedOffset(
-      () => {
-        const eventLuck = getDailyEventSeedLuck();
-        if (eventLuck != null) {
-          DailyLuck.value = eventLuck;
-          return;
-        }
-
-        DailyLuck.value = randSeedInt(15); // Random number between 0 and 14
-      },
-      0,
-      globalScene.seed,
-    );
-    return DailyLuck.value;
-  }
-
   const eventSpecies = timedEventManager.getEventLuckBoostedSpecies();
   const luck = Phaser.Math.Clamp(
     party
