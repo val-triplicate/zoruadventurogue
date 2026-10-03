@@ -4,7 +4,6 @@ import { activeOverrides } from "#app/overrides";
 import { SceneBase } from "#app/scene-base";
 import { isMobile } from "#app/touch-controls";
 import { BiomeId } from "#enums/biome-id";
-import { GachaType } from "#enums/gacha-types";
 import { getBiomeHasProps } from "#field/arena";
 import { initializeGame } from "#init/init";
 import { CacheBustedLoaderPlugin } from "#plugins/cache-busted-loader-plugin";
@@ -302,7 +301,6 @@ export class LoadingScene extends SceneBase {
       .loadAtlas("egg_icons", "egg")
       .loadAtlas("egg_shard", "egg")
       .loadAtlas("egg_lightrays", "egg")
-      .loadEggGachaImages()
       .loadImage("gacha_glass", "egg")
       .loadImage("gacha_eggs", "egg")
       .loadAtlas("gacha_hatch", "egg")
@@ -593,14 +591,6 @@ export class LoadingScene extends SceneBase {
         lang = "en";
       }
       this.loadImage(`${timedEventManager.getEventBannerFilename()}-${lang}`, "events");
-    }
-    return this;
-  }
-
-  private loadEggGachaImages(): this {
-    for (const gt of Object.keys(GachaType)) {
-      const key = gt.toLowerCase();
-      this.loadImage(`gacha_${key}`, "egg").loadAtlas(`gacha_underlay_${key}`, "egg");
     }
     return this;
   }

@@ -1,9 +1,6 @@
 import { BattleStyle } from "#enums/battle-style";
-import { CandyUpgradeDisplayMode } from "#enums/candy-upgrade-display-mode";
-import { CandyUpgradeNotificationMode } from "#enums/candy-upgrade-notification-mode";
 import { DamageNumbersMode } from "#enums/damage-numbers-mode";
 import { EaseType } from "#enums/ease-type";
-import { EggSkipPreference } from "#enums/egg-skip-preference";
 import { ExpGainsSpeed } from "#enums/exp-gains-speed";
 import { ExpNotification } from "#enums/exp-notification";
 import { GameSpeed } from "#enums/game-speed";
@@ -28,7 +25,6 @@ const defaultGeneralSettings: GeneralSettings = {
   battleCursorMemory: false,
   battleStyle: BattleStyle.SWITCH,
   dexForDevs: false,
-  eggSkipPreference: EggSkipPreference.ASK,
   enableRetries: true,
   enableTouchControls: true, // auto
   enableTutorials: false,
@@ -46,8 +42,6 @@ const defaultGeneralSettings: GeneralSettings = {
 };
 
 const defaultDisplaySettings: DisplaySettings = {
-  candyUpgradeDisplayMode: CandyUpgradeDisplayMode.ICON,
-  candyUpgradeNotificationMode: CandyUpgradeNotificationMode.ON,
   damageNumbersMode: DamageNumbersMode.FANCY,
   enableFusionPaletteSwaps: true,
   enableMoveAnimations: true,

@@ -1,9 +1,6 @@
 import type { BattleStyle } from "#enums/battle-style";
-import type { CandyUpgradeDisplayMode } from "#enums/candy-upgrade-display-mode";
-import type { CandyUpgradeNotificationMode } from "#enums/candy-upgrade-notification-mode";
 import type { DamageNumbersMode } from "#enums/damage-numbers-mode";
 import type { EaseType } from "#enums/ease-type";
-import type { EggSkipPreference } from "#enums/egg-skip-preference";
 import type { ExpGainsSpeed } from "#enums/exp-gains-speed";
 import type { ExpNotification } from "#enums/exp-notification";
 import type { GameSpeed } from "#enums/game-speed";
@@ -36,7 +33,6 @@ export interface GeneralSettings {
   battleCursorMemory: boolean;
   battleStyle: BattleStyle;
   dexForDevs: boolean;
-  eggSkipPreference: EggSkipPreference;
   enableRetries: boolean;
   enableTouchControls: boolean;
   enableTutorials: boolean;
@@ -54,8 +50,6 @@ export interface GeneralSettings {
 }
 
 export interface DisplaySettings {
-  candyUpgradeDisplayMode: CandyUpgradeDisplayMode;
-  candyUpgradeNotificationMode: CandyUpgradeNotificationMode;
   damageNumbersMode: DamageNumbersMode;
   enableFusionPaletteSwaps: boolean;
   enableMoveAnimations: boolean;

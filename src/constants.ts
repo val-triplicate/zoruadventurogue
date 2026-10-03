@@ -1,4 +1,3 @@
-import { SpeciesId } from "#enums/species-id";
 import { TeamId } from "#enums/team-id";
 
 /** The maximum size of the player's party */
@@ -20,16 +19,6 @@ export const CHALLENGE_MODE_MYSTERY_ENCOUNTER_WAVES: [number, number] = [10, 180
 
 /** The raw percentage power boost for type boost items*/
 export const TYPE_BOOST_ITEM_BOOST_PERCENT = 20;
-
-/**
- * The default species that a new player can choose from
- */
-export const defaultStarterSpecies: readonly SpeciesId[] = [
-  SpeciesId.ZORUA,
-  SpeciesId.FENNEKIN,
-  SpeciesId.BULBASAUR,
-  SpeciesId.MAREEP,
-];
 
 /**
  * The default teams that a new player can choose from

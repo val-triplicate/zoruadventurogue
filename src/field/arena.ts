@@ -7,7 +7,6 @@ import { NIGHT_TIME } from "#constants/game-constants";
 import type { ArenaTag, ArenaTagTypeMap } from "#data/arena-tag";
 import { getArenaTag } from "#data/arena-tag";
 import { biomeBgmLoopPoints } from "#data/biome-bgm-loop-points";
-import { getDailyForcedWaveBiomePoolTier } from "#data/daily-run";
 import { allBiomes } from "#data/data-lists";
 import { SpeciesFormChangeRevertWeatherFormTrigger, SpeciesFormChangeWeatherTrigger } from "#data/form-change-triggers";
 import type { PokemonSpecies } from "#data/pokemon-species";
@@ -572,18 +571,13 @@ export class Arena {
         || globalScene.gameMode.isWaveFinal(waveIndex));
 
     let tier: BiomePoolTier;
-    const forcedTier = getDailyForcedWaveBiomePoolTier(waveIndex);
-    if (forcedTier === null) {
-      const rollMax = isBossSpecies ? 64 : 512;
+    const rollMax = isBossSpecies ? 64 : 512;
 
-      // Luck reduces the RNG ceiling by 0.5x for bosses or 2x otherwise
-      const luckModifier = luckValue * (isBossSpecies ? 0.5 : 2);
+    // Luck reduces the RNG ceiling by 0.5x for bosses or 2x otherwise
+    const luckModifier = luckValue * (isBossSpecies ? 0.5 : 2);
 
-      const rngRoll = randSeedInt(rollMax - luckModifier);
-      tier = (isBossSpecies ? this.generateBossBiomeTier : this.generateNonBossBiomeTier)(rngRoll);
-    } else {
-      tier = forcedTier;
-    }
+    const rngRoll = randSeedInt(rollMax - luckModifier);
+    tier = (isBossSpecies ? this.generateBossBiomeTier : this.generateNonBossBiomeTier)(rngRoll);
 
     console.log("Starting species pool tier:", BiomePoolTier[tier]);
 
@@ -609,7 +603,7 @@ export class Arena {
     }
 
     // TODO: Clarify what the `isBoss` parameter does
-    const newSpeciesId = species.getWildSpeciesForLevel(level, true, isBoss ?? isBossSpecies, globalScene.gameMode);
+    const newSpeciesId = species.getWildSpeciesForLevel(level, true, isBoss ?? isBossSpecies);
     if (newSpeciesId !== species.speciesId) {
       console.log("Replaced", SpeciesId[species.speciesId], "with", SpeciesId[newSpeciesId]);
       species = speciesDataRegistry.getSpecies(newSpeciesId);

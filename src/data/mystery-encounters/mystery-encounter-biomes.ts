@@ -1,36 +1,6 @@
 import { BiomeId } from "#enums/biome-id";
 import { MysteryEncounterType } from "#enums/mystery-encounter-type";
-import { ATrainersTestEncounter } from "#mystery-encounters/a-trainers-test-encounter";
-import { AbsoluteAvariceEncounter } from "#mystery-encounters/absolute-avarice-encounter";
-import { AnOfferYouCantRefuseEncounter } from "#mystery-encounters/an-offer-you-cant-refuse-encounter";
-import { BerriesAboundEncounter } from "#mystery-encounters/berries-abound-encounter";
-import { BugTypeSuperfanEncounter } from "#mystery-encounters/bug-type-superfan-encounter";
-import { ClowningAroundEncounter } from "#mystery-encounters/clowning-around-encounter";
-import { DancingLessonsEncounter } from "#mystery-encounters/dancing-lessons-encounter";
-import { DarkDealEncounter } from "#mystery-encounters/dark-deal-encounter";
-import { DelibirdyEncounter } from "#mystery-encounters/delibirdy-encounter";
-import { DepartmentStoreSaleEncounter } from "#mystery-encounters/department-store-sale-encounter";
-import { FieldTripEncounter } from "#mystery-encounters/field-trip-encounter";
-import { FieryFalloutEncounter } from "#mystery-encounters/fiery-fallout-encounter";
-import { FightOrFlightEncounter } from "#mystery-encounters/fight-or-flight-encounter";
-import { FunAndGamesEncounter } from "#mystery-encounters/fun-and-games-encounter";
-import { GlobalTradeSystemEncounter } from "#mystery-encounters/global-trade-system-encounter";
-import { LostAtSeaEncounter } from "#mystery-encounters/lost-at-sea-encounter";
-import { MysteriousChallengersEncounter } from "#mystery-encounters/mysterious-challengers-encounter";
-import { MysteriousChestEncounter } from "#mystery-encounters/mysterious-chest-encounter";
 import type { MysteryEncounter } from "#mystery-encounters/mystery-encounter";
-import { PartTimerEncounter } from "#mystery-encounters/part-timer-encounter";
-import { SafariZoneEncounter } from "#mystery-encounters/safari-zone-encounter";
-import { ShadyVitaminDealerEncounter } from "#mystery-encounters/shady-vitamin-dealer-encounter";
-import { SlumberingSnorlaxEncounter } from "#mystery-encounters/slumbering-snorlax-encounter";
-import { TeleportingHijinksEncounter } from "#mystery-encounters/teleporting-hijinks-encounter";
-import { ThePokemonSalesmanEncounter } from "#mystery-encounters/the-pokemon-salesman-encounter";
-import { TheStrongStuffEncounter } from "#mystery-encounters/the-strong-stuff-encounter";
-import { TheWinstrateChallengeEncounter } from "#mystery-encounters/the-winstrate-challenge-encounter";
-import { TrainingSessionEncounter } from "#mystery-encounters/training-session-encounter";
-import { TrashToTreasureEncounter } from "#mystery-encounters/trash-to-treasure-encounter";
-import { UncommonBreedEncounter } from "#mystery-encounters/uncommon-breed-encounter";
-import { WeirdDreamEncounter } from "#mystery-encounters/weird-dream-encounter";
 import { getBiomeName } from "#utils/common";
 
 export const EXTREME_ENCOUNTER_BIOMES = [
@@ -238,37 +208,6 @@ export const mysteryEncountersByBiome = new Map<BiomeId, MysteryEncounterType[]>
 ]);
 
 export function initMysteryEncounters() {
-  allMysteryEncounters[MysteryEncounterType.MYSTERIOUS_CHALLENGERS] = MysteriousChallengersEncounter;
-  allMysteryEncounters[MysteryEncounterType.MYSTERIOUS_CHEST] = MysteriousChestEncounter;
-  allMysteryEncounters[MysteryEncounterType.DARK_DEAL] = DarkDealEncounter;
-  allMysteryEncounters[MysteryEncounterType.FIGHT_OR_FLIGHT] = FightOrFlightEncounter;
-  allMysteryEncounters[MysteryEncounterType.TRAINING_SESSION] = TrainingSessionEncounter;
-  allMysteryEncounters[MysteryEncounterType.SLUMBERING_SNORLAX] = SlumberingSnorlaxEncounter;
-  allMysteryEncounters[MysteryEncounterType.DEPARTMENT_STORE_SALE] = DepartmentStoreSaleEncounter;
-  allMysteryEncounters[MysteryEncounterType.SHADY_VITAMIN_DEALER] = ShadyVitaminDealerEncounter;
-  allMysteryEncounters[MysteryEncounterType.FIELD_TRIP] = FieldTripEncounter;
-  allMysteryEncounters[MysteryEncounterType.SAFARI_ZONE] = SafariZoneEncounter;
-  allMysteryEncounters[MysteryEncounterType.LOST_AT_SEA] = LostAtSeaEncounter;
-  allMysteryEncounters[MysteryEncounterType.FIERY_FALLOUT] = FieryFalloutEncounter;
-  allMysteryEncounters[MysteryEncounterType.THE_STRONG_STUFF] = TheStrongStuffEncounter;
-  allMysteryEncounters[MysteryEncounterType.THE_POKEMON_SALESMAN] = ThePokemonSalesmanEncounter;
-  allMysteryEncounters[MysteryEncounterType.AN_OFFER_YOU_CANT_REFUSE] = AnOfferYouCantRefuseEncounter;
-  allMysteryEncounters[MysteryEncounterType.DELIBIRDY] = DelibirdyEncounter;
-  allMysteryEncounters[MysteryEncounterType.ABSOLUTE_AVARICE] = AbsoluteAvariceEncounter;
-  allMysteryEncounters[MysteryEncounterType.A_TRAINERS_TEST] = ATrainersTestEncounter;
-  allMysteryEncounters[MysteryEncounterType.TRASH_TO_TREASURE] = TrashToTreasureEncounter;
-  allMysteryEncounters[MysteryEncounterType.BERRIES_ABOUND] = BerriesAboundEncounter;
-  allMysteryEncounters[MysteryEncounterType.CLOWNING_AROUND] = ClowningAroundEncounter;
-  allMysteryEncounters[MysteryEncounterType.PART_TIMER] = PartTimerEncounter;
-  allMysteryEncounters[MysteryEncounterType.DANCING_LESSONS] = DancingLessonsEncounter;
-  allMysteryEncounters[MysteryEncounterType.WEIRD_DREAM] = WeirdDreamEncounter;
-  allMysteryEncounters[MysteryEncounterType.THE_WINSTRATE_CHALLENGE] = TheWinstrateChallengeEncounter;
-  allMysteryEncounters[MysteryEncounterType.TELEPORTING_HIJINKS] = TeleportingHijinksEncounter;
-  allMysteryEncounters[MysteryEncounterType.BUG_TYPE_SUPERFAN] = BugTypeSuperfanEncounter;
-  allMysteryEncounters[MysteryEncounterType.FUN_AND_GAMES] = FunAndGamesEncounter;
-  allMysteryEncounters[MysteryEncounterType.UNCOMMON_BREED] = UncommonBreedEncounter;
-  allMysteryEncounters[MysteryEncounterType.GLOBAL_TRADE_SYSTEM] = GlobalTradeSystemEncounter;
-
   // Add extreme encounters to biome map
   extremeBiomeEncounters.forEach(encounter => {
     EXTREME_ENCOUNTER_BIOMES.forEach(biome => {

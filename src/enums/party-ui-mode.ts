@@ -51,16 +51,6 @@ export const PartyUiMode = {
    */
   MODIFIER_TRANSFER: 8,
   /**
-   * Indicates that the party UI is open because of a DNA Splicer.  This
-   * type of selection can be cancelled.
-   */
-  SPLICE: 9,
-  /**
-   * Indicates that the party UI is open to release a party member.  This
-   * type of selection can be cancelled.
-   */
-  RELEASE: 10,
-  /**
    * Indicates that the party UI is open to check the team.  This
    * type of selection can be cancelled.
    */
