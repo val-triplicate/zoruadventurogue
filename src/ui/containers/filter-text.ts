@@ -1,14 +1,10 @@
 import { globalScene } from "#app/global-scene";
 import { TextStyle } from "#enums/text-style";
-import { UiMode } from "#enums/ui-mode";
 import type { UiTheme } from "#enums/ui-theme";
-import type { AwaitableUiHandler } from "#ui/awaitable-ui-handler";
 import type { PokedexMonContainer } from "#ui/pokedex-mon-container";
 import type { StarterContainer } from "#ui/starter-container";
 import { addTextObject, getTextColor } from "#ui/text";
-import type { UI } from "#ui/ui";
 import { addWindow, WindowVariant } from "#ui/ui-theme";
-import i18next from "i18next";
 
 export enum FilterTextRow {
   NAME,
@@ -126,31 +122,6 @@ export class FilterText extends Phaser.GameObjects.Container {
     for (let i = 0; i < this.numFilters; i++) {
       this.resetSelection(i);
     }
-  }
-
-  startSearch(index: number, ui: UI): void {
-    ui.playSelect();
-    const prefilledText = "";
-    const buttonAction: any = {};
-    buttonAction["buttonActions"] = [
-      (sanitizedName: string) => {
-        ui.playSelect();
-        const dialogueTestName = sanitizedName;
-        //TODO: Is it really necessary to encode and decode?
-        const dialogueName = decodeURIComponent(escape(atob(dialogueTestName)));
-        const handler = ui.getHandler() as AwaitableUiHandler;
-        handler.tutorialActive = true;
-        // Switch to the dialog test window
-        this.selections[index].setText(dialogueName === "" ? this.defaultText : String(i18next.t(dialogueName)));
-        ui.revertMode();
-        this.onChange();
-      },
-      () => {
-        ui.revertMode();
-        this.onChange;
-      },
-    ];
-    ui.setOverlayMode(UiMode.POKEDEX_SCAN, buttonAction, prefilledText, index);
   }
 
   setCursor(cursor: number): void {

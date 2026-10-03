@@ -15,7 +15,7 @@ import { BgmBar } from "#ui/bgm-bar";
 import { OptionSelectUiHandler } from "#ui/option-select-ui-handler";
 import { addTextObject } from "#ui/text";
 import { addWindow, WindowVariant } from "#ui/ui-theme";
-import { fixedInt, sessionIdKey } from "#utils/common";
+import { sessionIdKey } from "#utils/common";
 import { getCookie } from "#utils/cookies";
 import { getEnumValues } from "#utils/enums";
 import { toCamelCase } from "#utils/strings";
@@ -559,25 +559,6 @@ export class MenuUiHandler extends OptionSelectUiHandler {
         ui.setOverlayMode(UiMode.GAME_STATS);
         success = true;
         break;
-      case MenuOptions.EGG_LIST:
-        if (globalScene.gameData.eggs.length > 0) {
-          ui.revertMode();
-          ui.setOverlayMode(UiMode.EGG_LIST);
-          success = true;
-        } else {
-          ui.showText(i18next.t("menuUiHandler:noEggs"), null, () => ui.showText(""), fixedInt(1500));
-        }
-        break;
-      case MenuOptions.EGG_GACHA:
-        ui.revertMode();
-        ui.setOverlayMode(UiMode.EGG_GACHA);
-        success = true;
-        break;
-      case MenuOptions.POKEDEX:
-        ui.revertMode();
-        ui.setOverlayMode(UiMode.POKEDEX);
-        success = true;
-        break;
       case MenuOptions.MANAGE_DATA:
         if (
           !bypassLogin
@@ -687,41 +668,6 @@ export class MenuUiHandler extends OptionSelectUiHandler {
         } else {
           doSaveQuit();
         }
-        break;
-      }
-      case MenuOptions.LOG_OUT: {
-        success = true;
-        const doLogout = () => {
-          ui.setMode(UiMode.LOADING, {
-            buttonActions: [],
-            fadeOut: () =>
-              pokerogueApi.account
-                .logout()
-                .then(() => updateUserInfo())
-                .then(() => globalScene.reset(true, true)),
-          });
-        };
-
-        if (globalScene.currentBattle) {
-          ui.showText(i18next.t("menuUiHandler:losingProgressionWarning"), null, () => {
-            if (!this.active) {
-              this.showText("", 0);
-              return;
-            }
-            const options: ConfirmModeConfig = {
-              yesHandler: doLogout,
-              noHandler: () => {
-                ui.revertMode();
-                this.showText("", 0);
-              },
-              xOffset: this.optionSelectBg.displayWidth,
-            };
-            ui.setOverlayMode(UiMode.CONFIRM, options);
-          });
-        } else {
-          doLogout();
-        }
-
         break;
       }
     }

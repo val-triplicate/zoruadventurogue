@@ -8,7 +8,6 @@ import { TextStyle } from "#enums/text-style";
 import { UiMode } from "#enums/ui-mode";
 import { AchvBar } from "#ui/achv-bar";
 import { AchvsUiHandler } from "#ui/achvs-ui-handler";
-import { AdminUiHandler } from "#ui/admin-ui-handler";
 import { AlertModalUiHandler } from "#ui/alert-modal-ui-handler";
 import { SettingsAudioUiHandler } from "#ui/audio-settings-ui-handler";
 import { AutoCompleteUiHandler } from "#ui/autocomplete-ui-handler";
@@ -57,12 +56,6 @@ const transitionModes = [
   UiMode.SUMMARY,
   UiMode.STARTER_SELECT,
   UiMode.EVOLUTION_SCENE,
-  UiMode.EGG_HATCH_SCENE,
-  UiMode.EGG_LIST,
-  UiMode.EGG_GACHA,
-  UiMode.POKEDEX,
-  UiMode.POKEDEX_PAGE,
-  UiMode.CHALLENGE_SELECT,
   UiMode.RUN_HISTORY,
 ];
 
@@ -81,7 +74,6 @@ const noTransitionModes = [
   UiMode.SETTINGS_KEYBOARD,
   UiMode.ACHIEVEMENTS,
   UiMode.GAME_STATS,
-  UiMode.POKEDEX_SCAN,
   UiMode.LOGIN_FORM,
   UiMode.REGISTRATION_FORM,
   UiMode.LOADING,
@@ -154,7 +146,6 @@ export class UI extends Phaser.GameObjects.Container {
       new RunInfoUiHandler(),
       new TestDialogueUiHandler(),
       new AutoCompleteUiHandler(),
-      new AdminUiHandler(),
       new MysteryEncounterUiHandler(),
       new AlertModalUiHandler(),
     ];

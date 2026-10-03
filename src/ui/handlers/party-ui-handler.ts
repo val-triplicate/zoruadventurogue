@@ -4,7 +4,7 @@ import { speciesDataRegistry } from "#app/global-species-data-registry";
 import { getPokemonNameWithAffix } from "#app/messages";
 import { allMoves } from "#data/data-lists";
 import { SpeciesFormChangeItemTrigger } from "#data/form-change-triggers";
-import { Gender, getGenderColor, getGenderSymbol } from "#data/gender";
+import { getGenderColor, getGenderSymbol } from "#data/gender";
 import { Button } from "#enums/buttons";
 import { Command } from "#enums/command";
 import { FormChangeItem } from "#enums/form-change-item";
@@ -291,19 +291,6 @@ export class PartyUiHandler extends MessageUiHandler {
     const ui = this.getUi();
     ui.playSelect();
     ui.setModeWithoutClear(UiMode.SUMMARY, pokemon).then(() => this.clearOptions());
-    return true;
-  }
-
-  private processPokedexOption(pokemon: Pokemon): boolean {
-    const ui = this.getUi();
-    ui.playSelect();
-    const attributes = {
-      shiny: pokemon.shiny,
-      variant: pokemon.variant,
-      form: pokemon.formIndex,
-      female: pokemon.gender === Gender.FEMALE,
-    };
-    ui.setOverlayMode(UiMode.POKEDEX_PAGE, pokemon.species, attributes).then(() => this.clearOptions());
     return true;
   }
 

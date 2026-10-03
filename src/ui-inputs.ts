@@ -198,7 +198,6 @@ export class UiInputs {
         globalScene.ui.setOverlayMode(UiMode.MENU);
         break;
       case UiMode.STARTER_SELECT:
-      case UiMode.POKEDEX_PAGE:
         this.buttonTouch();
         break;
       case UiMode.MENU:
