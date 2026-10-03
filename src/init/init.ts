@@ -3,10 +3,10 @@ import "#app/extensions"; // Setup Phaser extension methods/etc
 import { initAbilities } from "#abilities/init-abilities";
 import { initGlobalAudioManager } from "#app/global-audio-manager";
 import { initSettingsManager } from "#app/global-settings-manager";
+import { initTeamMemberDataRegistry } from "#data/character-registry";
 import { initTrainerTypeDialogue } from "#data/dialogue";
 import { initSpeciesDataRegistry } from "#data/species-data-registry";
-import { initTeamDataRegistry } from "#data/team-data-registry";
-import { initTeamMemberDataRegistry } from "#data/team-member-data-registry";
+import { initTeamDataRegistry } from "#data/team-registry";
 import { initBiomeBgmLoopPoints } from "#init/init-biome-bgm-loop-points";
 import { initBiomeDepths } from "#init/init-biome-depths";
 import { initBiomes } from "#init/init-biomes";
@@ -16,7 +16,6 @@ import { initModifierTypes } from "#modifiers/modifier-type";
 import { initMoves } from "#moves/move";
 import { initMysteryEncounters } from "#mystery-encounters/mystery-encounter-biomes";
 import { initAchievements } from "#system/achv";
-import { initStatsKeys } from "#ui/game-stats-ui-handler";
 
 export async function initializeGame(): Promise<void> {
   await initStarterColors();
@@ -29,7 +28,6 @@ export async function initializeGame(): Promise<void> {
   initModifierTypes();
   initModifierPools();
   initAchievements();
-  initStatsKeys();
   initBiomes();
   initBiomeDepths();
   initTrainerTypeDialogue();

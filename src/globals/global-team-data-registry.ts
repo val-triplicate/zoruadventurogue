@@ -1,7 +1,7 @@
-import type { TeamDataRegistry } from "#data/team-data-registry";
+import type { TeamRegistry } from "#data/team-registry";
 
-export let teamDataRegistry: TeamDataRegistry;
+export let teamRegistry: TeamRegistry;
 
-export function setTeamDataRegistry(registry: TeamDataRegistry): void {
-  teamDataRegistry = registry;
+export function setTeamRegistry(registry: TeamRegistry): void {
+  teamRegistry = registry;
 }

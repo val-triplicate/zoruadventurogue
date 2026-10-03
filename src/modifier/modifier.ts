@@ -2178,8 +2178,6 @@ export class PokemonNatureChangeModifier extends ConsumablePokemonModifier {
    */
   override apply(playerPokemon: PlayerPokemon): boolean {
     playerPokemon.setCustomNature(this.nature);
-    globalScene.gameData.unlockSpeciesNature(playerPokemon.species, this.nature);
-
     return true;
   }
 }
