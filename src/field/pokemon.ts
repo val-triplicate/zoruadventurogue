@@ -1403,7 +1403,7 @@ export abstract class Pokemon extends Phaser.GameObjects.Container {
       this.isPlayer() ? activeOverrides.MOVESET_OVERRIDE : activeOverrides.ENEMY_MOVESET_OVERRIDE,
     );
     if (overrideArray.length === 0) {
-      return !ignoreOverride && this.summonData.moveset ? this.summonData.moveset : this.moves;
+      return !ignoreOverride && this.summonData.moves ? this.summonData.moves : this.moves;
     }
 
     const moves = blankCurrentMoves;
@@ -1414,7 +1414,7 @@ export abstract class Pokemon extends Phaser.GameObjects.Container {
       moves[index] = new PokemonMove(move, Math.min(ppUsed, allMoves[move].pp));
     });
 
-    return !ignoreOverride && this.summonData.moveset ? this.summonData.moveset : this.moves;
+    return !ignoreOverride && this.summonData.moves ? this.summonData.moves : this.moves;
   }
 
   /**
@@ -1504,8 +1504,8 @@ export abstract class Pokemon extends Phaser.GameObjects.Container {
     }
     const move = new PokemonMove(moveId);
     this.moves[moveIndex] = move;
-    if (this.summonData.moveset) {
-      this.summonData.moveset[moveIndex] = move;
+    if (this.summonData.moves) {
+      this.summonData.moves[moveIndex] = move;
     }
   }
 

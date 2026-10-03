@@ -120,6 +120,7 @@ import type {
   MoveMessageFunc,
 } from "#types/move-types";
 import type { GetEffectiveStatParams } from "#types/pokemon-common";
+import { toCurrentMoves } from "#types/save-data";
 import type { StatStageChangePhaseOptions } from "#types/stat-change";
 import type { TurnMove } from "#types/turn-move";
 import type { AbstractConstructor } from "#types/type-helpers";
@@ -4538,7 +4539,7 @@ export class LessPPMorePowerAttr extends VariablePowerAttr {
    */
   apply(user: Pokemon, _target: Pokemon, move: Move, args: any[]): boolean {
     const ppMax = move.pp;
-    const ppUsed = user.moveset.find(m => m.moveId === move.id)?.ppUsed ?? 0;
+    const ppUsed = user.moves.find(m => m.moveId === move.id)?.ppUsed ?? 0;
 
     let ppRemains = ppMax - ppUsed;
     /** Reduce to 0 to avoid negative numbers if user has 1PP before attack and target has Ability.PRESSURE */
@@ -8131,7 +8132,7 @@ export class RandomMovesetMoveAttr extends RandomMoveAttr {
     const allies: Pokemon[] = this.includeParty
       ? (user.isPlayer() ? globalScene.getPlayerParty() : globalScene.getEnemyParty()).filter(p => p !== user)
       : [user];
-    return allies.flatMap(p => p.moveset).filter(pm => this.isMoveAllowed(pm.moveId));
+    return allies.flatMap(p => p.moves).filter(pm => this.isMoveAllowed(pm.moveId));
   }
 }
 
@@ -8360,8 +8361,8 @@ export class MovesetCopyMoveAttr extends OverrideMoveEffectAttr {
     }
 
     // Populate summon data with a copy of the current moveset, replacing the copying move with the copied move
-    user.summonData.moveset = user.getMoveset().slice(0);
-    user.summonData.moveset[thisMoveIndex] = new PokemonMove(copiedMove.id);
+    user.summonData.moves = toCurrentMoves(user.getMoveset().slice(0));
+    user.summonData.moves[thisMoveIndex] = new PokemonMove(copiedMove.id);
 
     globalScene.phaseManager.queueMessage(
       i18next.t("moveTriggers:copiedMove", { pokemonName: getPokemonNameWithAffix(user), moveName: copiedMove.name }),
@@ -8458,11 +8459,6 @@ export class AbilityChangeAttr extends MoveEffectAttr {
     const moveTarget = this.selfTarget ? user : target;
 
     globalScene.triggerPokemonFormChange(moveTarget, SpeciesFormChangeRevertWeatherFormTrigger);
-    if (moveTarget.breakIllusion()) {
-      globalScene.phaseManager.queueMessage(
-        i18next.t("abilityTriggers:illusionBreak", { pokemonName: getPokemonNameWithAffix(moveTarget) }),
-      );
-    }
     globalScene.phaseManager.queueMessage(
       i18next.t("moveTriggers:acquiredAbility", {
         pokemonName: getPokemonNameWithAffix(moveTarget),

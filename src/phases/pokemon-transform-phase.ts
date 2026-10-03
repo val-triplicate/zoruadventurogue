@@ -7,6 +7,7 @@ import { MoveId } from "#enums/move-id";
 import { BATTLE_STATS, EFFECTIVE_STATS } from "#enums/stat";
 import { PokemonMove } from "#moves/pokemon-move";
 import { PokemonPhase } from "#phases/pokemon-phase";
+import { toCurrentMoves } from "#types/save-data";
 import i18next from "i18next";
 
 /**
@@ -51,14 +52,16 @@ export class PokemonTransformPhase extends PokemonPhase {
       user.setStatStage(s, target.getStatStage(s));
     }
 
-    user.summonData.moveset = target.getMoveset().map(m => {
-      if (m) {
-        // If PP value is less than 5, do nothing. If greater, we need to reduce the value to 5.
-        return new PokemonMove(m.moveId, 0, 0, Math.min(m.getMove().pp, 5));
-      }
-      console.warn(`Transform: somehow iterating over a ${m} value when copying moveset!`);
-      return new PokemonMove(MoveId.NONE);
-    });
+    user.summonData.moves = toCurrentMoves(
+      target.getMoveset().map(m => {
+        if (m) {
+          // If PP value is less than 5, do nothing. If greater, we need to reduce the value to 5.
+          return new PokemonMove(m.moveId, 0, 0, Math.min(m.getMove().pp, 5));
+        }
+        console.warn(`Transform: somehow iterating over a ${m} value when copying moveset!`);
+        return new PokemonMove(MoveId.NONE);
+      }),
+    );
 
     // TODO: This should fallback to the target's original typing if none are left (from Burn Up, etc.)
     user.summonData.types = target.getTypes({ includeTeraType: false });

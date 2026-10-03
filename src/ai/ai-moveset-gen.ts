@@ -9,7 +9,7 @@
 import { EVOLVE_MOVE, RELEARN_MOVE } from "#app/constants";
 import { globalScene } from "#app/global-scene";
 import { speciesDataRegistry } from "#app/global-species-data-registry";
-import { teamMemberMoveOptions } from "#balance/egg-moves";
+import { characterMovePools } from "#balance/egg-moves";
 import { FORBIDDEN_SINGLES_MOVES, FORBIDDEN_TM_MOVES, LEVEL_BASED_DENYLIST } from "#balance/forbidden-moves";
 import {
   BASE_LEVEL_WEIGHT_OFFSET,
@@ -59,6 +59,7 @@ import { isWeatherInstantCharge } from "#moves/move-utils";
 import { PokemonMove } from "#moves/pokemon-move";
 import type { LevelMovesWithSource } from "#types/level-moves";
 import type { Move, StatStageChangeAttr } from "#types/move-types";
+import { blankCurrentMoves } from "#types/save-data";
 import type { StarterSpeciesId } from "#types/starter-species-id";
 import { NumberHolder, randSeedInt, randSeedItem } from "#utils/common";
 import { deepCopy } from "#utils/data";
@@ -264,7 +265,7 @@ function getEggPoolForSpecies(
   excludeRare: boolean,
   rareEggMoveWeight = 0,
 ): void {
-  const eggMoves = teamMemberMoveOptions[rootSpeciesId as Exclude<StarterSpeciesId, SpeciesId.PIKACHU>];
+  const eggMoves = characterMovePools[rootSpeciesId as Exclude<StarterSpeciesId, SpeciesId.PIKACHU>];
   if (eggMoves == null) {
     return;
   }
@@ -557,7 +558,7 @@ function addToMoveset(
     eggPool.delete(move);
     eggMoveCount.value++;
   }
-  pokemon.moveset.push(new PokemonMove(move));
+  pokemon.moves.push(new PokemonMove(move));
   return true;
 }
 
@@ -709,7 +710,7 @@ function getMoveType(move: MoveId | Move, pokemon: Pokemon, willTera: boolean): 
  */
 function getExistingDamageMoveTypes(pokemon: Pokemon, willTera: boolean): Set<PokemonType> {
   const existingMoveTypes = new Set<PokemonType>();
-  for (const mo of pokemon.moveset) {
+  for (const mo of pokemon.moves) {
     const move = mo.getMove();
     if (move.category !== MoveCategory.STATUS && !move.hasAttr("FixedDamageAttr")) {
       existingMoveTypes.add(getMoveType(move, pokemon, willTera));
@@ -771,7 +772,7 @@ function removeSelfStatBoost(pokemon: Pokemon, attr: StatStageChangeAttr | undef
   }
 
   // If any damging move matches the category, boost is not wasted.
-  for (const pokemonMove of pokemon.moveset) {
+  for (const pokemonMove of pokemon.moves) {
     const move = pokemonMove.getMove();
     if (doesMoveMatchOffensiveCategory(move, category)) {
       return false;
@@ -812,7 +813,7 @@ function shouldRemoveRainDance(pokemon: Pokemon): boolean {
     }
   }
 
-  for (const pokemonMove of pokemon.moveset) {
+  for (const pokemonMove of pokemon.moves) {
     const move = pokemonMove.getMove();
     if (isWeatherInstantCharge(move, WeatherType.RAIN)) {
       return false;
@@ -848,7 +849,7 @@ function shouldRemoveSunnyDay(pokemon: Pokemon): boolean {
 
   // Solar power depends on having a move that is specially boosted
   const hasSolarPower = pokemon.hasAbility(AbilityId.SOLAR_POWER, false, true);
-  for (const pokemonMove of pokemon.moveset) {
+  for (const pokemonMove of pokemon.moves) {
     const move = pokemonMove.getMove();
     if (
       move.hasAttr("WeatherBallTypeAttr")
@@ -889,7 +890,7 @@ function shouldRemoveSnowscapeHail(pokemon: Pokemon, willTera: boolean): boolean
       return false;
     }
   }
-  for (const pokemonMove of pokemon.moveset) {
+  for (const pokemonMove of pokemon.moves) {
     const move = pokemonMove.getMove();
     if (move.id === MoveId.AURORA_VEIL || isWeatherInstantCharge(move, WeatherType.SNOW)) {
       return false;
@@ -925,7 +926,7 @@ function shouldRemoveSandstorm(pokemon: Pokemon, willTera: boolean): boolean {
       return false;
     }
   }
-  for (const pokemonMove of pokemon.moveset) {
+  for (const pokemonMove of pokemon.moves) {
     const move = pokemonMove.getMove();
     if (isWeatherInstantCharge(move, WeatherType.SANDSTORM)) {
       return false;
@@ -941,7 +942,7 @@ function shouldRemoveSandstorm(pokemon: Pokemon, willTera: boolean): boolean {
  * @returns Whether the Pokémon has a sleep-inducing move in its moveset
  */
 function hasSleepInducingMove(pokemon: Pokemon, targetSelf = false): boolean {
-  for (const pokemonMove of pokemon.moveset) {
+  for (const pokemonMove of pokemon.moves) {
     const move = pokemonMove.getMove();
     if (
       move.is(targetSelf ? "SelfStatusMove" : "StatusMove")
@@ -965,7 +966,7 @@ function hasSleepInducingMove(pokemon: Pokemon, targetSelf = false): boolean {
  */
 function hasSunInstantCharge(pokemon: Pokemon): boolean {
   return (
-    pokemon.moveset.some(m => m.moveId === MoveId.SUNNY_DAY)
+    pokemon.moves.some(m => m.moveId === MoveId.SUNNY_DAY)
     || pokemon
       .getAbilityAttrs("PostSummonWeatherChangeAbAttr")
       .some(a => [WeatherType.SUNNY, WeatherType.HARSH_SUN].includes(a.weatherType))
@@ -989,7 +990,7 @@ function canInflictPoison(pokemon: Pokemon): boolean {
   // Has a move that can inflict poison
   const noSheerForce = !pokemon.hasAbility(AbilityId.SHEER_FORCE, false, true);
   if (
-    pokemon.moveset.some(m => {
+    pokemon.moves.some(m => {
       const move = m.getMove();
       return (
         // Hard coding baneful bunker; checking for battler tag is needlessly cumbersome
@@ -1013,7 +1014,7 @@ function canInflictPoison(pokemon: Pokemon): boolean {
 
   // Has ability that inflicts poison on attack (respecting contact requirements)
   const canMakeContact =
-    pokemon.moveset.some(m => m.getMove().hasFlag(MoveFlags.MAKES_CONTACT))
+    pokemon.moves.some(m => m.getMove().hasFlag(MoveFlags.MAKES_CONTACT))
     && !pokemon.hasAbilityWithAttr("IgnoreContactAbAttr");
   if (
     canMakeContact
@@ -1040,7 +1041,7 @@ function canInflictPoison(pokemon: Pokemon): boolean {
  */
 function filterUselessMoves(pokemon: Pokemon, willTera: boolean): boolean {
   let numWeatherMoves = 0;
-  const moveset = pokemon.moveset;
+  const moveset = pokemon.moves;
   for (let i = moveset.length - 1; i >= 0; i--) {
     const move = moveset[i].getMove();
     if (move.hasAttr("WeatherChangeAttr")) {
@@ -1098,7 +1099,7 @@ function filterRemainingTrainerMovePool(pool: [id: MoveId, weight: number][], po
   // Status moves remain unchanged on weight, pokemon encourages 1-2
 
   // TODO: Optimize this by adding the information as moves are added to the moveset rather than recalculating every time
-  const numDamageMoves = pokemon.moveset.filter(mo => (mo.getMove().power ?? 0) > 1).length;
+  const numDamageMoves = pokemon.moves.filter(mo => (mo.getMove().power ?? 0) > 1).length;
   const weightDenominator = Math.max(Math.pow(4, numDamageMoves) / 8, 0.5);
   const typesForStab = new Set(pokemon.getTypes());
   const willTera = willTerastallize(pokemon);
@@ -1153,12 +1154,12 @@ function fillInRemainingMovesetSlots(
   const tmCap = getMaxTmCount(pokemon.level);
   const eggCap = getMaxEggMoveCount(pokemon.level);
   const remainingPoolWeight = new NumberHolder(0);
-  while (pokemon.moveset.length < 4) {
+  while (pokemon.moves.length < 4) {
     const nonLevelMoveCount = tmCount.value + eggMoveCount.value;
     remainingPool = filterPool(
       baseWeights,
       (m: MoveId) =>
-        !pokemon.moveset.some(
+        !pokemon.moves.some(
           mo =>
             m === mo.moveId || (allMoves[m]?.hasAttr("SacrificialAttr") && mo.getMove()?.hasAttr("SacrificialAttr")), // Only one self-KO move allowed
         )
@@ -1189,7 +1190,7 @@ function fillInRemainingMovesetSlots(
       eggMoveCount.value++;
       eggMovePool.delete(selectedMoveId);
     }
-    pokemon.moveset.push(new PokemonMove(selectedMoveId));
+    pokemon.moves.push(new PokemonMove(selectedMoveId));
   }
 }
 
@@ -1218,7 +1219,7 @@ function debugMoveWeights(pokemon: Pokemon, pool: Map<MoveId, number>, note: str
  */
 export function generateMoveset(pokemon: Pokemon, forceRivalSignatures = false): void {
   globalScene.movesetGenInProgress = true;
-  pokemon.moveset = [];
+  pokemon.moves = blankCurrentMoves;
   const isBoss = pokemon.isBoss();
   // Step 1: Generate the pools from various sources: level up, egg moves, and TMs
   const learnPool = getAndWeightLevelMoves(pokemon);
@@ -1309,7 +1310,7 @@ export function generateMoveset(pokemon: Pokemon, forceRivalSignatures = false):
   // Should also tweak the function to skip the signature move forcing step
 
   // Step 5: Fill in remaining slots
-  const remainingPool = filterPool(baseWeights, (m: MoveId) => !pokemon.moveset.some(mo => m === mo.moveId));
+  const remainingPool = filterPool(baseWeights, (m: MoveId) => !pokemon.moves.some(mo => m === mo.moveId));
   do {
     fillInRemainingMovesetSlots(pokemon, tmPool, eggMovePool, tmCount, eggMoveCount, baseWeights, remainingPool);
   } while (remainingPool.length > 0 && filterUselessMoves(pokemon, willTera));

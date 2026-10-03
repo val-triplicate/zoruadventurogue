@@ -117,7 +117,7 @@ export class PokemonSummonData {
   public passiveAbility: AbilityId | undefined;
   public gender: Gender | undefined;
   public stats: number[] = [0, 0, 0, 0, 0, 0];
-  public moveset: CurrentMoves | null;
+  public moves: CurrentMoves | null;
 
   /**
    * An array containing any temporary {@link https://bulbapedia.bulbagarden.net/wiki/Type_change | typing overrides}
@@ -155,7 +155,7 @@ export class PokemonSummonData {
       }
 
       if (key === "moveset") {
-        this.moveset = value?.map((m: any) => PokemonMove.loadMove(m));
+        this.moves = value?.map((m: any) => PokemonMove.loadMove(m));
         continue;
       }
 

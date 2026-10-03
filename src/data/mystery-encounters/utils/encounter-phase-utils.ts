@@ -47,6 +47,7 @@ import type { TrainerConfig } from "#trainers/trainer-config";
 import { trainerConfigs } from "#trainers/trainer-config";
 import type { HeldModifierConfig } from "#types/held-modifier-config";
 import type { RandomEncounterParams } from "#types/pokemon-common";
+import { type MoveSet, toCurrentMoves } from "#types/save-data";
 import type { OptionSelectItem, OptionSelectModeConfig } from "#types/ui-types";
 import type { PartyOption, PokemonSelectFilter } from "#ui/party-ui-handler";
 import { coerceArray } from "#utils/array";
@@ -92,7 +93,7 @@ export interface EnemyPokemonConfig {
   level?: number;
   gender?: Gender;
   passive?: boolean;
-  moveSet?: MoveId[];
+  moveSet?: MoveSet;
   nature?: Nature;
   ivs?: [number, number, number, number, number, number];
   shiny?: boolean;
@@ -348,9 +349,9 @@ export async function initBattleWithEnemyConfig(partyConfig: EnemyPartyConfig): 
 
       // Set moves
       if (config.moveSet && config.moveSet.length > 0) {
-        const moves = config.moveSet.map(m => new PokemonMove(m));
-        enemyPokemon.moveset = moves;
-        enemyPokemon.summonData.moveset = moves;
+        const moves = toCurrentMoves(config.moveSet.map(m => new PokemonMove(m)));
+        enemyPokemon.moves = moves;
+        enemyPokemon.summonData.moves = moves;
       }
 
       // Set tags
