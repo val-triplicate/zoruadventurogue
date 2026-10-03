@@ -2268,7 +2268,7 @@ export class EvolutionItemModifier extends ConsumablePokemonModifier {
     const matchingEvolution = speciesDataRegistry.hasEvolutions(playerPokemon.species.speciesId)
       ? speciesDataRegistry
           .getEvolutions(playerPokemon.species.speciesId)
-          .find(e => e.item === this.type.evolutionItem && e.validate(playerPokemon, false, e.item))
+          .find(e => e.item === this.type.evolutionItem && e.validate(playerPokemon, e.item))
       : null;
 
     if (matchingEvolution) {

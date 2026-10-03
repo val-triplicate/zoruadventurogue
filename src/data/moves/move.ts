@@ -43,7 +43,6 @@ import { BattleType } from "#enums/battle-type";
 import { BattlerIndex } from "#enums/battler-index";
 import { BattlerTagType } from "#enums/battler-tag-type";
 import { BiomeId } from "#enums/biome-id";
-import { ChallengeType } from "#enums/challenge-type";
 import { Command } from "#enums/command";
 import { FieldPosition } from "#enums/field-position";
 import { HitResult } from "#enums/hit-result";
@@ -125,7 +124,6 @@ import type { StatStageChangePhaseOptions } from "#types/stat-change";
 import type { TurnMove } from "#types/turn-move";
 import type { AbstractConstructor } from "#types/type-helpers";
 import { coerceArray } from "#utils/array";
-import { applyChallenges } from "#utils/challenge-utils";
 import {
   BooleanHolder,
   isBetween,
@@ -5687,10 +5685,7 @@ export class FormChangeItemTypeAttr extends VariableMoveTypeAttr {
     }
 
     if (user.hasSpecies(SpeciesId.ARCEUS) || user.hasSpecies(SpeciesId.SILVALLY)) {
-      const form =
-        user.species.speciesId === SpeciesId.ARCEUS || user.species.speciesId === SpeciesId.SILVALLY
-          ? user.formIndex
-          : user.fusionSpecies!.formIndex;
+      const form = user.formIndex;
       if (form >= 0 && form <= MAX_POKEMON_TYPE && form !== PokemonType.STELLAR) {
         moveType.value = form;
         return true;
@@ -5727,8 +5722,8 @@ export class TechnoBlastTypeAttr extends VariableMoveTypeAttr {
       return false;
     }
 
-    if ([user.species.speciesId, user.fusionSpecies?.speciesId].includes(SpeciesId.GENESECT)) {
-      const form = user.species.speciesId === SpeciesId.GENESECT ? user.formIndex : user.fusionSpecies?.formIndex;
+    if ([user.species.speciesId].includes(SpeciesId.GENESECT)) {
+      const form = user.formIndex;
 
       switch (form) {
         case 1: // Shock Drive
@@ -5772,8 +5767,8 @@ export class AuraWheelTypeAttr extends VariableMoveTypeAttr {
       return false;
     }
 
-    if ([user.species.speciesId, user.fusionSpecies?.speciesId].includes(SpeciesId.MORPEKO)) {
-      const form = user.species.speciesId === SpeciesId.MORPEKO ? user.formIndex : user.fusionSpecies?.formIndex;
+    if ([user.species.speciesId].includes(SpeciesId.MORPEKO)) {
+      const form = user.formIndex;
 
       switch (form) {
         case 1: // Hangry Mode
@@ -5807,8 +5802,8 @@ export class RagingBullTypeAttr extends VariableMoveTypeAttr {
       return false;
     }
 
-    if ([user.species.speciesId, user.fusionSpecies?.speciesId].includes(SpeciesId.PALDEA_TAUROS)) {
-      const form = user.species.speciesId === SpeciesId.PALDEA_TAUROS ? user.formIndex : user.fusionSpecies?.formIndex;
+    if ([user.species.speciesId].includes(SpeciesId.PALDEA_TAUROS)) {
+      const form = user.formIndex;
 
       switch (form) {
         case 1: // Blaze breed
@@ -5846,8 +5841,8 @@ export class IvyCudgelTypeAttr extends VariableMoveTypeAttr {
       return false;
     }
 
-    if ([user.species.speciesId, user.fusionSpecies?.speciesId].includes(SpeciesId.OGERPON)) {
-      const form = user.species.speciesId === SpeciesId.OGERPON ? user.formIndex : user.fusionSpecies?.formIndex;
+    if ([user.species.speciesId].includes(SpeciesId.OGERPON)) {
+      const form = user.formIndex;
 
       switch (form) {
         case 1: // Wellspring Mask
@@ -8042,7 +8037,6 @@ abstract class CallMoveAttrWithBanlist extends CallMoveAttr {
     const valid = new BooleanHolder(
       move !== MoveId.NONE && !this.invalidMoves.has(move) && !allMoves[move].isUnimplemented,
     );
-    applyChallenges(ChallengeType.POKEMON_MOVE, move, valid);
     return valid.value;
   }
 

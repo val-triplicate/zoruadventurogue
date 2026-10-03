@@ -1105,7 +1105,7 @@ export class EvolutionItemModifierType extends PokemonModifierType implements Ge
           speciesDataRegistry.hasEvolutions(pokemon.species.speciesId)
           && speciesDataRegistry
             .getEvolutions(pokemon.species.speciesId)
-            .filter(e => e.validate(pokemon, false, this.evolutionItem)).length > 0
+            .filter(e => e.validate(pokemon, this.evolutionItem)).length > 0
           && pokemon.getFormKey() !== SpeciesFormKey.GIGANTAMAX
         ) {
           return null;

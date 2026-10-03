@@ -5,11 +5,9 @@
  */
 
 import { allMoves } from "#data/data-lists";
-import { ChallengeType } from "#enums/challenge-type";
 import { MoveId } from "#enums/move-id";
 import type { Pokemon } from "#field/pokemon";
 import type { Move } from "#moves/move";
-import { applyChallenges } from "#utils/challenge-utils";
 import { BooleanHolder, toDmgValue } from "#utils/common";
 import i18next from "i18next";
 
@@ -75,7 +73,7 @@ export class PokemonMove {
     }
 
     const usability = new BooleanHolder(true);
-    if (pokemon.isPlayer() && applyChallenges(ChallengeType.POKEMON_MOVE, this.moveId, usability) && !usability.value) {
+    if (pokemon.isPlayer() && !usability.value) {
       return [false, i18next.t("battle:moveCannotUseChallenge", { moveName: move.name })];
     }
 

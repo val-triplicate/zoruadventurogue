@@ -6,7 +6,6 @@ import { type Gender, getGenderSymbol } from "#data/gender";
 import type { BiomeId } from "#enums/biome-id";
 import { MoveId } from "#enums/move-id";
 import type { Nature } from "#enums/nature";
-import { PokeballType } from "#enums/pokeball";
 import type { PokemonType } from "#enums/pokemon-type";
 import type { SpeciesId } from "#enums/species-id";
 import { TimeOfDay } from "#enums/time-of-day";
@@ -168,7 +167,7 @@ export class SpeciesEvolutionCondition {
     return this.desc;
   }
 
-  public conditionsFulfilled(pokemon: Pokemon, forFusion = false): boolean {
+  public conditionsFulfilled(pokemon: Pokemon): boolean {
     return this.data.every(cond => {
       switch (cond.key) {
         case EvoCondKey.FRIENDSHIP:
@@ -192,7 +191,7 @@ export class SpeciesEvolutionCondition {
               m => m.is("EvoTrackerModifier") && m.getStackCount() + pokemon.getPersistentTreasureCount() >= cond.value,
             );
         case EvoCondKey.GENDER:
-          return cond.gender === (forFusion ? pokemon.fusionGender : pokemon.gender);
+          return cond.gender === pokemon.gender;
         case EvoCondKey.SHEDINJA: // Shedinja cannot be evolved into directly
           return false;
         case EvoCondKey.BIOME:
@@ -229,7 +228,7 @@ export class SpeciesEvolutionCondition {
 }
 
 export function validateShedinjaEvo(): boolean {
-  return globalScene.getPlayerParty().length < 6 && globalScene.pokeballCounts[PokeballType.POKEBALL] > 0;
+  return false;
 }
 
 interface SpeciesFormEvolutionConstructor {
@@ -320,14 +319,13 @@ export class SpeciesFormEvolution {
    * @param item - (Default `EvolutionItem.NONE`) The {@linkcode EvolutionItem} to check for, if applicable
    * @returns Whether this evolution can apply to the Pokemon
    */
-  public validate(pokemon: Pokemon, forFusion = false, item: EvolutionItem = EvolutionItem.NONE): boolean {
-    const correctForm =
-      this.preFormKey == null || (forFusion ? pokemon.getFusionFormKey() : pokemon.getFormKey()) === this.preFormKey;
+  public validate(pokemon: Pokemon, item: EvolutionItem = EvolutionItem.NONE): boolean {
+    const correctForm = this.preFormKey == null || pokemon.getFormKey() === this.preFormKey;
 
     return (
       pokemon.level >= this.level
       && correctForm
-      && (this.condition == null || this.condition.conditionsFulfilled(pokemon, forFusion))
+      && (this.condition == null || this.condition.conditionsFulfilled(pokemon))
       && item === this.item
     );
   }
@@ -338,9 +336,8 @@ export class SpeciesFormEvolution {
    * @param forFusion - (Default `false`) Whether this evolution is meant for the secondary fused mon.
    * @returns Whether this evolution uses an item and can apply to the Pokemon
    */
-  public isValidItemEvolution(pokemon: Pokemon, forFusion = false): boolean {
-    const correctForm =
-      this.preFormKey == null || (forFusion ? pokemon.getFusionFormKey() : pokemon.getFormKey()) === this.preFormKey;
+  public isValidItemEvolution(pokemon: Pokemon): boolean {
+    const correctForm = this.preFormKey == null || pokemon.getFormKey() === this.preFormKey;
 
     return (
       !!this.item
