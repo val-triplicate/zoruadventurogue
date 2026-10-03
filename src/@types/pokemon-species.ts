@@ -10,7 +10,7 @@ import type { Origin } from "#enums/origin";
 import type { SpeciesId } from "#enums/species-id";
 import type { TeamId } from "#enums/team-id";
 import type { LevelMoves } from "./level-moves";
-import type { MovePool } from "./save-data";
+import type { CharacterPreference, MovePool } from "./save-data";
 import type { StarterSpeciesId } from "./starter-species-id";
 
 /**
@@ -74,6 +74,7 @@ export interface CharacterIdentity {
 
 export type SpeciesDataMap = Record<SpeciesId, PokemonSpeciesData>;
 export type CharacterDataMap = Record<CharacterId, Character>;
+export type PreferenceDataMap = Record<CharacterId, CharacterPreference>;
 export type TeamDataMap = Record<TeamId, Team>;
 
 /**

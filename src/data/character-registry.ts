@@ -3,12 +3,13 @@ import { globalScene } from "#app/global-scene";
 import { speciesDataRegistry } from "#app/global-species-data-registry";
 import { initTeamMembers } from "#balance/custom-characters";
 import type { CharacterId } from "#enums/character-id";
-import type { Character, CharacterDataMap } from "#types/pokemon-species";
-import type { TeamSaveDataEntry } from "#types/save-data";
+import type { Character, CharacterDataMap, PreferenceDataMap } from "#types/pokemon-species";
+import type { CharacterPreference, TeamSaveDataEntry } from "#types/save-data";
 import type { PokemonSpecies, PokemonSpeciesForm } from "./pokemon-species";
 
 export class CharacterRegistry {
   private readonly _data: CharacterDataMap;
+  private readonly _preference_data: PreferenceDataMap;
 
   get data(): CharacterDataMap {
     return this._data;
@@ -46,8 +47,12 @@ export class CharacterRegistry {
   public getSaveData(id: CharacterId): TeamSaveDataEntry {
     return globalScene.gameData.teamSaveData[id];
   }
+
+  public getPreferences(id: CharacterId): CharacterPreference {
+    return this._preference_data[id];
+  }
 }
 
-export function initTeamMemberDataRegistry(): void {
+export function initCharacterRegistry(): void {
   setCharacterRegistry(new CharacterRegistry());
 }

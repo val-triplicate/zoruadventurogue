@@ -39,6 +39,7 @@ import { getTypeRgb } from "#data/type";
 import { BattleType } from "#enums/battle-type";
 import { BattlerTagType } from "#enums/battler-tag-type";
 import { BiomeId } from "#enums/biome-id";
+import type { CharacterId } from "#enums/character-id";
 import { FormChangeItem } from "#enums/form-change-item";
 import { ModifierPoolType } from "#enums/modifier-pool-type";
 import { MoveId } from "#enums/move-id";
@@ -811,6 +812,7 @@ export class BattleScene extends SceneBase {
 
   // biome-ignore lint/complexity/useMaxParams: will be fixed later
   addPlayerPokemon(
+    charId: CharacterId,
     species: PokemonSpecies,
     level: number,
     abilityIndex?: number,
@@ -823,6 +825,7 @@ export class BattleScene extends SceneBase {
     postProcess?: (playerPokemon: PlayerPokemon) => void,
   ): PlayerPokemon {
     const pokemon = new PlayerPokemon(
+      charId,
       species,
       level,
       abilityIndex,
@@ -953,24 +956,23 @@ export class BattleScene extends SceneBase {
     originX = 0.5,
     originY = 0.5,
     ignoreOverride = true,
-    useIllusion = false,
   ): Phaser.GameObjects.Container {
     const container = this.add //
       .container(x, y)
       .setName(`${pokemon.name}-icon`);
 
     const icon = this.add
-      .sprite(0, 0, pokemon.getIconAtlasKey(ignoreOverride, useIllusion))
+      .sprite(0, 0, pokemon.getIconAtlasKey(ignoreOverride))
       .setName(`sprite-${pokemon.name}-icon`)
-      .setFrame(pokemon.getIconId(ignoreOverride, useIllusion))
+      .setFrame(pokemon.getIconId(ignoreOverride))
       .setOrigin(0.5, 0);
     // Temporary fix to show pokemon's default icon if variant icon doesn't exist
-    if (icon.frame.name !== pokemon.getIconId(ignoreOverride, useIllusion)) {
+    if (icon.frame.name !== pokemon.getIconId(ignoreOverride)) {
       console.log(`${pokemon.name}'s variant icon does not exist. Replacing with default.`);
       const temp = pokemon.shiny;
       pokemon.shiny = false;
-      icon.setTexture(pokemon.getIconAtlasKey(ignoreOverride, useIllusion));
-      icon.setFrame(pokemon.getIconId(true, useIllusion));
+      icon.setTexture(pokemon.getIconAtlasKey(ignoreOverride));
+      icon.setFrame(pokemon.getIconId(true));
       pokemon.shiny = temp;
     }
     icon.setOrigin(0.5, 0);
@@ -3021,7 +3023,7 @@ export class BattleScene extends SceneBase {
               moveset: p.getMoveset(true).map(move => move.getName()),
               // the pokemon's temporary moveset, e.g. from Transform
               // biome-ignore lint/style/useExplicitLengthCheck: doubles as a null check
-              tempMoveset: p.summonData.moveset?.length ? p.getMoveset().map(move => move.getName()) : [],
+              tempMoveset: p.summonData.moves?.length ? p.getMoveset().map(move => move.getName()) : [],
               // the pokemon's actual ability
               ability: p.getAbility(true).name,
               // the pokemon's temporary ability, e.g. from Transform or Skill Swap
