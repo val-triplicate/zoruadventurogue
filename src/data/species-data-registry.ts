@@ -1,4 +1,3 @@
-import { defaultStarterSpecies } from "#app/constants";
 import { setSpeciesDataRegistry } from "#app/global-species-data-registry";
 import { teamMemberDataRegistry } from "#app/global-team-member-data-registry";
 import { initGenerationOne } from "#balance/generation-01";
@@ -267,14 +266,6 @@ export class SpeciesDataRegistry {
       }
     }
     return ret;
-  }
-
-  /**
-   * Get the default starters and their evolution lines (e.g. the Bulbasaur line, etc)
-   * @returns An array of {@linkcode SpeciesId}s
-   */
-  public getDefaultStartersAndEvolutions(): SpeciesId[] {
-    return defaultStarterSpecies.flatMap(sId => [sId, ...this.getEvolutionChain(sId)]);
   }
 
   /**

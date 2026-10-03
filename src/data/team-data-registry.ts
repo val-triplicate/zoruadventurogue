@@ -1,6 +1,7 @@
 import { setTeamDataRegistry } from "#app/global-team-data-registry";
 import { initTeams } from "#balance/custom-teams";
 import type { TeamId } from "#enums/team-id";
+import type { TeamMemberId } from "#enums/team-member-id";
 import type { TeamData, TeamDataMap } from "#types/pokemon-species";
 
 /**
@@ -23,6 +24,18 @@ export class TeamDataRegistry {
 
   public getTeam(id: TeamId): TeamData {
     return this._data[id];
+  }
+
+  public getTeamOf(teamMemberId: TeamMemberId): TeamData | undefined {
+    for (const team of this.getAllTeams()) {
+      if (team.leader === teamMemberId || team.follower === teamMemberId) {
+        return team;
+      }
+    }
+  }
+
+  public getTeamIdOf(teamMemberId: TeamMemberId): TeamId | undefined {
+    return this.getTeamOf(teamMemberId)?.teamId;
   }
 }
 

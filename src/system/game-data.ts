@@ -1,6 +1,6 @@
 import { pokerogueApi } from "#api/api";
 import { clientSessionId, getSessionDataLocalStorageKey, loggedInUser, updateUserInfo } from "#app/account";
-import { defaultStarterSpecies, defaultTeams, saveKey } from "#app/constants";
+import { defaultTeams, saveKey } from "#app/constants";
 import { audioManager } from "#app/global-audio-manager";
 import { globalScene } from "#app/global-scene";
 import { settings } from "#app/global-settings-manager";
@@ -17,12 +17,11 @@ import { allMoves } from "#data/data-lists";
 import { Gender } from "#data/gender";
 import type { PokemonSpecies } from "#data/pokemon-species";
 import { loadPositionalTag } from "#data/positional-tags/load-positional-tag";
-import { AbilityAttr } from "#enums/ability-attr";
 import { BattleType } from "#enums/battle-type";
 import type { Device } from "#enums/devices";
 import { DexAttr } from "#enums/dex-attr";
 import { GameDataType } from "#enums/game-data-type";
-import { Nature } from "#enums/nature";
+import type { Nature } from "#enums/nature";
 import { PlayerGender } from "#enums/player-gender";
 import { SpeciesId } from "#enums/species-id";
 import { StatusEffect } from "#enums/status-effect";
@@ -61,7 +60,7 @@ import type {
 } from "#types/save-data";
 import type { ConfirmModeConfig } from "#types/ui-types";
 import { RUN_HISTORY_LIMIT } from "#ui/run-history-ui-handler";
-import { fixedInt, randInt, randSeedItem } from "#utils/common";
+import { fixedInt, randInt } from "#utils/common";
 import { decrypt, encrypt, getDataTypeKey, isValidJSON } from "#utils/data";
 import { compareVersions } from "#utils/migrator-utils";
 import { toCamelCase } from "#utils/strings";
@@ -122,7 +121,7 @@ export class GameData {
     this.achvUnlocks = {};
     this.unlockPity = [0, 0, 0, 0];
     this.initDexData();
-    this.initStarterData();
+    this.initTeamMemberData();
   }
 
   public getSystemSaveData(): SystemSaveData {
@@ -168,10 +167,6 @@ export class GameData {
     let dataValidated = true;
 
     for (const speciesId of speciesDataRegistry.getAllStarters()) {
-      if (defaultStarterSpecies.includes(speciesId)) {
-        continue;
-      }
-
       const starterEntry = data.starterData[speciesId];
       const dexEntry = data.dexData[speciesId];
 
@@ -1433,32 +1428,6 @@ export class GameData {
       };
     }
 
-    const defaultStarterAttr =
-      DexAttr.NON_SHINY | DexAttr.MALE | DexAttr.FEMALE | DexAttr.DEFAULT_VARIANT | DexAttr.DEFAULT_FORM;
-
-    const defaultStarterNatures: Nature[] = [];
-
-    globalScene.executeWithSeedOffset(
-      () => {
-        const neutralNatures = [Nature.HARDY, Nature.DOCILE, Nature.SERIOUS, Nature.BASHFUL, Nature.QUIRKY];
-        for (const _ of defaultStarterSpecies) {
-          defaultStarterNatures.push(randSeedItem(neutralNatures));
-        }
-      },
-      0,
-      "default",
-    );
-
-    for (let ds = 0; ds < defaultStarterSpecies.length; ds++) {
-      const entry = data[defaultStarterSpecies[ds]] as DexEntry;
-      entry.seenAttr = defaultStarterAttr;
-      entry.caughtAttr = defaultStarterAttr;
-      entry.natureAttr = 1 << (defaultStarterNatures[ds] + 1);
-      for (const i in entry.ivs) {
-        entry.ivs[i] = 15;
-      }
-    }
-
     for (const teamId of defaultTeams) {
       teamData[teamId].isUnlocked = true;
     }
@@ -1467,24 +1436,21 @@ export class GameData {
     this.dexData = data;
   }
 
-  private initStarterData(): void {
-    const starterData: StarterData = {};
+  private initTeamMemberData(): void {
+    const teamSaveData: TeamSaveData = {};
 
-    const starterSpeciesIds = speciesDataRegistry.getAllStarters();
-    for (const speciesId of starterSpeciesIds) {
-      starterData[speciesId] = {
-        moveset: null,
-        eggMoves: 0,
-        candyCount: 0,
-        friendship: 0,
-        abilityAttr: defaultStarterSpecies.includes(speciesId) ? AbilityAttr.ABILITY_1 : 0,
-        passiveAttr: 0,
-        valueReduction: 0,
-        classicWinCount: 0,
+    const teamMemberIds = teamMemberDataRegistry.getAllTeamMemberIds();
+    for (const teamMemberId of teamMemberIds) {
+      const teamId = teamDataRegistry.getTeamIdOf(teamMemberId);
+      teamSaveData[teamMemberId] = {
+        unlocked: (teamId && defaultTeams.includes(teamId)) || false,
+        boss1WinCount: 0,
+        boss2WinCount: 0,
+        boss3WinCount: 0,
       };
     }
 
-    this.starterData = starterData;
+    this.teamSaveData = teamSaveData;
   }
 
   setPokemonSeen(pokemon: Pokemon, incrementCount = true, trainer = false): void {
