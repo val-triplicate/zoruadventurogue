@@ -10,6 +10,7 @@ import type { Origin } from "#enums/origin";
 import type { SpeciesId } from "#enums/species-id";
 import type { TeamId } from "#enums/team-id";
 import type { LevelMoves } from "./level-moves";
+import type { MovePool } from "./save-data";
 import type { StarterSpeciesId } from "./starter-species-id";
 
 /**
@@ -59,11 +60,9 @@ export interface Character {
   id: CharacterId;
   identity?: CharacterIdentity | undefined;
   speciesId: SpeciesId;
-  moves: LearnableMoves;
+  movePool: MovePool;
   abilities: { first?: AbilityId; second?: AbilityId; hidden?: AbilityId; passive?: AbilityId };
 }
-
-export type LearnableMoves = [MoveId, MoveId, MoveId, MoveId, MoveId, MoveId, MoveId, MoveId];
 
 export interface CharacterIdentity {
   name?: string | undefined;

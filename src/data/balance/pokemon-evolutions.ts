@@ -175,9 +175,9 @@ export class SpeciesEvolutionCondition {
         case EvoCondKey.TIME:
           return cond.time.includes(globalScene.arena.getTimeOfDay());
         case EvoCondKey.MOVE:
-          return pokemon.moveset.some(m => m.moveId === cond.move);
+          return pokemon.moves.some(m => m.moveId === cond.move);
         case EvoCondKey.MOVE_TYPE:
-          return pokemon.moveset.some(m => m.getMove().type === cond.pkmnType);
+          return pokemon.moves.some(m => m.getMove().type === cond.pkmnType);
         case EvoCondKey.PARTY_TYPE:
           return globalScene
             .getPlayerParty()

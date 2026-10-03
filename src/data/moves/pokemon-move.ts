@@ -30,6 +30,10 @@ export class PokemonMove {
   public ppUsed: number;
   public ppUp: number;
 
+  public static get blankMove(): PokemonMove {
+    return new PokemonMove(MoveId.NONE, 0, 0, 0);
+  }
+
   /**
    * If defined and nonzero, overrides the maximum PP of the move (e.g., due to move being copied by Transform).
    * This also nullifies all effects of `ppUp`.

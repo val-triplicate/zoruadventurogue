@@ -1,9 +1,9 @@
 import { Gender } from "#data/gender";
 import { CharacterId } from "#enums/character-id";
-import { MoveId } from "#enums/move-id";
 import { Nature } from "#enums/nature";
 import { SpeciesId } from "#enums/species-id";
-import type { CharacterDataMap, LearnableMoves } from "#types/pokemon-species";
+import type { CharacterDataMap } from "#types/pokemon-species";
+import { blankMovePool } from "#types/save-data";
 
 function addTeamMember(
   map: CharacterDataMap,
@@ -13,17 +13,13 @@ function addTeamMember(
   nature?: Nature,
   name?: string,
 ) {
-  const moves: LearnableMoves = [
-    MoveId.SPLASH,
-    MoveId.SPLASH,
-    MoveId.SPLASH,
-    MoveId.SPLASH,
-    MoveId.SPLASH,
-    MoveId.SPLASH,
-    MoveId.SPLASH,
-    MoveId.SPLASH,
-  ];
-  map[teamMemberId] = { id: teamMemberId, identity: { name, gender, nature }, speciesId, moves, abilities: {} };
+  map[teamMemberId] = {
+    id: teamMemberId,
+    identity: { name, gender, nature },
+    speciesId,
+    movePool: blankMovePool,
+    abilities: {},
+  };
 }
 
 export function initTeamMembers(): CharacterDataMap {

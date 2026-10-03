@@ -7,8 +7,6 @@ import { type BattlerTag, CritBoostTag, SemiInvulnerableTag } from "#data/battle
 import { getBerryEffectFunc } from "#data/berry";
 import { allAbilities, allMoves } from "#data/data-lists";
 import { SpeciesFormChangeAbilityTrigger, SpeciesFormChangeWeatherTrigger } from "#data/form-change-triggers";
-import { getPokeballName } from "#data/pokeball";
-import type { PokemonSpecies } from "#data/pokemon-species";
 import { getStatusEffectDescriptor, getStatusEffectHealText } from "#data/status-effect";
 import { TerrainType } from "#data/terrain";
 import type { Weather } from "#data/weather";
@@ -4449,28 +4447,6 @@ export class PostTurnHurtIfSleepingAbAttr extends PostTurnAbAttr {
   }
 }
 
-/**
- * Grabs the last failed Pokeball used
- * @sealed
- */
-export class FetchBallAbAttr extends PostTurnAbAttr {
-  override canApply({ simulated, pokemon }: AbAttrBaseParams): boolean {
-    return !simulated && globalScene.currentBattle.lastUsedPokeball != null && pokemon.isPlayer();
-  }
-
-  override apply({ pokemon }: AbAttrBaseParams): void {
-    const lastUsed = globalScene.currentBattle.lastUsedPokeball!;
-    globalScene.pokeballCounts[lastUsed]++;
-    globalScene.currentBattle.lastUsedPokeball = null;
-    globalScene.phaseManager.queueMessage(
-      i18next.t("abilityTriggers:fetchBall", {
-        pokemonNameWithAffix: getPokemonNameWithAffix(pokemon),
-        pokeballName: getPokeballName(lastUsed),
-      }),
-    );
-  }
-}
-
 // TODO: Remove this and just replace it with applying `PostSummonChangeTerrainAbAttr` again
 export class PostBiomeChangeAbAttr extends AbAttr {
   declare private readonly _: never;
@@ -5514,93 +5490,6 @@ export class PreSummonAbAttr extends AbAttr {
   }
 }
 
-/** @sealed */
-export class IllusionPreSummonAbAttr extends PreSummonAbAttr {
-  /**
-   * Apply a new illusion when summoning Zoroark if the illusion is available
-   *
-   * @param pokemon - The Pokémon with the Illusion ability.
-   */
-  override apply({ pokemon }: AbAttrBaseParams): void {
-    const party: Pokemon[] = (pokemon.isPlayer() ? globalScene.getPlayerParty() : globalScene.getEnemyParty()).filter(
-      p => p.isAllowedInBattle(),
-    );
-    let illusionPokemon: Pokemon | PokemonSpecies;
-    if (pokemon.hasTrainer()) {
-      illusionPokemon = party.filter(p => p !== pokemon).at(-1) || pokemon;
-    } else {
-      illusionPokemon = globalScene.arena.randomSpecies(globalScene.currentBattle.waveIndex, pokemon.level);
-    }
-    pokemon.setIllusion(illusionPokemon);
-  }
-
-  /** @returns Whether the illusion can be applied. */
-  override canApply({ pokemon }: AbAttrBaseParams): boolean {
-    if (pokemon.hasTrainer()) {
-      const party: Pokemon[] = (pokemon.isPlayer() ? globalScene.getPlayerParty() : globalScene.getEnemyParty()).filter(
-        p => p.isAllowedInBattle(),
-      );
-      const lastPokemon: Pokemon = party.filter(p => p !== pokemon).at(-1) || pokemon;
-      const speciesId = lastPokemon.species.speciesId;
-
-      // If the last conscious Pokémon in the party is a Terastallized Ogerpon or Terapagos, Illusion will not activate.
-      // Illusion will also not activate if the Pokémon with Illusion is Terastallized and the last Pokémon in the party is Ogerpon or Terapagos.
-      if (
-        lastPokemon === pokemon
-        || ((speciesId === SpeciesId.OGERPON || speciesId === SpeciesId.TERAPAGOS)
-          && (lastPokemon.isTerastallized || pokemon.isTerastallized))
-      ) {
-        return false;
-      }
-    }
-    return pokemon.summonData.illusion != null;
-  }
-}
-
-/** @sealed */
-export class IllusionBreakAbAttr extends AbAttr {
-  declare private readonly _: never;
-  // TODO: Consider adding a `canApply` method that checks if the pokemon has an active illusion
-  override apply({ pokemon }: AbAttrBaseParams): void {
-    pokemon.breakIllusion();
-  }
-}
-
-/** @sealed */
-export class PostDefendIllusionBreakAbAttr extends PostDefendAbAttr {
-  override apply({ pokemon }: PostMoveInteractionAbAttrParams): void {
-    pokemon.breakIllusion();
-  }
-
-  override canApply({ pokemon, hitResult }: PostMoveInteractionAbAttrParams): boolean {
-    // TODO: I remember this or a derivative being declared elsewhere - merge the 2 into 1
-    // and store it somewhere globally accessible
-    const damagingHitResults: ReadonlySet<HitResult> = new Set([
-      HitResult.EFFECTIVE,
-      HitResult.EXTREMELY_EFFECTIVE,
-      HitResult.SUPER_EFFECTIVE,
-      HitResult.NOT_VERY_EFFECTIVE,
-      HitResult.MOSTLY_INEFFECTIVE,
-      HitResult.ONE_HIT_KO,
-    ]);
-    return damagingHitResults.has(hitResult) && pokemon.summonData.illusion != null;
-  }
-}
-
-export class IllusionPostBattleAbAttr extends PostBattleAbAttr {
-  /**
-   * Break the illusion once the battle ends
-   *
-   * @param pokemon - The Pokémon with the Illusion ability.
-   * @param _passive - Unused
-   * @param _args - Unused
-   * @returns - Whether the illusion was applied.
-   */
-  override apply({ pokemon }: PostBattleAbAttrParams): void {
-    pokemon.breakIllusion();
-  }
-}
-
 /**
  * If a Pokémon with this Ability selects a damaging move, it has a 30% chance of going first in its priority bracket. If the Ability activates, this is announced at the start of the turn (after move selection).
  * @sealed
@@ -6164,7 +6053,6 @@ export const AbilityAttrs = Object.freeze({
   DownloadAbAttr,
   EffectSporeAbAttr,
   ExecutedMoveAbAttr,
-  FetchBallAbAttr,
   FieldMovePowerBoostAbAttr,
   FieldMoveTypePowerBoostAbAttr,
   FieldMultiplyStatAbAttr,
@@ -6185,9 +6073,6 @@ export const AbilityAttrs = Object.freeze({
   IgnoreProtectOnContactAbAttr,
   IgnoreTypeImmunityAbAttr,
   IgnoreTypeStatusEffectImmunityAbAttr,
-  IllusionBreakAbAttr,
-  IllusionPostBattleAbAttr,
-  IllusionPreSummonAbAttr,
   IncreasePpUsedAbAttr,
   InfiltratorAbAttr,
   IntimidateImmunityAbAttr,
@@ -6233,7 +6118,6 @@ export const AbilityAttrs = Object.freeze({
   PostDefendContactApplyTagChanceAbAttr,
   PostDefendContactDamageAbAttr,
   PostDefendHpGatedStatStageChangeAbAttr,
-  PostDefendIllusionBreakAbAttr,
   PostDefendMoveDisableAbAttr,
   PostDefendPerishSongAbAttr,
   PostDefendStatStageChangeAbAttr,

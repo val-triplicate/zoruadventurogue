@@ -1,6 +1,5 @@
 import type { MoveCategory } from "#enums/move-category";
 import type { Pokemon } from "#field/pokemon";
-import type { IllusionData } from "#types/illusion-data";
 import type { Move, MoveTypeChartOverrideAttr } from "#types/move-types";
 
 /**
@@ -68,9 +67,4 @@ export interface GetAttackTypeEffectivenessParams {
    * Used for applying {@linkcode MoveTypeChartOverrideAttr}.
    */
   move?: Move;
-  /**
-   * Whether to consider this Pokemon's {@linkcode IllusionData | illusion} when determining types.
-   * @defaultValue `false`
-   */
-  useIllusion?: boolean;
 }

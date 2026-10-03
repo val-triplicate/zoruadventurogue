@@ -1,15 +1,17 @@
 import type { PokeballCounts } from "#app/battle-scene";
+import { characterRegistry } from "#app/global-character-data-registry";
 import type { Tutorial } from "#app/tutorial";
-import type { Gender } from "#data/gender";
+import { Gender } from "#data/gender";
 import type { BattleType } from "#enums/battle-type";
 import type { CharacterId } from "#enums/character-id";
 import type { GameModes } from "#enums/game-modes";
-import type { MoveId } from "#enums/move-id";
+import { MoveId } from "#enums/move-id";
 import type { MysteryEncounterType } from "#enums/mystery-encounter-type";
-import type { Nature } from "#enums/nature";
+import { Nature } from "#enums/nature";
 import type { PlayerGender } from "#enums/player-gender";
 import type { PokemonType } from "#enums/pokemon-type";
 import type { SpeciesId } from "#enums/species-id";
+import { PokemonMove } from "#moves/pokemon-move";
 import type { MysteryEncounterSaveData } from "#mystery-encounters/mystery-encounter-save-data";
 import type { Variant } from "#sprites/variant";
 import type { ArenaData } from "#system/arena-data";
@@ -17,6 +19,7 @@ import type { GameStats } from "#system/game-stats";
 import type { ModifierData } from "#system/modifier-data";
 import type { PokemonData } from "#system/pokemon-data";
 import type { TrainerData } from "#system/trainer-data";
+import { getDefaultIconProps } from "#ui/starter-select-ui-utils";
 
 export type AppliedMigrators = { [key: string]: number };
 
@@ -74,22 +77,97 @@ export interface AchvUnlocks {
   [key: string]: number;
 }
 
-export type SelectedMoves = [MoveId, MoveId, MoveId, MoveId];
+export type MovePool = [MoveId, MoveId, MoveId, MoveId, MoveId, MoveId, MoveId, MoveId];
+export type MoveSet = [MoveId, MoveId, MoveId, MoveId];
+export type CurrentMoves = [PokemonMove, PokemonMove, PokemonMove, PokemonMove];
 
-/** The team member's current attributes (such as selected nature, nickname, etc). */
-export interface CharacterPreferences {
+export function toMovePool(ids: MoveId[]): MovePool {
+  return [
+    ids[0] || MoveId.NONE,
+    ids[1] || MoveId.NONE,
+    ids[2] || MoveId.NONE,
+    ids[3] || MoveId.NONE,
+    ids[4] || MoveId.NONE,
+    ids[5] || MoveId.NONE,
+    ids[6] || MoveId.NONE,
+    ids[7] || MoveId.NONE,
+  ];
+}
+
+export function toSelectedMoves(ids: MoveId[]): MoveSet {
+  return [ids[0] || MoveId.NONE, ids[1] || MoveId.NONE, ids[2] || MoveId.NONE, ids[3] || MoveId.NONE];
+}
+
+export function toCurrentMoves(ids: PokemonMove[]): CurrentMoves {
+  return [
+    ids[0] || PokemonMove.blankMove,
+    ids[1] || PokemonMove.blankMove,
+    ids[2] || PokemonMove.blankMove,
+    ids[3] || PokemonMove.blankMove,
+  ];
+}
+
+export const blankMovePool: MovePool = [
+  MoveId.NONE,
+  MoveId.NONE,
+  MoveId.NONE,
+  MoveId.NONE,
+  MoveId.NONE,
+  MoveId.NONE,
+  MoveId.NONE,
+  MoveId.NONE,
+];
+export const blankSelectedMoves: MoveSet = [MoveId.NONE, MoveId.NONE, MoveId.NONE, MoveId.NONE];
+export const blankCurrentMoves: CurrentMoves = [
+  PokemonMove.blankMove,
+  PokemonMove.blankMove,
+  PokemonMove.blankMove,
+  PokemonMove.blankMove,
+];
+
+export interface CharacterPreferenceSelections {
   abilityIndex?: number | undefined;
+  passive?: boolean | undefined;
   favorite?: boolean | undefined;
-  gender?: Gender;
+  gender?: Gender | undefined;
   formIndex?: number | undefined;
   nature?: number | undefined;
   nickname?: string | undefined;
   shiny?: boolean | undefined;
   tera?: PokemonType | undefined;
   variant?: Variant | undefined;
+  selectedMoves?: MoveSet | undefined;
 }
 
-export type AllTeamMemberPreferences = Partial<Record<CharacterId, CharacterPreferences | undefined>>;
+export class CharacterPreference {
+  abilityIndex: number;
+  passive: boolean;
+  favorite: boolean;
+  gender: Gender;
+  formIndex: number;
+  nature: number;
+  nickname?: string | undefined;
+  shiny: boolean;
+  tera: PokemonType;
+  variant: Variant;
+  selectedMoves: MoveSet;
+  unselectedMoves: MoveSet;
+
+  constructor(id: CharacterId, selections: CharacterPreferenceSelections) {
+    const char = characterRegistry.getCharacter(id);
+    const defaults = getDefaultIconProps(id);
+    this.abilityIndex = selections.formIndex || 0;
+    this.passive = selections.passive || false;
+    this.favorite = selections.favorite || false;
+    this.gender = selections.gender ?? char.identity?.gender ?? Gender.GENDERLESS;
+    this.nature = selections.nature ?? char.identity?.nature ?? Nature.DOCILE;
+    this.shiny = selections.shiny ?? defaults.shiny;
+    this.variant = selections.variant ?? defaults.variant;
+    this.formIndex = selections.formIndex ?? defaults.formIndex;
+  }
+}
+
+export type AllPreferences = Record<CharacterId, CharacterPreference>;
 
 export interface IconProps {
   shiny: boolean;
@@ -107,7 +185,7 @@ export interface Starter {
   abilityIndex: number;
   passive: boolean;
   nature: Nature;
-  moveset?: SelectedMoves | undefined;
+  moveset?: MoveSet | undefined;
   pokerus: boolean;
   nickname?: string | undefined;
   teraType?: PokemonType | undefined;
@@ -136,7 +214,7 @@ export interface TeamSaveData {
 }
 
 export interface CharPreferenceData {
-  [key: number]: CharacterPreferences;
+  [key: number]: CharacterPreferenceSelections;
 }
 
 // TODO: Rework into a bitmask

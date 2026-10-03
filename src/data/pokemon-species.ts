@@ -5,7 +5,6 @@ import { globalScene } from "#app/global-scene";
 import { settings } from "#app/global-settings-manager";
 import { speciesDataRegistry } from "#app/global-species-data-registry";
 import type { AnySound } from "#audio/audio-manager";
-import { teamMemberMoveOptions } from "#balance/egg-moves";
 import type { GrowthRate } from "#data/exp";
 import { Gender } from "#data/gender";
 import { AbilityId } from "#enums/ability-id";
@@ -24,7 +23,6 @@ import type { Variant, VariantSet } from "#sprites/variant";
 import { populateVariantColorCache, variantColorCache, variantData } from "#sprites/variant";
 import type { LevelMoves } from "#types/level-moves";
 import type { Localizable } from "#types/locales";
-import type { SelectedMoves } from "#types/save-data";
 import type { EvolutionLevel, EvolutionLevelWithThreshold } from "#types/species-gen-types";
 import { randSeedFloat } from "#utils/common";
 import { toCamelCase, toPascalCase } from "#utils/strings";
@@ -628,26 +626,6 @@ export abstract class PokemonSpeciesForm {
       }
     }
     return `cry/${ret}`;
-  }
-
-  validateStarterMoveset(moveset: SelectedMoves, eggMoves: number): boolean {
-    const rootSpeciesId = this.getRootSpeciesId();
-    for (const moveId of moveset) {
-      if (Object.hasOwn(teamMemberMoveOptions, rootSpeciesId)) {
-        // TODO: Review typing of `speciesEggMoves` - asserting `rootSpeciesId` is `keyof typeof speciesEggMoves` results in `never[]`
-        // due to incompatible tuple intersections
-        const eggMoveIndex = teamMemberMoveOptions[rootSpeciesId].indexOf(moveId);
-        if (eggMoveIndex > -1 && eggMoves & (1 << eggMoveIndex)) {
-          continue;
-        }
-      }
-      const levelMoves = this.getLevelMoves();
-      if (!levelMoves.some(([l, m]) => m === moveId && l <= 5)) {
-        return false;
-      }
-    }
-
-    return true;
   }
 
   /**

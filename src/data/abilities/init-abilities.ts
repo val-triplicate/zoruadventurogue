@@ -33,7 +33,6 @@ import {
   DoubleBerryEffectAbAttr,
   DownloadAbAttr,
   EffectSporeAbAttr,
-  FetchBallAbAttr,
   FieldMoveTypePowerBoostAbAttr,
   FieldMultiplyStatAbAttr,
   FieldPreventExplosiveMovesAbAttr,
@@ -1440,17 +1439,17 @@ export function initAbilities() {
       .build(),
     new AbBuilder(AbilityId.BATTLE_BOND, 7) //
       .conditionalAttr(
-        p => p.species.speciesId === SpeciesId.BATTLE_BOND_GRENINJA && !p.isFusion(),
+        p => p.species.speciesId === SpeciesId.BATTLE_BOND_GRENINJA,
         PostVictoryFormChangeAbAttr,
         () => 1,
       )
       .conditionalAttr(
-        p => p.species.speciesId === SpeciesId.BATTLE_BOND_GRENINJA && !p.isFusion(),
+        p => p.species.speciesId === SpeciesId.BATTLE_BOND_GRENINJA,
         PostBattleInitFormChangeAbAttr,
         () => 0,
       )
       .conditionalAttr(
-        p => p.species.speciesId === SpeciesId.BATTLE_BOND_GRENINJA && !p.isFusion(),
+        p => p.species.speciesId === SpeciesId.BATTLE_BOND_GRENINJA,
         PostFaintFormChangeAbAttr,
         () => 0,
       )
@@ -1649,10 +1648,7 @@ export function initAbilities() {
       // TODO: needs testing on interaction with weather blockage
       .edgeCase()
       .build(),
-    new AbBuilder(AbilityId.BALL_FETCH, 8) //
-      .attr(FetchBallAbAttr)
-      .condition(getOncePerBattleCondition(AbilityId.BALL_FETCH))
-      .build(),
+    new AbBuilder(AbilityId.BALL_FETCH, 8).unimplemented().build(),
     new AbBuilder(AbilityId.COTTON_DOWN, 8) //
       .attr(
         PostDefendStatStageChangeAbAttr,
@@ -2343,7 +2339,7 @@ export function initAbilities() {
  * @param ability The ability to check if it's already been applied
  * @returns The condition
  */
-function getOncePerBattleCondition(ability: AbilityId): AbAttrCondition {
+export function getOncePerBattleCondition(ability: AbilityId): AbAttrCondition {
   return (pokemon: Pokemon) => {
     return !pokemon.waveData.abilitiesApplied.has(ability);
   };
@@ -2364,7 +2360,7 @@ function getTerrainCondition(...terrainTypes: TerrainType[]): AbAttrCondition {
  */
 const anticipationCondition: AbAttrCondition = (pokemon: Pokemon) =>
   pokemon.getOpponents().some(opponent =>
-    opponent.moveset.some(movesetMove => {
+    opponent.moves.some(movesetMove => {
       const move = movesetMove.getMove();
       if (!move.is("AttackMove")) {
         return false;
@@ -2431,8 +2427,8 @@ const normalTypeMoveConversionCondition: PokemonAttackCondition = (user, target,
 /**
  * Condition function to applied to abilities related to Sheer Force.
  * Checks if last move used against target was affected by a Sheer Force user and:
- * Disables: Color Change, Pickpocket, Berserk, Anger Shell, Wimp Out, Emergency Exit
- * @returns An {@linkcode AbAttrCondition} to disable the ability under the proper conditions.
+ * Disables: Color Change, Pickpocket, Berserk, An    opponent.moveset.some(movesetMove => {
+turns An {@linkcode AbAttrCondition} to disable the ability under the proper conditions.
  */
 const sheerForceHitDisableAbCondition: AbAttrCondition = (pokemon: Pokemon): boolean => {
   const lastReceivedAttack = pokemon.turnData.attacksReceived[0];
