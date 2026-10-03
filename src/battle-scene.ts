@@ -125,7 +125,6 @@ import { ArenaFlyout } from "#ui/arena-flyout";
 import { CharSprite } from "#ui/char-sprite";
 import { PartyExpBar } from "#ui/party-exp-bar";
 import { PokeballTray } from "#ui/pokeball-tray";
-import { PokemonInfoContainer } from "#ui/pokemon-info-container";
 import { addTextObject, getTextColor, RAINBOW_TINT } from "#ui/text";
 import { UI } from "#ui/ui";
 import { addUiThemeOverrides, updateWindowType } from "#ui/ui-theme";
@@ -221,7 +220,6 @@ export class BattleScene extends SceneBase {
   public lastEnemyTrainer: Trainer | null;
   public currentBattle: Battle;
   public money: number;
-  public pokemonInfoContainer: PokemonInfoContainer;
   private party: PlayerPokemon[];
   /** Session save data that pertains to Mystery Encounters */
   public mysteryEncounterSaveData: MysteryEncounterSaveData = new MysteryEncounterSaveData();
@@ -540,8 +538,6 @@ export class BattleScene extends SceneBase {
       .setVisible(false);
 
     this.arenaFlyout = new ArenaFlyout();
-    this.pokemonInfoContainer = new PokemonInfoContainer(this.scaledCanvas.width + 52, -this.scaledCanvas.height + 66) //
-      .setup();
     this.updateUIPositions();
 
     this.damageNumberHandler = new DamageNumberHandler();
@@ -563,7 +559,6 @@ export class BattleScene extends SceneBase {
         this.luckText,
         this.luckLabelText,
         this.arenaFlyout,
-        this.pokemonInfoContainer,
       ])
       .moveBelow<Phaser.GameObjects.GameObject>(this.arenaFlyout, this.fieldOverlay);
 
@@ -823,7 +818,6 @@ export class BattleScene extends SceneBase {
     gender?: Gender,
     shiny?: boolean,
     variant?: Variant,
-    ivs?: number[],
     nature?: Nature,
     dataSource?: Pokemon | PokemonData,
     postProcess?: (playerPokemon: PlayerPokemon) => void,
@@ -836,7 +830,6 @@ export class BattleScene extends SceneBase {
       gender,
       shiny,
       variant,
-      ivs,
       nature,
       dataSource,
     );

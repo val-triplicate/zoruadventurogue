@@ -1,0 +1,53 @@
+import { setCharacterRegistry } from "#app/global-character-data-registry";
+import { globalScene } from "#app/global-scene";
+import { speciesDataRegistry } from "#app/global-species-data-registry";
+import { initTeamMembers } from "#balance/custom-characters";
+import type { CharacterId } from "#enums/character-id";
+import type { Character, CharacterDataMap } from "#types/pokemon-species";
+import type { TeamSaveDataEntry } from "#types/save-data";
+import type { PokemonSpecies, PokemonSpeciesForm } from "./pokemon-species";
+
+export class CharacterRegistry {
+  private readonly _data: CharacterDataMap;
+
+  get data(): CharacterDataMap {
+    return this._data;
+  }
+
+  constructor() {
+    this._data = Object.assign({} as CharacterDataMap, initTeamMembers());
+  }
+
+  public getAllCharacterIds(): CharacterId[] {
+    return this.getAllCharacters().flatMap(d => d.id);
+  }
+
+  public getAllCharacters(): Character[] {
+    return Object.values(this._data);
+  }
+
+  public getCharacter(id: CharacterId): Character {
+    return this._data[id];
+  }
+
+  public getName(id: CharacterId): string {
+    const teamMemberData = this.getCharacter(id);
+    return teamMemberData.identity?.name || this.getSpecies(id).name;
+  }
+
+  public getSpecies(id: CharacterId): PokemonSpecies {
+    return speciesDataRegistry.getSpecies(this._data[id].speciesId);
+  }
+
+  public getPokemonSpeciesForm(id: CharacterId, form: string | number): PokemonSpeciesForm {
+    return speciesDataRegistry.getPokemonSpeciesForm(this.getCharacter(id).speciesId, form);
+  }
+
+  public getSaveData(id: CharacterId): TeamSaveDataEntry {
+    return globalScene.gameData.teamSaveData[id];
+  }
+}
+
+export function initTeamMemberDataRegistry(): void {
+  setCharacterRegistry(new CharacterRegistry());
+}

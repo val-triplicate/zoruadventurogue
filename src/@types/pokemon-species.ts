@@ -3,12 +3,12 @@ import type { Gender } from "#data/gender";
 import type { SpeciesFormChange } from "#data/pokemon-forms";
 import type { PokemonSpecies } from "#data/pokemon-species";
 import type { AbilityId } from "#enums/ability-id";
+import type { CharacterId } from "#enums/character-id";
 import type { MoveId } from "#enums/move-id";
 import type { Nature } from "#enums/nature";
 import type { Origin } from "#enums/origin";
 import type { SpeciesId } from "#enums/species-id";
 import type { TeamId } from "#enums/team-id";
-import type { TeamMemberId } from "#enums/team-member-id";
 import type { LevelMoves } from "./level-moves";
 import type { StarterSpeciesId } from "./starter-species-id";
 
@@ -47,28 +47,35 @@ export interface PokemonSpeciesData {
   formTms?: SpeciesFormTmMoves;
 }
 
-export interface TeamData {
-  teamId: TeamId;
+export interface Team {
+  id: TeamId;
   name?: string | undefined;
-  leader: TeamMemberId;
-  follower: TeamMemberId;
+  leader: CharacterId;
+  follower: CharacterId;
   origin: Origin;
 }
 
-export interface TeamMemberData {
-  teamMemberId: TeamMemberId;
-  shinyAttr?: bigint | undefined;
-  name?: string | undefined;
-  gender?: Gender | undefined;
+export interface Character {
+  id: CharacterId;
+  identity?: CharacterIdentity | undefined;
   speciesId: SpeciesId;
-  nature?: Nature | undefined;
-  moves: MoveId[];
+  moves: LearnableMoves;
   abilities: { first?: AbilityId; second?: AbilityId; hidden?: AbilityId; passive?: AbilityId };
 }
 
+export type LearnableMoves = [MoveId, MoveId, MoveId, MoveId, MoveId, MoveId, MoveId, MoveId];
+
+export interface CharacterIdentity {
+  name?: string | undefined;
+  formIndex?: number | undefined;
+  gender?: Gender | undefined;
+  nature?: Nature | undefined;
+  variants?: { unshiny: boolean; standard: boolean; rare: boolean; epic: boolean } | undefined;
+}
+
 export type SpeciesDataMap = Record<SpeciesId, PokemonSpeciesData>;
-export type TeamMemberDataMap = Record<TeamMemberId, TeamMemberData>;
-export type TeamDataMap = Record<TeamId, TeamData>;
+export type CharacterDataMap = Record<CharacterId, Character>;
+export type TeamDataMap = Record<TeamId, Team>;
 
 /**
  * The `prevolution` field is set on load based on the evolutions of the starter and doesn't need to be configured

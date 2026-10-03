@@ -2,6 +2,7 @@ import type { PokeballCounts } from "#app/battle-scene";
 import type { Tutorial } from "#app/tutorial";
 import type { Gender } from "#data/gender";
 import type { BattleType } from "#enums/battle-type";
+import type { CharacterId } from "#enums/character-id";
 import type { GameModes } from "#enums/game-modes";
 import type { MoveId } from "#enums/move-id";
 import type { MysteryEncounterType } from "#enums/mystery-encounter-type";
@@ -9,7 +10,6 @@ import type { Nature } from "#enums/nature";
 import type { PlayerGender } from "#enums/player-gender";
 import type { PokemonType } from "#enums/pokemon-type";
 import type { SpeciesId } from "#enums/species-id";
-import type { TeamMemberId } from "#enums/team-member-id";
 import type { MysteryEncounterSaveData } from "#mystery-encounters/mystery-encounter-save-data";
 import type { Variant } from "#sprites/variant";
 import type { ArenaData } from "#system/arena-data";
@@ -17,7 +17,6 @@ import type { GameStats } from "#system/game-stats";
 import type { ModifierData } from "#system/modifier-data";
 import type { PokemonData } from "#system/pokemon-data";
 import type { TrainerData } from "#system/trainer-data";
-import type { DexData } from "./dex-data";
 
 export type AppliedMigrators = { [key: string]: number };
 
@@ -25,8 +24,6 @@ export interface SystemSaveData {
   trainerId: number;
   secretId: number;
   gender: PlayerGender;
-  dexData: DexData;
-  starterData: StarterData;
   teamSaveData: TeamSaveData;
   gameStats: GameStats;
   unlocks: Unlocks;
@@ -77,35 +74,10 @@ export interface AchvUnlocks {
   [key: string]: number;
 }
 
-export type TeamMemberMoveset =
-  | [MoveId]
-  | [MoveId, MoveId]
-  | [MoveId, MoveId, MoveId]
-  | [MoveId, MoveId, MoveId, MoveId];
-
-export interface TeamMemberFormMoveData {
-  [key: number]: TeamMemberMoveset;
-}
-
-export interface TeamMemberMoveData {
-  [key: number]: TeamMemberMoveset | TeamMemberFormMoveData;
-}
-
-/** The starter's current attributes (such as selected nature, nickname, etc). */
-export interface StarterPreferences {
-  abilityIndex?: number | undefined;
-  favorite?: boolean | undefined;
-  female?: boolean | undefined;
-  formIndex?: number | undefined;
-  nature?: number | undefined;
-  nickname?: string | undefined;
-  shiny?: boolean | undefined;
-  tera?: PokemonType | undefined;
-  variant?: Variant | undefined;
-}
+export type SelectedMoves = [MoveId, MoveId, MoveId, MoveId];
 
 /** The team member's current attributes (such as selected nature, nickname, etc). */
-export interface TeamMemberPreferences {
+export interface CharacterPreferences {
   abilityIndex?: number | undefined;
   favorite?: boolean | undefined;
   gender?: Gender;
@@ -117,9 +89,9 @@ export interface TeamMemberPreferences {
   variant?: Variant | undefined;
 }
 
-export type AllTeamMemberPreferences = Partial<Record<TeamMemberId, TeamMemberPreferences | undefined>>;
+export type AllTeamMemberPreferences = Partial<Record<CharacterId, CharacterPreferences | undefined>>;
 
-export interface DexAttrProps {
+export interface IconProps {
   shiny: boolean;
   gender?: Gender | undefined;
   variant: Variant;
@@ -135,11 +107,10 @@ export interface Starter {
   abilityIndex: number;
   passive: boolean;
   nature: Nature;
-  moveset?: TeamMemberMoveset | undefined;
+  moveset?: SelectedMoves | undefined;
   pokerus: boolean;
   nickname?: string | undefined;
   teraType?: PokemonType | undefined;
-  ivs: number[];
 }
 
 // TODO: What type of number does this store?
@@ -152,30 +123,20 @@ export interface RunEntry {
   isFavorite: boolean;
 }
 
-export interface StarterDataEntry {
-  moveset: TeamMemberMoveset | TeamMemberFormMoveData | null;
-  eggMoves: number;
-  candyCount: number;
-  friendship: number;
-  abilityAttr: number;
-  passiveAttr: number;
-  valueReduction: number;
-  classicWinCount: number;
-}
-
 export interface TeamSaveDataEntry {
-  unlocked: boolean;
-  boss1WinCount: number;
-  boss2WinCount: number;
-  boss3WinCount: number;
-}
-
-export interface StarterData {
-  [key: number]: StarterDataEntry;
+  isTeamUnlocked: boolean;
+  isAbilityUnlocked: boolean;
+  isPassiveUnlocked: boolean;
+  runCount: bigint;
+  winCount: bigint;
 }
 
 export interface TeamSaveData {
   [key: number]: TeamSaveDataEntry;
+}
+
+export interface CharPreferenceData {
+  [key: number]: CharacterPreferences;
 }
 
 // TODO: Rework into a bitmask

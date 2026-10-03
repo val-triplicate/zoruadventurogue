@@ -1,7 +1,6 @@
 import { globalScene } from "#app/global-scene";
 import { speciesDataRegistry } from "#app/global-species-data-registry";
 import { SHINY_CATCH_RATE_MULTIPLIER } from "#balance/rates";
-import { CLASSIC_CANDY_FRIENDSHIP_MULTIPLIER } from "#balance/starters";
 import { timedEvents } from "#balance/timed-events";
 import type { PokemonSpeciesFilter } from "#data/pokemon-species";
 import type { MysteryEncounterTier } from "#enums/mystery-encounter-tier";
@@ -97,22 +96,6 @@ export class TimedEventManager {
         && speciesFilter(species)
       );
     });
-  }
-
-  /**
-   * For events that change the classic candy friendship multiplier
-   * @returns The classic friendship multiplier of the active {@linkcode TimedEvent}, or the default {@linkcode CLASSIC_CANDY_FRIENDSHIP_MULTIPLIER}
-   */
-  getClassicFriendshipMultiplier(): number {
-    return this.activeEvent()?.classicFriendshipMultiplier ?? CLASSIC_CANDY_FRIENDSHIP_MULTIPLIER;
-  }
-
-  /**
-   * For events where defeated bosses (Gym Leaders, E4 etc) give out Voucher Plus even if they were defeated before
-   * @returns Whether vouchers should be upgraded
-   */
-  getUpgradeUnlockedVouchers(): boolean {
-    return this.activeEvent()?.upgradeUnlockedVouchers ?? false;
   }
 
   /**
@@ -327,10 +310,6 @@ export class TimedEventManager {
       return false;
     }
     return event.textReplacements != null && event.textReplacements.length > 0;
-  }
-
-  getEventDailyStartingItems(): readonly ModifierTypeKeys[] {
-    return this.activeEvent()?.dailyRunStartingItems ?? [];
   }
 
   /**

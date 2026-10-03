@@ -1,6 +1,4 @@
-import { globalScene } from "#app/global-scene";
 import { PokeballType } from "#enums/pokeball";
-import { NumberHolder } from "#utils/common";
 import i18next from "i18next";
 
 export const MAX_PER_TYPE_POKEBALLS: number = 99;
@@ -79,32 +77,4 @@ export function getPokeballTintColor(type: PokeballType): number {
     case PokeballType.LUXURY_BALL:
       return 0xffde6a;
   }
-}
-
-/**
- * Gets the critical capture chance based on number of mons registered in Dex and modified {@link https://bulbapedia.bulbagarden.net/wiki/Catch_rate Catch rate}
- * Formula from {@link https://www.dragonflycave.com/mechanics/gen-vi-vii-capturing Dragonfly Cave Gen 6 Capture Mechanics page}
- * @param modifiedCatchRate the modified catch rate as calculated in {@linkcode AttemptCapturePhase}
- * @returns the chance of getting a critical capture, out of 256
- */
-export function getCriticalCaptureChance(modifiedCatchRate: number): number {
-  if (globalScene.gameMode.isFreshStartChallenge()) {
-    return 0;
-  }
-  const dexCount = globalScene.gameData.getSpeciesCount(d => !!d.caughtAttr);
-  const catchingCharmMultiplier = new NumberHolder(1);
-  globalScene.findModifier(m => m.is("CriticalCatchChanceBoosterModifier"))?.apply(catchingCharmMultiplier);
-  const dexMultiplier =
-    globalScene.gameMode.isDaily || dexCount > 800
-      ? 2.5
-      : dexCount > 600
-        ? 2
-        : dexCount > 400
-          ? 1.5
-          : dexCount > 200
-            ? 1
-            : dexCount > 100
-              ? 0.5
-              : 0;
-  return Math.floor((catchingCharmMultiplier.value * dexMultiplier * Math.min(255, modifiedCatchRate)) / 6);
 }
