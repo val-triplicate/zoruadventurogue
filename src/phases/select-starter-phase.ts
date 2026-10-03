@@ -1,13 +1,12 @@
 import { audioManager } from "#app/global-audio-manager";
+import { characterRegistry } from "#app/global-character-data-registry";
 import { globalScene } from "#app/global-scene";
-import { speciesDataRegistry } from "#app/global-species-data-registry";
-import { activeOverrides } from "#app/overrides";
 import { Phase } from "#app/phase";
 import { SpeciesFormChangeMoveLearnedTrigger } from "#data/form-change-triggers";
-import { Gender } from "#data/gender";
 import { UiMode } from "#enums/ui-mode";
+import type { PlayerPokemon } from "#field/pokemon";
 import { overrideHeldItems, overrideModifiers } from "#modifiers/modifier";
-import type { Starter } from "#types/save-data";
+import { blankSelectedMoves } from "#types/save-data";
 import { SaveSlotUiMode } from "#ui/save-slot-select-ui-handler";
 
 export class SelectStarterPhase extends Phase {
@@ -17,7 +16,7 @@ export class SelectStarterPhase extends Phase {
 
     audioManager.playBgm("menu");
 
-    globalScene.ui.setMode(UiMode.STARTER_SELECT, (starters: Starter[]) => {
+    globalScene.ui.setMode(UiMode.STARTER_SELECT, () => {
       globalScene.ui.clearText();
       globalScene.ui.setMode(UiMode.SAVE_SLOT, SaveSlotUiMode.SAVE, (slotId: number) => {
         // If clicking cancel, back out to title screen
@@ -27,71 +26,34 @@ export class SelectStarterPhase extends Phase {
           return;
         }
         globalScene.sessionSlotId = slotId;
-        this.initBattle(starters);
+        this.initBattle();
       });
     });
   }
 
-  /**
-   * Initialize starters before starting the first battle
-   * @param starters - Array of {@linkcode Starter}s with which to start the battle
-   */
-  initBattle(starters: Starter[]) {
+  initBattle() {
     const party = globalScene.getPlayerParty();
     const loadPokemonAssets: Promise<void>[] = [];
-    starters.forEach((starter: Starter, i: number) => {
-      if (!i && activeOverrides.STARTER_SPECIES_OVERRIDE) {
-        starter.speciesId = activeOverrides.STARTER_SPECIES_OVERRIDE;
-      }
-      const species = speciesDataRegistry.getSpecies(starter.speciesId);
-      let starterFormIndex = starter.formIndex;
-      if (
-        starter.speciesId in activeOverrides.STARTER_FORM_OVERRIDES
-        && activeOverrides.STARTER_FORM_OVERRIDES[starter.speciesId] != null
-        && species.forms[activeOverrides.STARTER_FORM_OVERRIDES[starter.speciesId]!]
-      ) {
-        starterFormIndex = activeOverrides.STARTER_FORM_OVERRIDES[starter.speciesId]!;
-      }
+    party.forEach((pokemon: PlayerPokemon) => {
+      const char = characterRegistry.getCharacter(pokemon.charId);
+      const preferences = characterRegistry.getPreferences(pokemon.charId);
 
-      let starterGender =
-        species.malePercent === null ? Gender.GENDERLESS : starter.female ? Gender.FEMALE : Gender.MALE;
-      if (activeOverrides.GENDER_OVERRIDE !== null) {
-        starterGender = activeOverrides.GENDER_OVERRIDE;
-      }
       const starterPokemon = globalScene.addPlayerPokemon(
-        species,
+        pokemon.species,
         globalScene.gameMode.getStartingLevel(),
-        starter.abilityIndex,
-        starterFormIndex,
-        starterGender,
-        starter.shiny,
-        starter.variant,
-        starter.ivs,
-        starter.nature,
+        pokemon.abilityIndex,
+        pokemon.formIndex,
+        pokemon.gender,
+        pokemon.shiny,
+        pokemon.variant,
+        pokemon.nature,
       );
-      if (starter.moveset) {
-        starterPokemon.tryPopulateMoveset(starter.moveset);
-      }
-      if (starter.passive) {
-        starterPokemon.passive = true;
-      }
-      starterPokemon.luck = globalScene.gameData.getDexAttrLuck(
-        globalScene.gameData.dexData[species.speciesId].caughtAttr,
-      );
-      if (starter.pokerus) {
-        starterPokemon.pokerus = true;
-      }
 
-      if (starter.nickname) {
-        starterPokemon.nickname = starter.nickname;
-      }
-
-      if (starter.teraType == null) {
-        starterPokemon.teraType = starterPokemon.species.type1;
-      } else {
-        starterPokemon.teraType = starter.teraType;
-      }
-
+      starterPokemon.tryPopulateMoveset(preferences.selectedMoves || blankSelectedMoves);
+      starterPokemon.passive = pokemon.passive;
+      starterPokemon.luck = 0;
+      starterPokemon.nickname = char.identity?.name;
+      starterPokemon.teraType = preferences.tera || starterPokemon.species.type1;
       starterPokemon.setVisible(false);
       party.push(starterPokemon);
       loadPokemonAssets.push(starterPokemon.loadAssets());
@@ -102,8 +64,6 @@ export class SelectStarterPhase extends Phase {
       audioManager.playBgm(undefined, true);
       if (globalScene.gameMode.isClassic) {
         globalScene.gameData.gameStats.classicSessionsPlayed++;
-      } else {
-        globalScene.gameData.gameStats.endlessSessionsPlayed++;
       }
       globalScene.newBattle();
       globalScene.arena.init();

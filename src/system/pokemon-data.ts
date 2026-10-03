@@ -13,6 +13,7 @@ import { TrainerSlot } from "#enums/trainer-slot";
 import { EnemyPokemon, Pokemon } from "#field/pokemon";
 import { PokemonMove } from "#moves/pokemon-move";
 import type { Variant } from "#sprites/variant";
+import type { CurrentMoves } from "#types/save-data";
 
 export class PokemonData {
   public id: number;
@@ -33,7 +34,7 @@ export class PokemonData {
   public stats: number[];
   public ivs: number[];
   public nature: Nature;
-  public moveset: PokemonMove[];
+  public moves: CurrentMoves;
   public status: Status | null;
   public metLevel: number;
   public luck: number;
@@ -87,7 +88,7 @@ export class PokemonData {
 
     // TODO: Can't we move some of this verification stuff to an upgrade script?
     this.nature = source.nature ?? Nature.HARDY;
-    this.moveset = source.moveset?.map((m: any) => PokemonMove.loadMove(m)) ?? [];
+    this.moves = source.moveset?.map((m: any) => PokemonMove.loadMove(m)) ?? [];
     this.status = source.status
       ? new Status(
           source.status.effect,

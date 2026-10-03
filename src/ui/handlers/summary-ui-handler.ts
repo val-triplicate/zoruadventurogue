@@ -4,12 +4,11 @@ import { globalScene } from "#app/global-scene";
 import { settings } from "#app/global-settings-manager";
 import { getLevelRelExp, getLevelTotalExp } from "#data/exp";
 import { getGenderColor, getGenderSymbol } from "#data/gender";
-import { getNatureName, getNatureStatMultiplier } from "#data/nature";
+import { getNatureStatMultiplier } from "#data/nature";
 import { getPokeballAtlasKey } from "#data/pokeball";
 import { getTypeRgb } from "#data/type";
 import { Button } from "#enums/buttons";
 import { MoveCategory } from "#enums/move-category";
-import { Nature } from "#enums/nature";
 import { PokemonType } from "#enums/pokemon-type";
 import { getStatKey, PERMANENT_STATS, Stat } from "#enums/stat";
 import { StatusEffect } from "#enums/status-effect";
@@ -24,10 +23,9 @@ import { getVariantTint } from "#sprites/variant";
 import { achvs } from "#system/achv";
 import { addBBCodeTextObject, addTextObject, getBBCodeFrag, getTextColor } from "#ui/text";
 import { UiHandler } from "#ui/ui-handler";
-import { fixedInt, formatStat, getBiomeName, getLocalizedSpriteKey, getShinyDescriptor, padInt } from "#utils/common";
+import { fixedInt, formatStat, getLocalizedSpriteKey, getShinyDescriptor, padInt } from "#utils/common";
 import { getEnumValues } from "#utils/enums";
 import { getDexNumber } from "#utils/pokemon-utils";
-import { toCamelCase, toTitleCase } from "#utils/strings";
 import i18next from "i18next";
 
 enum Page {
@@ -317,7 +315,7 @@ export class SummaryUiHandler extends UiHandler {
       .setPipelineData("spriteKey", this.pokemon.getSpriteKey())
       .setPipelineData("shiny", this.pokemon.shiny)
       .setPipelineData("variant", this.pokemon.variant);
-    ["spriteColors", "fusionSpriteColors"].forEach(k => {
+    ["spriteColors"].forEach(k => {
       delete this.pokemonSprite.pipelineData[`${k}Base`];
       if (this.pokemon?.summonData.speciesForm) {
         k += "Base";
@@ -326,29 +324,12 @@ export class SummaryUiHandler extends UiHandler {
     });
     this.pokemon.cry();
 
-    this.nameText.setText(this.pokemon.getNameToRender({ useIllusion: false }));
-
-    if (
-      globalScene.gameData.starterData[this.pokemon.species.getRootSpeciesId()].classicWinCount > 0
-      && globalScene.gameData.starterData[this.pokemon.species.getRootSpeciesId(true)].classicWinCount > 0
-    ) {
-      this.championRibbon.setVisible(true);
-    } else {
-      this.championRibbon.setVisible(false);
-    }
-
-    let currentFriendship = globalScene.gameData.starterData[this.pokemon.species.getRootSpeciesId()].friendship;
-    if (!currentFriendship || currentFriendship === undefined) {
-      currentFriendship = 0;
-    }
+    this.nameText.setText(this.pokemon.getNameToRender());
 
     const bigIconVariant = this.pokemon.getVariant();
 
     this.shinyIcon.setPositionRelative(this.nameText, this.nameText.displayWidth + 1, 3);
-    this.shinyIcon
-      .setTexture("shiny_star")
-      .setVisible(this.pokemon.isShiny(false))
-      .setTint(getVariantTint(bigIconVariant));
+    this.shinyIcon.setTexture("shiny_star").setVisible(this.pokemon.isShiny()).setTint(getVariantTint(bigIconVariant));
     if (this.shinyIcon.visible) {
       let shinyDescriptor = "";
       if (bigIconVariant) {
@@ -388,9 +369,9 @@ export class SummaryUiHandler extends UiHandler {
 
     const fromSummary = args.length >= 2;
 
-    if (this.pokemon.status || this.pokemon.pokerus) {
+    if (this.pokemon.status) {
       this.showStatus(!fromSummary);
-      this.status.setFrame(this.pokemon.status ? StatusEffect[this.pokemon.status.effect].toLowerCase() : "pokerus");
+      this.status.setFrame(StatusEffect[this.pokemon.status.effect].toLowerCase());
     } else {
       this.hideStatus(!fromSummary);
     }
@@ -410,7 +391,7 @@ export class SummaryUiHandler extends UiHandler {
 
     if (this.moveSelect) {
       if (button === Button.ACTION) {
-        if (this.pokemon && this.moveCursor < this.pokemon.moveset.length) {
+        if (this.pokemon && this.moveCursor < this.pokemon.moves.length) {
           if (this.summaryUiMode === SummaryUiMode.LEARN_MOVE) {
             this.moveSelectFunction?.(this.moveCursor);
           } else if (this.selectedMoveIndex === -1) {
@@ -418,9 +399,9 @@ export class SummaryUiHandler extends UiHandler {
             this.setCursor(this.moveCursor);
           } else {
             if (this.selectedMoveIndex !== this.moveCursor) {
-              const tempMove = this.pokemon?.moveset[this.selectedMoveIndex];
-              this.pokemon.moveset[this.selectedMoveIndex] = this.pokemon.moveset[this.moveCursor];
-              this.pokemon.moveset[this.moveCursor] = tempMove;
+              const tempMove = this.pokemon?.moves[this.selectedMoveIndex];
+              this.pokemon.moves[this.selectedMoveIndex] = this.pokemon.moves[this.moveCursor];
+              this.pokemon.moves[this.moveCursor] = tempMove;
 
               const selectedMoveRow = this.moveRowsContainer.getAt(
                 this.selectedMoveIndex,
@@ -859,10 +840,6 @@ export class SummaryUiHandler extends UiHandler {
         this.passiveContainer?.nameText?.setVisible(false);
         this.passiveContainer?.descriptionText?.setVisible(false);
 
-        const closeFragment = getBBCodeFrag("", TextStyle.WINDOW_ALT);
-        const rawNature = toCamelCase(Nature[this.pokemon?.getNature()!]); // TODO: is this bang correct?
-        const nature = `${getBBCodeFrag(toTitleCase(getNatureName(this.pokemon?.getNature()!)), TextStyle.SUMMARY_RED)}${closeFragment}`; // TODO: is this bang correct?
-
         const profileContainerMemoTitle = globalScene.add.image(
           7,
           107,
@@ -871,19 +848,7 @@ export class SummaryUiHandler extends UiHandler {
         profileContainerMemoTitle.setOrigin(0, 0.5);
         profileContainer.add(profileContainerMemoTitle);
 
-        const memoString = i18next.t("pokemonSummary:memoString", {
-          metFragment: i18next.t(
-            `pokemonSummary:metFragment.${this.pokemon?.metBiome === -1 ? "apparently" : "normal"}`,
-            {
-              biome: `${getBBCodeFrag(getBiomeName(this.pokemon?.metBiome!), TextStyle.SUMMARY_RED)}${closeFragment}`, // TODO: is this bang correct?
-              level: `${getBBCodeFrag(this.pokemon?.metLevel.toString()!, TextStyle.SUMMARY_RED)}${closeFragment}`, // TODO: is this bang correct?
-              wave: `${getBBCodeFrag(this.pokemon?.metWave ? this.pokemon.metWave.toString()! : i18next.t("pokemonSummary:unknownTrainer"), TextStyle.SUMMARY_RED)}${closeFragment}`,
-            },
-          ),
-          natureFragment: i18next.t(`pokemonSummary:natureFragment.${rawNature}`, { nature }),
-        });
-
-        const memoText = addBBCodeTextObject(7, 113, String(memoString), TextStyle.WINDOW_ALT);
+        const memoText = addBBCodeTextObject(7, 113, String("TEMP MEMO STRING"), TextStyle.WINDOW_ALT);
         memoText.setOrigin(0, 0);
         profileContainer.add(memoText);
         break;
@@ -1092,7 +1057,7 @@ export class SummaryUiHandler extends UiHandler {
 
         for (let m = 0; m < 4; m++) {
           const move: PokemonMove | null =
-            this.pokemon && this.pokemon.moveset.length > m ? this.pokemon?.moveset[m] : null;
+            this.pokemon && this.pokemon.moves.length > m ? this.pokemon?.moves[m] : null;
           const moveRowContainer = globalScene.add.container(0, 16 * m);
           this.moveRowsContainer.add(moveRowContainer);
 
@@ -1172,8 +1137,8 @@ export class SummaryUiHandler extends UiHandler {
       return null;
     }
 
-    if (this.moveCursor < 4 && this.pokemon && this.moveCursor < this.pokemon.moveset.length) {
-      return this.pokemon.moveset[this.moveCursor].getMove();
+    if (this.moveCursor < 4 && this.pokemon && this.moveCursor < this.pokemon.moves.length) {
+      return this.pokemon.moves[this.moveCursor].getMove();
     }
     if (this.summaryUiMode === SummaryUiMode.LEARN_MOVE && this.moveCursor === 4) {
       return this.newMove;
@@ -1188,7 +1153,6 @@ export class SummaryUiHandler extends UiHandler {
     this.setCursor(this.summaryUiMode === SummaryUiMode.LEARN_MOVE ? 4 : 0);
     this.showMoveEffect();
   }
-
   hideMoveSelect() {
     if (this.summaryUiMode === SummaryUiMode.LEARN_MOVE) {
       this.moveSelectFunction?.(4);

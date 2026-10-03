@@ -71,7 +71,6 @@ export class GameData {
   public trainerId: number;
   public secretId: number;
   public teamSaveData: TeamSaveData;
-  public charPreferenceData: TeamSaveData;
 
   public gameStats: GameStats;
   public runHistory: RunHistoryData;

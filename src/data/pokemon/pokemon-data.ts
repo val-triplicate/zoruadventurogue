@@ -9,14 +9,13 @@ import type { BerryType } from "#enums/berry-type";
 import type { MoveId } from "#enums/move-id";
 import type { Nature } from "#enums/nature";
 import type { PokemonType, RegularPokemonType } from "#enums/pokemon-type";
-import type { SpeciesId } from "#enums/species-id";
 import { StatusEffect } from "#enums/status-effect";
 import type { Pokemon } from "#field/pokemon";
 import { PokemonMove } from "#moves/pokemon-move";
 import type { ObtainStatusEffectPhase } from "#phases/obtain-status-effect-phase";
 import type { AttackMoveResult } from "#types/attack-move-result";
-import type { IllusionData } from "#types/illusion-data";
 import type { SerializedSpeciesForm } from "#types/pokemon-common";
+import type { CurrentMoves } from "#types/save-data";
 import type { TurnMove } from "#types/turn-move";
 import type { CoerceNullPropertiesToUndefined } from "#types/type-helpers";
 
@@ -65,11 +64,6 @@ function deserializePokemonSpeciesForm(value: SerializedSpeciesForm | PokemonSpe
   return speciesDataRegistry.getPokemonSpeciesForm(id, formIdx);
 }
 
-interface SerializedIllusionData extends Omit<IllusionData, "fusionSpecies"> {
-  /** The id of the illusioned fusion species, or `undefined` if not a fusion */
-  fusionSpecies?: SpeciesId | undefined;
-}
-
 interface SerializedPokemonSummonData {
   statStages: number[];
   moveQueue: TurnMove[];
@@ -77,16 +71,13 @@ interface SerializedPokemonSummonData {
   abilitySuppressed: boolean;
   abilitiesApplied: AbilityId[];
   speciesForm?: SerializedSpeciesForm | undefined;
-  fusionSpeciesForm?: SerializedSpeciesForm | undefined;
   ability?: AbilityId | undefined;
   passiveAbility?: AbilityId | undefined;
   gender?: Gender | undefined;
-  fusionGender?: Gender | undefined;
   stats: number[];
   moveset?: PokemonMove[] | undefined;
   types: PokemonType[];
   addedType?: PokemonType | undefined;
-  illusion?: SerializedIllusionData | undefined;
   berriesEatenLast: BerryType[];
   moveHistory: TurnMove[];
 }
@@ -122,13 +113,11 @@ export class PokemonSummonData {
   // Overrides for transform and company.
   // TODO: Move these into a separate class & add rage fist hit count
   public speciesForm: PokemonSpeciesForm | null = null;
-  public fusionSpeciesForm: PokemonSpeciesForm | null = null;
   public ability: AbilityId | undefined;
   public passiveAbility: AbilityId | undefined;
   public gender: Gender | undefined;
-  public fusionGender: Gender | undefined;
   public stats: number[] = [0, 0, 0, 0, 0, 0];
-  public moveset: PokemonMove[] | null;
+  public moveset: CurrentMoves | null;
 
   /**
    * An array containing any temporary {@link https://bulbapedia.bulbagarden.net/wiki/Type_change | typing overrides}
@@ -139,8 +128,6 @@ export class PokemonSummonData {
   /** The "third" type added from Trick-or-Treat or Forest's Curse, if present. */
   public addedType: PokemonType | null = null;
 
-  /** Data pertaining to this pokemon's Illusion, if it has one. */
-  public illusion: IllusionData | null = null;
   /** Array containing all berries eaten in the last turn; used by {@linkcode AbilityId.CUD_CHEW} */
   public berriesEatenLast: BerryType[] = [];
 
@@ -164,27 +151,6 @@ export class PokemonSummonData {
 
       if (key === "speciesForm" || key === "fusionSpeciesForm") {
         this[key] = deserializePokemonSpeciesForm(value);
-        continue;
-      }
-
-      if (key === "illusion" && typeof value === "object") {
-        // Make a copy so as not to mutate provided value
-        const illusionData = {
-          ...value,
-        };
-        if (illusionData.fusionSpecies != null) {
-          switch (typeof illusionData.fusionSpecies) {
-            case "object":
-              illusionData.fusionSpecies = speciesDataRegistry.getSpecies(illusionData.fusionSpecies.speciesId);
-              break;
-            case "number":
-              illusionData.fusionSpecies = speciesDataRegistry.getSpecies(illusionData.fusionSpecies);
-              break;
-            default:
-              illusionData.fusionSpecies = undefined;
-          }
-        }
-        this[key] = illusionData as IllusionData;
         continue;
       }
 
@@ -222,29 +188,12 @@ export class PokemonSummonData {
    */
   public toJSON(): SerializedPokemonSummonData {
     // Pokemon species forms are never saved, only the species ID.
-    const illusion = this.illusion;
     const speciesForm = this.speciesForm;
-    const fusionSpeciesForm = this.fusionSpeciesForm;
-    const illusionSpeciesForm = illusion?.fusionSpecies;
     const t = {
       // the "as omit" is required to avoid TS resolving the overwritten properties to "never"
       // We coerce null to undefined in the type, as the for loop below replaces `null` with `undefined`
-      ...(this as Omit<
-        CoerceNullPropertiesToUndefined<PokemonSummonData>,
-        "speciesForm" | "fusionSpeciesForm" | "illusion"
-      >),
+      ...(this as Omit<CoerceNullPropertiesToUndefined<PokemonSummonData>, "speciesForm">),
       speciesForm: speciesForm == null ? undefined : { id: speciesForm.speciesId, formIdx: speciesForm.formIndex },
-      fusionSpeciesForm:
-        fusionSpeciesForm == null
-          ? undefined
-          : { id: fusionSpeciesForm.speciesId, formIdx: fusionSpeciesForm.formIndex },
-      illusion:
-        illusion == null
-          ? undefined
-          : {
-              ...(this.illusion as Omit<typeof illusion, "fusionSpecies">),
-              fusionSpecies: illusionSpeciesForm?.speciesId,
-            },
       abilitiesApplied: [...this.abilitiesApplied.values()],
     };
     // Replace `null` with `undefined`, as `undefined` never gets serialized

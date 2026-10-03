@@ -4,7 +4,7 @@ import { Gender } from "#data/gender";
 import type { CharacterId } from "#enums/character-id";
 import type { MoveId } from "#enums/move-id";
 import { Nature } from "#enums/nature";
-import type { CharacterPreferences, IconProps, TeamSaveDataEntry } from "#types/save-data";
+import type { CharacterPreferenceSelections, IconProps, TeamSaveDataEntry } from "#types/save-data";
 import type { DefinedSpeciesDetails } from "#types/starter-select-types";
 import type { StarterSpeciesId } from "#types/starter-species-id";
 import { SortCriteria, type SortDirection } from "#ui/dropdown";
@@ -150,8 +150,8 @@ export function getTeamDataEntry(teamMemberId: CharacterId): TeamSaveDataEntry {
   return deepCopy(globalScene.gameData.teamSaveData[teamMemberId]);
 }
 
-export function getDefaultIconProps(charId: CharacterId): IconProps {
-  const teamMember = characterRegistry.getCharacter(charId);
+export function getDefaultIconProps(id: CharacterId): IconProps {
+  const teamMember = characterRegistry.getCharacter(id);
   // Default is female only for species where malePercent is not null but 0
   const gender = teamMember.identity?.gender || Gender.GENDERLESS;
   const formIndex = teamMember.identity?.formIndex || 0;
@@ -172,7 +172,10 @@ export function getDefaultIconProps(charId: CharacterId): IconProps {
   return { shiny: false, gender, variant: 0, formIndex };
 }
 
-export function getIconPropsFromPreferences(id: CharacterId, preferences: CharacterPreferences = {}): IconProps {
+export function getIconPropsFromPreferences(
+  id: CharacterId,
+  preferences: CharacterPreferenceSelections = {},
+): IconProps {
   const defaults = getDefaultIconProps(id);
   return {
     shiny: preferences.shiny ?? defaults.shiny,
@@ -182,7 +185,8 @@ export function getIconPropsFromPreferences(id: CharacterId, preferences: Charac
   };
 }
 
-export function getStarterDetailsFromPreferences(id: CharacterId, preference: CharacterPreferences = {}) {
+export function getStarterDetailsFromPreferences(id: CharacterId) {
+  const preference = characterRegistry.getPreferences(id);
   let { gender, formIndex, shiny, variant } = getIconPropsFromPreferences(id, preference);
 
   const char = characterRegistry.getCharacter(id);
@@ -222,5 +226,5 @@ export function sortTeamMembers(teamMemberIds: CharacterId[], sort: SortCriteria
  * @returns An array of move IDs
  */
 export function getTeamMemberMoves(teamMemberId: CharacterId): MoveId[] {
-  return characterRegistry.getCharacter(teamMemberId).moves;
+  return characterRegistry.getCharacter(teamMemberId).movePool;
 }

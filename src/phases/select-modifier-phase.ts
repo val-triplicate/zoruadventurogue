@@ -291,36 +291,6 @@ export class SelectModifierPhase extends BattlePhase {
     }
   }
 
-  // Opens the party menu specifically for fusions
-  private openFusionMenu(
-    modifierType: PokemonModifierType,
-    cost: number,
-    modifierSelectCallback: ModifierSelectCallback,
-  ): void {
-    const party = globalScene.getPlayerParty();
-    globalScene.ui.setModeWithoutClear(
-      UiMode.PARTY,
-      PartyUiMode.SPLICE,
-      -1,
-      (fromSlotIndex: number, spliceSlotIndex: number) => {
-        if (
-          spliceSlotIndex !== undefined
-          && fromSlotIndex < 6
-          && spliceSlotIndex < 6
-          && fromSlotIndex !== spliceSlotIndex
-        ) {
-          globalScene.ui.setMode(UiMode.MODIFIER_SELECT, this.isPlayer()).then(() => {
-            const modifier = modifierType.newModifier(party[fromSlotIndex], party[spliceSlotIndex])!; //TODO: is the bang correct?
-            this.applyModifier(modifier, cost, true);
-          });
-        } else {
-          this.resetModifierSelect(modifierSelectCallback);
-        }
-      },
-      modifierType.selectFilter,
-    );
-  }
-
   // Opens the party menu to apply one of various modifiers
   private openModifierMenu(
     modifierType: PokemonModifierType,

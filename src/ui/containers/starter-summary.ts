@@ -1,27 +1,21 @@
+import { characterRegistry } from "#app/global-character-data-registry";
 import { globalScene } from "#app/global-scene";
 import { speciesDataRegistry } from "#app/global-species-data-registry";
-import { teamMemberDataRegistry } from "#app/global-team-member-data-registry";
-import { teamMemberMoveOptions } from "#balance/egg-moves";
+import { characterMovePools } from "#balance/egg-moves";
 import { allAbilities, allMoves } from "#data/data-lists";
 import { GrowthRate, getGrowthRateColor } from "#data/exp";
 import { Gender, getGenderColor, getGenderSymbol } from "#data/gender";
 import { getNatureName } from "#data/nature";
 import type { PokemonSpecies } from "#data/pokemon-species";
+import type { CharacterId } from "#enums/character-id";
 import { Passive } from "#enums/passive";
 import { PokemonType } from "#enums/pokemon-type";
 import { SpeciesId } from "#enums/species-id";
-import type { TeamMemberId } from "#enums/team-member-id";
 import { TextStyle } from "#enums/text-style";
 import { getVariantIcon, getVariantTint, type Variant } from "#sprites/variant";
-import { achvs } from "#system/achv";
-import type { TeamMemberMoveset, TeamMemberPreferences } from "#types/save-data";
+import type { CharacterPreferenceSelections, MoveSet } from "#types/save-data";
 import type { DefinedSpeciesDetails } from "#types/starter-select-types";
-import {
-  getDexAttrFromPreferences,
-  getStarterSelectTextSettings,
-  getTeamMemberDataEntry,
-} from "#ui/starter-select-ui-utils";
-import { StatsContainer } from "#ui/stats-container";
+import { getStarterSelectTextSettings } from "#ui/starter-select-ui-utils";
 import { addBBCodeTextObject, addTextObject, getTextColor } from "#ui/text";
 import { getLocalizedSpriteKey, padInt, truncateString } from "#utils/common";
 import { toCamelCase, toTitleCase } from "#utils/strings";
@@ -64,13 +58,6 @@ export class StarterSummary extends Phaser.GameObjects.Container {
   private pokemonPassiveLockedIcon: Phaser.GameObjects.Sprite;
   private teraIcon: Phaser.GameObjects.Sprite;
 
-  /** Whether the tera type icon should be displayed */
-  private allowTera: boolean;
-
-  /** Container for ivs, whether they should be shown */
-  private readonly statsContainer: StatsContainer;
-  private statsMode = false;
-
   /** Which of the tooltips is displayed (on mouse hover) */
   private activeTooltip: "ABILITY" | "PASSIVE" | "CANDY" | undefined;
 
@@ -82,7 +69,6 @@ export class StarterSummary extends Phaser.GameObjects.Container {
   private readonly pokemonPreferencesContainer: GameObjects.Container;
 
   private speciesId: SpeciesId;
-  private teamMemberId: TeamMemberId;
 
   constructor(x: number, y: number) {
     super(globalScene, x, y);
@@ -183,11 +169,6 @@ export class StarterSummary extends Phaser.GameObjects.Container {
       this.pokemonEggMovesContainer.add(eggMoveContainer);
     }
 
-    this.statsContainer = new StatsContainer(6, 16) //
-      .setVisible(false);
-
-    globalScene.add.existing(this.statsContainer);
-
     this.add([
       this.pokemonSprite,
       this.shinyOverlay,
@@ -199,7 +180,6 @@ export class StarterSummary extends Phaser.GameObjects.Container {
       this.pokemonStatisticsContainer,
       this.pokemonMovesContainer,
       this.pokemonEggMovesContainer,
-      this.statsContainer,
     ]);
   }
 
@@ -384,7 +364,7 @@ export class StarterSummary extends Phaser.GameObjects.Container {
     this.truncateName();
   }
 
-  private setNameAndNumber(species: PokemonSpecies, teamMemberPreferences: TeamMemberPreferences): void {
+  private setNameAndNumber(species: PokemonSpecies, teamMemberPreferences: CharacterPreferenceSelections): void {
     this.pokemonNumberText.setText(padInt(species.speciesId, 4));
 
     if (teamMemberPreferences?.nickname) {
@@ -424,49 +404,24 @@ export class StarterSummary extends Phaser.GameObjects.Container {
     this.pokemonAbilityText.off("pointerover");
     this.pokemonPassiveText.off("pointerover");
 
-    if (this.statsMode) {
-      this.statsContainer.setVisible(false);
-    }
-
     this.cleanStarterSprite();
   }
 
-  public setTeamMember(teamMemberId: TeamMemberId, teamMemberPreferences: TeamMemberPreferences): void {
-    // Checking here to ensure achievements are loaded, and updated if unlocked while playing
-    this.allowTera = Object.hasOwn(globalScene.gameData.achvUnlocks, achvs.TERASTALLIZE.id);
-
-    const teamMemberData = teamMemberDataRegistry.getTeamMember(teamMemberId);
-    this.speciesId = teamMemberData.speciesId;
-    this.teamMemberId = teamMemberId;
+  public setCharacter(id: CharacterId): void {
+    const saveData = globalScene.gameData.teamSaveData[id];
+    const character = characterRegistry.getCharacter(id);
+    const preferences = characterRegistry.getPreferences(id);
+    this.speciesId = character.speciesId;
     const species = speciesDataRegistry.getSpecies(this.speciesId);
-
-    const { dexEntry } = getTeamMemberDataEntry(teamMemberId);
 
     this.pokemonAbilityText.off("pointerover");
     this.pokemonPassiveText.off("pointerover");
 
-    if (this.statsMode) {
-      if (dexEntry?.caughtAttr) {
-        this.statsContainer.setVisible(true);
-        this.showStats();
-      } else {
-        this.statsContainer.setVisible(false);
-      }
-    }
-
-    if (dexEntry.caughtAttr) {
-      this.setNameAndNumber(species, teamMemberPreferences);
+    if (saveData.isTeamUnlocked) {
+      this.setNameAndNumber(species, preferences);
       this.pokemonUncaughtText.setVisible(false);
       this.pokemonPermanentInfoContainer.setVisible(true);
       this.pokemonStatisticsContainer.setVisible(true);
-
-      const luck = globalScene.gameData.getDexAttrLuck(dexEntry.caughtAttr);
-      const luckDisabled = !!luck;
-      this.pokemonLuckText
-        .setVisible(!!luck)
-        .setText(luckDisabled ? i18next.t("starterSelectUiHandler:disabled") : luck.toString())
-        .setTint(luckDisabled ? 0x808080 : getVariantTint(Phaser.Math.Clamp(luck - 1, 0, 2) as Variant));
-      this.pokemonLuckLabelText.setVisible(this.pokemonLuckText.visible);
 
       let growthReadable = toTitleCase(GrowthRate[species.growthRate]);
       const growthAux = toCamelCase(growthReadable);
@@ -478,27 +433,23 @@ export class StarterSummary extends Phaser.GameObjects.Container {
         .setColor(getGrowthRateColor(species.growthRate))
         .setShadowColor(getGrowthRateColor(species.growthRate, true));
 
-      const defaultDexAttr = getDexAttrFromPreferences(teamMemberId, teamMemberPreferences);
       this.pokemonShinyIcon.setY(104);
       this.pokemonFormText.setY(25);
-
-      const props = globalScene.gameData.getDexAttrProps(defaultDexAttr);
-      props.formIndex = teamMemberPreferences?.formIndex ?? props.formIndex;
-      const speciesForm = speciesDataRegistry.getPokemonSpeciesForm(species.speciesId, props.formIndex);
+      const speciesForm = speciesDataRegistry.getPokemonSpeciesForm(species.speciesId, preferences.formIndex);
       this.setTypeIcons(speciesForm.type1, speciesForm.type2);
 
       this.pokemonSprite.clearTint();
       return;
     }
 
-    this.cleanStarterSprite(species, !!dexEntry.seenAttr);
+    this.cleanStarterSprite(species, saveData.isTeamUnlocked);
 
-    const { gender, formIndex, shiny, variant } = globalScene.gameData.getTeamMemberDefaultDexAttrProps(teamMemberId);
+    const { gender, formIndex, shiny, variant } = globalScene.gameData.getDefaultIconProps(id);
 
     this.updateSprite(species, gender ?? Gender.NONBINARY, formIndex, shiny, variant);
     this.pokemonSprite //
       .setVisible(true)
-      .setTint(dexEntry.seenAttr ? 0x808080 : 0x000000);
+      .setTint(saveData.isTeamUnlocked ? 0x808080 : 0x000000);
   }
 
   private cleanStarterSprite(species?: PokemonSpecies, isSeen = false): void {
@@ -534,10 +485,10 @@ export class StarterSummary extends Phaser.GameObjects.Container {
     this.pokemonAdditionalMoveCountLabel.setVisible(false);
   }
 
-  public setStarterDetails(teamMemberId: TeamMemberId, options: DefinedSpeciesDetails): void {
+  public setStarterDetails(id: CharacterId, options: DefinedSpeciesDetails): void {
     const { shiny, formIndex, gender, variant, abilityIndex, natureIndex, teraType } = options;
 
-    const species = teamMemberDataRegistry.getSpecies(teamMemberId);
+    const species = characterRegistry.getSpecies(id);
 
     this.pokemonSprite.setVisible(false);
     this.teraIcon.setVisible(false);
@@ -590,11 +541,11 @@ export class StarterSummary extends Phaser.GameObjects.Container {
       });
     }
 
-    this.updatePassiveDisplay(teamMemberId, formIndex);
+    this.updatePassiveDisplay(id, formIndex);
 
     this.pokemonNatureText.setText(getNatureName(natureIndex, true, true, false));
 
-    const speciesForm = teamMemberDataRegistry.getPokemonSpeciesForm(teamMemberId, formIndex);
+    const speciesForm = characterRegistry.getPokemonSpeciesForm(id, formIndex);
     const formText = species.getFormNameToDisplay(formIndex);
     this.pokemonFormText.setText(formText);
 
@@ -605,27 +556,19 @@ export class StarterSummary extends Phaser.GameObjects.Container {
       newTeraType = PokemonType.STELLAR;
     }
     this.teraIcon.setFrame(PokemonType[newTeraType].toLowerCase());
-    this.teraIcon.setVisible(!this.statsMode && this.allowTera);
+    this.teraIcon.setVisible(true);
   }
 
-  protected showStats(): void {
-    const { dexEntry } = getTeamMemberDataEntry(this.teamMemberId);
-    this.statsContainer //
-      .setVisible(true)
-      .updateIvs(dexEntry.ivs);
-  }
-
-  private updatePassiveDisplay(teamMemberId: TeamMemberId, formIndex = 0): void {
+  private updatePassiveDisplay(id: CharacterId, formIndex = 0): void {
     this.pokemonPassiveLabelText.setVisible(false);
     this.pokemonPassiveText.setVisible(false);
     this.pokemonPassiveDisabledIcon.setVisible(false);
     this.pokemonPassiveLockedIcon.setVisible(false);
 
-    const { starterDataEntry } = getTeamMemberDataEntry(teamMemberId);
+    const saveData = characterRegistry.getSaveData(id);
 
-    const passiveAttr = starterDataEntry.passiveAttr;
-    const defaultPassiveAbility = teamMemberDataRegistry.getSpecies(teamMemberId).getPassiveAbility(formIndex);
-    const customAbilities = teamMemberDataRegistry.getTeamMember(teamMemberId).abilities;
+    const defaultPassiveAbility = characterRegistry.getSpecies(id).getPassiveAbility(formIndex);
+    const customAbilities = characterRegistry.getCharacter(id).abilities;
     const passiveAbility = customAbilities ? customAbilities[3] : defaultPassiveAbility;
 
     if (!passiveAbility) {
@@ -635,8 +578,8 @@ export class StarterSummary extends Phaser.GameObjects.Container {
       return;
     }
 
-    const isUnlocked = !!(passiveAttr & Passive.UNLOCKED);
-    const isEnabled = !!(passiveAttr & Passive.ENABLED);
+    const isUnlocked = saveData.isPassiveUnlocked;
+    const isEnabled = isUnlocked && Passive.ENABLED;
 
     const textStyle = isUnlocked && isEnabled ? TextStyle.SUMMARY_ALT : TextStyle.SUMMARY_GRAY;
     const textAlpha = isUnlocked && isEnabled ? 1 : 0.5;
@@ -688,11 +631,11 @@ export class StarterSummary extends Phaser.GameObjects.Container {
         .setPipelineData("shiny", shiny)
         .setPipelineData("variant", variant)
         .setPipelineData("spriteKey", species.getSpriteKey(gender, formIndex, shiny, variant))
-        .setVisible(!this.statsMode);
+        .setVisible(true);
     });
   }
 
-  public updateMoveset(starterMoveset: TeamMemberMoveset, totalMoves: number): void {
+  public updateMoveset(starterMoveset: MoveSet, totalMoves: number): void {
     for (let m = 0; m < 4; m++) {
       const move = m < starterMoveset.length ? allMoves[starterMoveset[m]] : null;
       this.pokemonMoveBgs[m].setFrame(PokemonType[move ? move.type : PokemonType.UNKNOWN].toString().toLowerCase());
@@ -705,7 +648,7 @@ export class StarterSummary extends Phaser.GameObjects.Container {
 
   public updateEggMoves(eggMoves: number): void {
     for (let em = 0; em < 4; em++) {
-      const eggMove = allMoves[teamMemberMoveOptions[this.speciesId][em]];
+      const eggMove = allMoves[characterMovePools[this.speciesId][em]];
       const eggMoveUnlocked = eggMove && eggMoves & (1 << em);
       this.pokemonEggMoveBgs[em].setFrame(
         PokemonType[eggMove ? eggMove.type : PokemonType.UNKNOWN].toString().toLowerCase(),
@@ -718,20 +661,6 @@ export class StarterSummary extends Phaser.GameObjects.Container {
 
   public hideEggMoves(): void {
     this.pokemonEggMovesContainer.setVisible(false);
-  }
-
-  public showIvs(): void {
-    this.showStats();
-    this.statsMode = true;
-    this.pokemonSprite.setVisible(false);
-    this.teraIcon.setVisible(false);
-  }
-
-  public hideIvs(caught = true): void {
-    this.statsMode = false;
-    this.statsContainer.setVisible(false);
-    this.pokemonSprite.setVisible(caught);
-    this.teraIcon.setVisible(this.allowTera);
   }
 
   /** Truncate the Pokémon name so it won't overlap into the starters. */
