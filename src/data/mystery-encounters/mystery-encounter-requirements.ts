@@ -977,50 +977,6 @@ export class LevelRequirement extends EncounterPokemonRequirement {
   }
 }
 
-export class FriendshipRequirement extends EncounterPokemonRequirement {
-  requiredFriendshipRange: [number, number];
-  minNumberOfPokemon: number;
-  invertQuery: boolean;
-
-  constructor(requiredFriendshipRange: [number, number], minNumberOfPokemon = 1, invertQuery = false) {
-    super();
-    this.minNumberOfPokemon = minNumberOfPokemon;
-    this.invertQuery = invertQuery;
-    this.requiredFriendshipRange = requiredFriendshipRange;
-  }
-
-  override meetsRequirement(): boolean {
-    // Party Pokemon inside required friendship range
-    if (this.requiredFriendshipRange != null && this.requiredFriendshipRange[0] <= this.requiredFriendshipRange[1]) {
-      const partyPokemon = globalScene.getPlayerParty();
-      const pokemonInRange = this.queryParty(partyPokemon);
-      if (pokemonInRange.length < this.minNumberOfPokemon) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  override queryParty(partyPokemon: PlayerPokemon[]): PlayerPokemon[] {
-    if (!this.invertQuery) {
-      return partyPokemon.filter(
-        pokemon =>
-          pokemon.friendship >= this.requiredFriendshipRange[0]
-          && pokemon.friendship <= this.requiredFriendshipRange[1],
-      );
-    }
-    // for an inverted query, we only want to get the pokemon that don't have ANY of the listed requiredFriendshipRanges
-    return partyPokemon.filter(
-      pokemon =>
-        pokemon.friendship < this.requiredFriendshipRange[0] || pokemon.friendship > this.requiredFriendshipRange[1],
-    );
-  }
-
-  override getDialogueToken(pokemon?: PlayerPokemon): [string, string] {
-    return ["friendship", pokemon?.friendship.toString() ?? ""];
-  }
-}
-
 /**
  * .1 -> 10% hp
  * .5 -> 50% hp

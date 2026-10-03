@@ -171,7 +171,7 @@ export class SpeciesEvolutionCondition {
     return this.data.every(cond => {
       switch (cond.key) {
         case EvoCondKey.FRIENDSHIP:
-          return pokemon.friendship >= cond.value;
+          return false;
         case EvoCondKey.TIME:
           return cond.time.includes(globalScene.arena.getTimeOfDay());
         case EvoCondKey.MOVE:
@@ -211,7 +211,7 @@ export class SpeciesEvolutionCondition {
           return ret;
         }
         case EvoCondKey.SPECIES_CAUGHT:
-          return !!globalScene.gameData.dexData[cond.speciesCaught].caughtAttr;
+          return false;
         case EvoCondKey.HELD_ITEM:
           return pokemon
             .getHeldItems()

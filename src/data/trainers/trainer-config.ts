@@ -6634,7 +6634,6 @@ export const trainerConfigs: TrainerConfigs = {
         p.generateAndPopulateMoveset();
         p.pokeball = PokeballType.ULTRA_BALL;
         p.generateName();
-        p.friendship = 255; // In the case Veevee Volley generates
         replaceInMoveset(p.moveset, MoveId.DOUBLE_EDGE, MoveId.VEEVEE_VOLLEY);
       }),
     )
@@ -6724,7 +6723,6 @@ export const trainerConfigs: TrainerConfigs = {
         p.generateAndPopulateMoveset();
         p.generateName();
         p.pokeball = PokeballType.ULTRA_BALL;
-        p.friendship = 255; // In the case Veevee Volley generates
         replaceInMoveset(p.moveset, MoveId.DOUBLE_EDGE, MoveId.VEEVEE_VOLLEY);
       }),
     )

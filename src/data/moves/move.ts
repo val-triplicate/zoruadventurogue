@@ -5005,7 +5005,7 @@ export class FriendshipPowerAttr extends VariablePowerAttr {
 
     // wild mons use their base friendship
     // TODO: Can't we just... set the enemy's friendship to its base inside enemy generation?
-    let friendship = user.isPlayer() || user.hasTrainer() ? user.friendship : user.species.baseFriendship;
+    let friendship = user.isPlayer() || user.hasTrainer() ? 255 : 250;
     if (!isBetween(friendship, 0, 255)) {
       // TODO: Remove this if or when proper validation is added (or otherwise guaranteed)
       console.warn(

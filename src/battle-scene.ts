@@ -1436,7 +1436,6 @@ export class BattleScene extends SceneBase {
       enemyPokemon.destroy();
     }
 
-    this.trySpreadPokerus();
     if (!isNewBiome && this.currentBattle.waveIndex % 10 === 5) {
       this.arena.updatePoolsForTimeOfDay();
     }
@@ -1856,35 +1855,6 @@ export class BattleScene extends SceneBase {
     ret += Math.floor(waveIndex / 250);
 
     return ret;
-  }
-
-  trySpreadPokerus(): void {
-    const party = this.getPlayerParty();
-    const infectedIndexes: number[] = [];
-    const spread = (index: number, spreadTo: number) => {
-      const partyMember = party[index + spreadTo];
-      if (!partyMember.pokerus && !randSeedInt(10)) {
-        partyMember.pokerus = true;
-        infectedIndexes.push(index + spreadTo);
-      }
-    };
-    party.forEach((pokemon, p) => {
-      if (!pokemon.pokerus || infectedIndexes.indexOf(p) > -1) {
-        return;
-      }
-
-      this.executeWithSeedOffset(
-        () => {
-          if (p) {
-            spread(p, -1);
-          }
-          if (p < party.length - 1) {
-            spread(p, 1);
-          }
-        },
-        this.currentBattle.waveIndex + (p << 8),
-      );
-    });
   }
 
   // TODO: Refactor this and other RNG functions - these dearly need help
@@ -3212,9 +3182,6 @@ export class BattleScene extends SceneBase {
           }
         } else if (expShareModifier) {
           expMultiplier += (expShareModifier.getStackCount() * 0.2) / participantIds.size;
-        }
-        if (partyMember.pokerus) {
-          expMultiplier *= 1.5;
         }
         if (activeOverrides.XP_MULTIPLIER_OVERRIDE !== null) {
           expMultiplier = activeOverrides.XP_MULTIPLIER_OVERRIDE;
