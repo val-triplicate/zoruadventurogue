@@ -1,7 +1,5 @@
 import { globalScene } from "#app/global-scene";
 import { settings } from "#app/global-settings-manager";
-import { MAX_STARTER_CANDY_COUNT } from "#constants/game-constants";
-import { EggTier } from "#enums/egg-type";
 import { ModifierTier } from "#enums/modifier-tier";
 import { TextStyle } from "#enums/text-style";
 import type { TextStyleOptions } from "#types/ui-types";
@@ -664,28 +662,6 @@ export function getTextColor(textStyle: TextStyle, shadow?: boolean): string {
 
 export const RAINBOW_TINT = [0xffef5c, 0x47ff69, 0x6b6bff, 0xff6969];
 
-/**
- * Updates the text style of the candy count text based on the candy count.
- * @param text - The text object to update
- * @param candyCount - The candy count to update the text style based on
- * @param defaultStyle - The default text style to use when the candy count is less than the max
- * @param maxStyle - The text style to use when the candy count is at or above the max
- */
-export function updateCandyCountTextStyle(
-  text: Phaser.GameObjects.Text | BBCodeText,
-  candyCount: number,
-  defaultStyle: TextStyle = TextStyle.WINDOW_ALT,
-  maxStyle: TextStyle = TextStyle.SUMMARY_GOLD,
-) {
-  if (candyCount >= MAX_STARTER_CANDY_COUNT) {
-    text.setColor(getTextColor(maxStyle));
-    text.setTint(...RAINBOW_TINT);
-  } else {
-    text.setColor(getTextColor(defaultStyle));
-    text.clearTint();
-  }
-}
-
 export function getModifierTierTextTint(tier: ModifierTier): number {
   switch (tier) {
     case ModifierTier.COMMON:
@@ -700,18 +676,5 @@ export function getModifierTierTextTint(tier: ModifierTier): number {
       return 0xe331c5;
     case ModifierTier.LUXURY:
       return 0xe74c18;
-  }
-}
-
-export function getEggTierTextTint(tier: EggTier): number {
-  switch (tier) {
-    case EggTier.COMMON:
-      return getModifierTierTextTint(ModifierTier.COMMON);
-    case EggTier.RARE:
-      return getModifierTierTextTint(ModifierTier.GREAT);
-    case EggTier.EPIC:
-      return getModifierTierTextTint(ModifierTier.ULTRA);
-    case EggTier.LEGENDARY:
-      return getModifierTierTextTint(ModifierTier.MASTER);
   }
 }

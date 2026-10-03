@@ -2,8 +2,6 @@ import type { Ability } from "#abilities/ability";
 import { loggedInUser } from "#app/account";
 import { globalScene } from "#app/global-scene";
 import { settings } from "#app/global-settings-manager";
-import { speciesDataRegistry } from "#app/global-species-data-registry";
-import { getStarterValueFriendshipCap } from "#balance/starters";
 import { getLevelRelExp, getLevelTotalExp } from "#data/exp";
 import { getGenderColor, getGenderSymbol } from "#data/gender";
 import { getNatureName, getNatureStatMultiplier } from "#data/nature";
@@ -24,12 +22,11 @@ import type { PokemonMove } from "#moves/pokemon-move";
 import type { Variant } from "#sprites/variant";
 import { getVariantTint } from "#sprites/variant";
 import { achvs } from "#system/achv";
-import { addBBCodeTextObject, addTextObject, getBBCodeFrag, getTextColor, updateCandyCountTextStyle } from "#ui/text";
+import { addBBCodeTextObject, addTextObject, getBBCodeFrag, getTextColor } from "#ui/text";
 import { UiHandler } from "#ui/ui-handler";
-import { argbFromRgba, rgbHexToRgba } from "#utils/color-utils";
 import { fixedInt, formatStat, getBiomeName, getLocalizedSpriteKey, getShinyDescriptor, padInt } from "#utils/common";
 import { getEnumValues } from "#utils/enums";
-import { getDexNumber, getStarterColors } from "#utils/pokemon-utils";
+import { getDexNumber } from "#utils/pokemon-utils";
 import { toCamelCase, toTitleCase } from "#utils/strings";
 import i18next from "i18next";
 
@@ -66,16 +63,10 @@ export class SummaryUiHandler extends UiHandler {
   private numberText: Phaser.GameObjects.Text;
   private pokemonSprite: Phaser.GameObjects.Sprite;
   private nameText: Phaser.GameObjects.Text;
-  private splicedIcon: Phaser.GameObjects.Sprite;
   private pokeball: Phaser.GameObjects.Sprite;
   private levelText: Phaser.GameObjects.Text;
   private genderText: Phaser.GameObjects.Text;
   private shinyIcon: Phaser.GameObjects.Image;
-  private fusionShinyIcon: Phaser.GameObjects.Image;
-  private candyShadow: Phaser.GameObjects.Sprite;
-  private candyIcon: Phaser.GameObjects.Sprite;
-  private candyOverlay: Phaser.GameObjects.Sprite;
-  private candyCountText: Phaser.GameObjects.Text;
   private championRibbon: Phaser.GameObjects.Image;
   private statusContainer: Phaser.GameObjects.Container;
   private status: Phaser.GameObjects.Image;
@@ -100,12 +91,7 @@ export class SummaryUiHandler extends UiHandler {
   private moveAccuracyText: Phaser.GameObjects.Text;
   private moveCategoryIcon: Phaser.GameObjects.Sprite;
   private summaryPageTransitionContainer: Phaser.GameObjects.Container;
-  private friendshipShadow: Phaser.GameObjects.Sprite;
-  private friendshipText: Phaser.GameObjects.Text;
-  private friendshipIcon: Phaser.GameObjects.Sprite;
-  private friendshipOverlay: Phaser.GameObjects.Sprite;
   private permStatsContainer: Phaser.GameObjects.Container;
-  private ivContainer: Phaser.GameObjects.Container;
   private statsContainer: Phaser.GameObjects.Container;
   private statsContainerItemTitle: Phaser.GameObjects.Image;
   private statsContainerStatsTitle: Phaser.GameObjects.Image;
@@ -173,13 +159,6 @@ export class SummaryUiHandler extends UiHandler {
     this.nameText.setOrigin(0, 0);
     this.summaryContainer.add(this.nameText);
 
-    this.splicedIcon = globalScene.add.sprite(0, -54, "icon_spliced");
-    this.splicedIcon.setVisible(false);
-    this.splicedIcon.setOrigin(0, 0);
-    this.splicedIcon.setScale(0.75);
-    this.splicedIcon.setInteractive(new Phaser.Geom.Rectangle(0, 0, 12, 15), Phaser.Geom.Rectangle.Contains);
-    this.summaryContainer.add(this.splicedIcon);
-
     this.shinyIcon = globalScene.add.image(0, -54, "shiny_star");
     this.shinyIcon.setVisible(false);
     this.shinyIcon.setOrigin(0, 0);
@@ -187,57 +166,9 @@ export class SummaryUiHandler extends UiHandler {
     this.shinyIcon.setInteractive(new Phaser.Geom.Rectangle(0, 0, 12, 15), Phaser.Geom.Rectangle.Contains);
     this.summaryContainer.add(this.shinyIcon);
 
-    this.fusionShinyIcon = globalScene.add.image(0, 0, "shiny_star_2");
-    this.fusionShinyIcon.setVisible(false);
-    this.fusionShinyIcon.setOrigin(0, 0);
-    this.fusionShinyIcon.setScale(0.75);
-    this.summaryContainer.add(this.fusionShinyIcon);
-
     this.pokeball = globalScene.add.sprite(6, -19, "pb");
     this.pokeball.setOrigin(0, 1);
     this.summaryContainer.add(this.pokeball);
-
-    this.candyIcon = globalScene.add.sprite(13, -140, "candy");
-    this.candyIcon.setScale(0.8);
-    this.summaryContainer.add(this.candyIcon);
-
-    this.candyOverlay = globalScene.add.sprite(13, -140, "candy_overlay");
-    this.candyOverlay.setScale(0.8);
-    this.summaryContainer.add(this.candyOverlay);
-
-    this.candyShadow = globalScene.add.sprite(13, -140, "candy");
-    this.candyShadow.setTint(0x000000);
-    this.candyShadow.setAlpha(0.5);
-    this.candyShadow.setScale(0.8);
-    this.candyShadow.setInteractive(new Phaser.Geom.Rectangle(0, 0, 30, 16), Phaser.Geom.Rectangle.Contains);
-    this.summaryContainer.add(this.candyShadow);
-
-    this.candyCountText = addTextObject(20, -146, "×0", TextStyle.WINDOW_ALT, {
-      fontSize: "76px",
-    });
-    this.candyCountText.setOrigin(0, 0);
-    this.summaryContainer.add(this.candyCountText);
-
-    this.friendshipIcon = globalScene.add.sprite(13, -60, "friendship");
-    this.friendshipIcon.setScale(0.8);
-    this.summaryContainer.add(this.friendshipIcon);
-
-    this.friendshipOverlay = globalScene.add.sprite(13, -60, "friendship_overlay");
-    this.friendshipOverlay.setScale(0.8);
-    this.summaryContainer.add(this.friendshipOverlay);
-
-    this.friendshipShadow = globalScene.add.sprite(13, -60, "friendship");
-    this.friendshipShadow.setTint(0x000000);
-    this.friendshipShadow.setAlpha(0.5);
-    this.friendshipShadow.setScale(0.8);
-    this.friendshipShadow.setInteractive(new Phaser.Geom.Rectangle(0, 0, 50, 16), Phaser.Geom.Rectangle.Contains);
-    this.summaryContainer.add(this.friendshipShadow);
-
-    this.friendshipText = addTextObject(20, -66, "×0", TextStyle.WINDOW_ALT, {
-      fontSize: "76px",
-    });
-    this.friendshipText.setOrigin(0, 0);
-    this.summaryContainer.add(this.friendshipText);
 
     this.championRibbon = globalScene.add.image(88, -146, "champion_ribbon");
     this.championRibbon.setOrigin(0, 0);
@@ -370,10 +301,6 @@ export class SummaryUiHandler extends UiHandler {
 
     this.shinyOverlay.setVisible(this.pokemon.isShiny());
 
-    const colorScheme = getStarterColors(this.pokemon.species.getRootSpeciesId());
-    this.candyIcon.setTint(argbFromRgba(rgbHexToRgba(colorScheme[0])));
-    this.candyOverlay.setTint(argbFromRgba(rgbHexToRgba(colorScheme[1])));
-
     this.numberText.setText(padInt(getDexNumber(this.pokemon.species.speciesId), 4));
     this.numberText.setColor(getTextColor(this.pokemon.isShiny() ? TextStyle.SUMMARY_GOLD : TextStyle.SUMMARY));
     this.numberText.setShadowColor(
@@ -401,21 +328,6 @@ export class SummaryUiHandler extends UiHandler {
 
     this.nameText.setText(this.pokemon.getNameToRender({ useIllusion: false }));
 
-    const isFusion = this.pokemon.isFusion();
-
-    this.splicedIcon.setPositionRelative(this.nameText, this.nameText.displayWidth + 2, 3);
-    this.splicedIcon.setVisible(isFusion);
-    if (this.splicedIcon.visible) {
-      this.splicedIcon.on("pointerover", () =>
-        globalScene.ui.showTooltip(
-          "",
-          `${this.pokemon?.species.getName(this.pokemon.formIndex)}/${this.pokemon?.fusionSpecies?.getName(this.pokemon?.fusionFormIndex)}`,
-          true,
-        ),
-      );
-      this.splicedIcon.on("pointerout", () => globalScene.ui.hideTooltip());
-    }
-
     if (
       globalScene.gameData.starterData[this.pokemon.species.getRootSpeciesId()].classicWinCount > 0
       && globalScene.gameData.starterData[this.pokemon.species.getRootSpeciesId(true)].classicWinCount > 0
@@ -430,54 +342,17 @@ export class SummaryUiHandler extends UiHandler {
       currentFriendship = 0;
     }
 
-    const friendshipCap = getStarterValueFriendshipCap(
-      speciesDataRegistry.getStarterCost(this.pokemon.species.getRootSpeciesId()),
-    );
-    const candyCropY = 16 - 16 * (currentFriendship / friendshipCap);
+    const bigIconVariant = this.pokemon.getVariant();
 
-    if (this.candyShadow.visible) {
-      this.candyShadow.on("pointerover", () =>
-        globalScene.ui.showTooltip("", `${currentFriendship}/${friendshipCap}`, true),
-      );
-      this.candyShadow.on("pointerout", () => globalScene.ui.hideTooltip());
-    }
-
-    const candyCount = globalScene.gameData.starterData[this.pokemon.species.getRootSpeciesId()].candyCount;
-    this.candyCountText.setText(`×${candyCount}`);
-    updateCandyCountTextStyle(this.candyCountText, candyCount);
-
-    this.candyShadow.setCrop(0, 0, 16, candyCropY);
-
-    if (this.friendshipShadow.visible) {
-      this.friendshipShadow.on("pointerover", () =>
-        globalScene.ui.showTooltip("", `${i18next.t("pokemonSummary:friendship")}`, true),
-      );
-      this.friendshipShadow.on("pointerout", () => globalScene.ui.hideTooltip());
-    }
-
-    this.friendshipText.setText(` ${this.pokemon?.friendship || "0"}/255`);
-
-    this.friendshipShadow.setCrop(0, 0, 16, 16 - 16 * ((this.pokemon?.friendship || 0) / 255));
-
-    const doubleShiny = this.pokemon.isDoubleShiny(false);
-    const bigIconVariant = doubleShiny ? this.pokemon.getBaseVariant(doubleShiny) : this.pokemon.getVariant();
-
-    this.shinyIcon.setPositionRelative(
-      this.nameText,
-      this.nameText.displayWidth + (this.splicedIcon.visible ? this.splicedIcon.displayWidth + 1 : 0) + 1,
-      3,
-    );
+    this.shinyIcon.setPositionRelative(this.nameText, this.nameText.displayWidth + 1, 3);
     this.shinyIcon
-      .setTexture(`shiny_star${doubleShiny ? "_1" : ""}`)
+      .setTexture("shiny_star")
       .setVisible(this.pokemon.isShiny(false))
       .setTint(getVariantTint(bigIconVariant));
     if (this.shinyIcon.visible) {
       let shinyDescriptor = "";
-      if (doubleShiny || bigIconVariant) {
+      if (bigIconVariant) {
         shinyDescriptor = " (" + getShinyDescriptor(bigIconVariant);
-        if (doubleShiny) {
-          shinyDescriptor += "/" + getShinyDescriptor(this.pokemon.fusionVariant);
-        }
         shinyDescriptor += ")";
       }
       this.shinyIcon
@@ -485,12 +360,6 @@ export class SummaryUiHandler extends UiHandler {
           globalScene.ui.showTooltip("", i18next.t("common:shinyOnHover") + shinyDescriptor, true),
         )
         .on("pointerout", () => globalScene.ui.hideTooltip());
-    }
-
-    this.fusionShinyIcon.setPosition(this.shinyIcon.x, this.shinyIcon.y);
-    this.fusionShinyIcon.setVisible(doubleShiny);
-    if (isFusion) {
-      this.fusionShinyIcon.setTint(getVariantTint(this.pokemon.fusionVariant));
     }
 
     this.pokeball.setFrame(getPokeballAtlasKey(this.pokemon.pokeball));
@@ -616,10 +485,6 @@ export class SummaryUiHandler extends UiHandler {
         this.passiveContainer.nameText?.setVisible(!this.passiveContainer.descriptionText?.visible);
         this.passiveContainer.descriptionText?.setVisible(!this.passiveContainer.descriptionText.visible);
         this.passiveContainer.labelImage.setVisible(!this.passiveContainer.labelImage.visible);
-      } else if (this.cursor === Page.STATS) {
-        //Show IVs
-        this.permStatsContainer.setVisible(!this.permStatsContainer.visible);
-        this.ivContainer.setVisible(!this.ivContainer.visible);
       }
     } else if (button === Button.CANCEL) {
       if (this.summaryUiMode === SummaryUiMode.LEARN_MOVE) {
@@ -1028,8 +893,6 @@ export class SummaryUiHandler extends UiHandler {
         pageContainer.add(this.statsContainer);
         this.permStatsContainer = globalScene.add.container(27, 64);
         this.statsContainer.add(this.permStatsContainer);
-        this.ivContainer = globalScene.add.container(27, 64);
-        this.statsContainer.add(this.ivContainer);
         this.statsContainer.setVisible(true);
 
         this.statsContainerItemTitle = globalScene.add.image(7, 4, getLocalizedSpriteKey("summary_stats_item_title")); // Pixel text 'ITEM'
@@ -1083,7 +946,6 @@ export class SummaryUiHandler extends UiHandler {
           statLabel.setOrigin(0.5, 0);
           ivLabel.setOrigin(0.5, 0);
           this.permStatsContainer.add(statLabel);
-          this.ivContainer.add(ivLabel);
 
           // TODO: are those bangs correct?
           const statValueText =
@@ -1097,9 +959,7 @@ export class SummaryUiHandler extends UiHandler {
           this.permStatsContainer.add(statValue);
           const ivValue = addTextObject(93 + 93 * colIndex, 16 * rowIndex, ivText, TextStyle.WINDOW_ALT);
           ivValue.setOrigin(1, 0);
-          this.ivContainer.add(ivValue);
         });
-        this.ivContainer.setVisible(false);
 
         const itemModifiers = (
           globalScene.findModifiers(

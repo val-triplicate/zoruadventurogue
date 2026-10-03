@@ -74,18 +74,14 @@ const noTransitionModes = [
   UiMode.SETTINGS_KEYBOARD,
   UiMode.ACHIEVEMENTS,
   UiMode.GAME_STATS,
-  UiMode.LOGIN_FORM,
-  UiMode.REGISTRATION_FORM,
   UiMode.LOADING,
   UiMode.UNAVAILABLE,
   UiMode.RENAME_POKEMON,
   UiMode.RENAME_RUN,
   UiMode.TEST_DIALOGUE,
   UiMode.AUTO_COMPLETE,
-  UiMode.ADMIN,
   UiMode.MYSTERY_ENCOUNTER,
   UiMode.RUN_INFO,
-  UiMode.CHANGE_PASSWORD_FORM,
   UiMode.ALERT_MODAL,
 ];
 
@@ -117,33 +113,39 @@ export class UI extends Phaser.GameObjects.Container {
       new CommandUiHandler(),
       new FightUiHandler(),
       new TargetSelectUiHandler(),
+
       new ModifierSelectUiHandler(),
       new SaveSlotSelectUiHandler(),
       new PartyUiHandler(),
       new SummaryUiHandler(),
       new StarterSelectUiHandler(),
+
       new EvolutionSceneUiHandler(),
       new ConfirmUiHandler(),
       new OptionSelectUiHandler(),
       new MenuUiHandler(),
       new OptionSelectUiHandler(UiMode.MENU_OPTION_SELECT),
+
       // settings
       new GeneralSettingsUiHandler(),
       new SettingsDisplayUiHandler(),
       new SettingsAudioUiHandler(),
       new SettingsGamepadUiHandler(),
       new GamepadBindingUiHandler(),
+
       new SettingsKeyboardUiHandler(),
       new KeyboardBindingUiHandler(),
       // end settings
       new AchvsUiHandler(),
       new GameStatsUiHandler(),
       new LoadingModalUiHandler(),
+
       new UnavailableModalUiHandler(),
       new RenameFormUiHandler(),
       new RenameRunFormUiHandler(),
       new RunHistoryUiHandler(),
       new RunInfoUiHandler(),
+
       new TestDialogueUiHandler(),
       new AutoCompleteUiHandler(),
       new MysteryEncounterUiHandler(),
