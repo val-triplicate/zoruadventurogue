@@ -24,7 +24,7 @@ import type { Variant, VariantSet } from "#sprites/variant";
 import { populateVariantColorCache, variantColorCache, variantData } from "#sprites/variant";
 import type { LevelMoves } from "#types/level-moves";
 import type { Localizable } from "#types/locales";
-import type { TeamMemberMoveset } from "#types/save-data";
+import type { SelectedMoves } from "#types/save-data";
 import type { EvolutionLevel, EvolutionLevelWithThreshold } from "#types/species-gen-types";
 import { randSeedFloat } from "#utils/common";
 import { toCamelCase, toPascalCase } from "#utils/strings";
@@ -630,7 +630,7 @@ export abstract class PokemonSpeciesForm {
     return `cry/${ret}`;
   }
 
-  validateStarterMoveset(moveset: TeamMemberMoveset, eggMoves: number): boolean {
+  validateStarterMoveset(moveset: SelectedMoves, eggMoves: number): boolean {
     const rootSpeciesId = this.getRootSpeciesId();
     for (const moveId of moveset) {
       if (Object.hasOwn(teamMemberMoveOptions, rootSpeciesId)) {
