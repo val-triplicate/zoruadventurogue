@@ -28,7 +28,6 @@ import { TurnCommandManager } from "#app/turn-command-manager";
 import { UiInputs } from "#app/ui-inputs";
 import { STARTING_WAVE } from "#balance/misc";
 import { initCommonAnims, initMoveAnim, loadCommonAnimAssets, loadMoveAnimAssets } from "#data/battle-anims";
-import { getDailyMysteryEncounter } from "#data/daily-run";
 import { allMoves, biomeDepths, modifierTypes } from "#data/data-lists";
 import { classicFinalBossDialogue } from "#data/dialogue";
 import type { SpeciesFormChangeTrigger } from "#data/form-change-triggers";
@@ -41,7 +40,6 @@ import { BattleType } from "#enums/battle-type";
 import { BattlerTagType } from "#enums/battler-tag-type";
 import { BiomeId } from "#enums/biome-id";
 import { FormChangeItem } from "#enums/form-change-item";
-import { GameModes } from "#enums/game-modes";
 import { ModifierPoolType } from "#enums/modifier-pool-type";
 import { MoveId } from "#enums/move-id";
 import { MysteryEncounterMode } from "#enums/mystery-encounter-mode";
@@ -49,7 +47,7 @@ import { MysteryEncounterTier } from "#enums/mystery-encounter-tier";
 import { MysteryEncounterType } from "#enums/mystery-encounter-type";
 import { Nature } from "#enums/nature";
 import { PlayerGender } from "#enums/player-gender";
-import { PokeballType } from "#enums/pokeball";
+import type { PokeballType } from "#enums/pokeball";
 import type { PokemonAnimType } from "#enums/pokemon-anim-type";
 import { PokemonType } from "#enums/pokemon-type";
 import { SpeciesId } from "#enums/species-id";
@@ -125,7 +123,6 @@ import type { SessionSaveData } from "#types/save-data";
 import type { VolumeSettingsKey } from "#types/settings";
 import { AbilityBar } from "#ui/ability-bar";
 import { ArenaFlyout } from "#ui/arena-flyout";
-import { CandyBar } from "#ui/candy-bar";
 import { CharSprite } from "#ui/char-sprite";
 import { PartyExpBar } from "#ui/party-exp-bar";
 import { PokeballTray } from "#ui/pokeball-tray";
@@ -210,7 +207,6 @@ export class BattleScene extends SceneBase {
   public pbTrayEnemy: PokeballTray;
   public abilityBar: AbilityBar;
   public partyExpBar: PartyExpBar;
-  public candyBar: CandyBar;
   public arenaBg: Phaser.GameObjects.Sprite;
   public arenaBgTransition: Phaser.GameObjects.Sprite;
   public arenaPlayer: ArenaBase;
@@ -225,7 +221,6 @@ export class BattleScene extends SceneBase {
   public trainer: Phaser.GameObjects.Sprite;
   public lastEnemyTrainer: Trainer | null;
   public currentBattle: Battle;
-  public pokeballCounts: PokeballCounts;
   public money: number;
   public pokemonInfoContainer: PokemonInfoContainer;
   private party: PlayerPokemon[];
@@ -518,10 +513,6 @@ export class BattleScene extends SceneBase {
       .setName("party-exp-bar")
       .setup();
 
-    this.candyBar = new CandyBar() //
-      .setName("candy-bar")
-      .setup();
-
     this.biomeWaveText = addTextObject(this.scaledCanvas.width - 2, 0, STARTING_WAVE.toString(), TextStyle.BATTLE_INFO)
       .setName("text-biome-wave")
       .setOrigin(1, 0.5);
@@ -567,7 +558,6 @@ export class BattleScene extends SceneBase {
         this.pbTrayEnemy,
         this.abilityBar,
         this.partyExpBar,
-        this.candyBar,
         this.biomeWaveText,
         this.moneyText,
         this.scoreText,
@@ -625,7 +615,7 @@ export class BattleScene extends SceneBase {
     this.uiContainer.add(this.ui);
     this.ui.setup();
 
-    this.phaseManager.toTitleScreen(true);
+    this.phaseManager.toTitleScreen();
     this.phaseManager.shiftPhase();
   }
 
@@ -1008,7 +998,7 @@ export class BattleScene extends SceneBase {
   setSeed(seed: string): void {
     this.seed = seed;
     this.waveCycleOffset = this.getGeneratedWaveCycleOffset();
-    this.offsetGym = this.gameMode.isClassic && this.getGeneratedOffsetGym();
+    this.offsetGym = this.getGeneratedOffsetGym();
   }
 
   /**
@@ -1032,7 +1022,7 @@ export class BattleScene extends SceneBase {
     }
 
     this.turnCommandManager.resetTurnOrder();
-    this.gameMode = getGameMode(GameModes.CLASSIC);
+    this.gameMode = getGameMode();
 
     this.disableMenu = false;
 
@@ -1040,18 +1030,6 @@ export class BattleScene extends SceneBase {
     this.money = 0;
 
     this.lockModifierTiers = false;
-
-    if (activeOverrides.POKEBALL_OVERRIDE.active) {
-      this.pokeballCounts = activeOverrides.POKEBALL_OVERRIDE.pokeballs;
-    } else {
-      // TODO: Remove unused luxury balls and remove the `filter`
-      this.pokeballCounts = Object.fromEntries(
-        getEnumValues(PokeballType)
-          .filter(pt => pt !== PokeballType.LUXURY_BALL)
-          .map(t => [t, 0]),
-      );
-      this.pokeballCounts[PokeballType.POKEBALL] = 5;
-    }
 
     this.modifiers = [];
     this.enemyModifiers = [];
@@ -1860,13 +1838,6 @@ export class BattleScene extends SceneBase {
       return 0;
     }
 
-    if (this.gameMode.isDaily && this.gameMode.isWaveFinal(waveIndex)) {
-      if (this.gameMode.dailyConfig?.boss?.segments != null) {
-        return this.gameMode.dailyConfig.boss.segments;
-      }
-      return 5;
-    }
-
     let isBoss: boolean | undefined;
     if (forceBoss || (species && (species.subLegendary || species.legendary || species.mythical))) {
       isBoss = true;
@@ -2101,7 +2072,7 @@ export class BattleScene extends SceneBase {
     const { score } = this;
     this.scoreText // formatting
       .setText(i18next.t("battleScene:score", { score }))
-      .setVisible(this.gameMode.isDaily);
+      .setVisible(false);
   }
 
   /**
@@ -2165,7 +2136,6 @@ export class BattleScene extends SceneBase {
     );
     const offsetY = (this.scoreText.visible ? this.scoreText : this.moneyText).y + 15;
     this.partyExpBar.setY(offsetY);
-    this.candyBar.setY(offsetY + 15);
     this.ui?.achvBar.setY(this.scaledCanvas.height + offsetY);
   }
 
@@ -3316,9 +3286,6 @@ export class BattleScene extends SceneBase {
    * @returns Whether a Mystery Encounter should be generated.
    */
   private isWaveMysteryEncounter(battleType: BattleType, waveIndex: number): boolean {
-    if (getDailyMysteryEncounter(waveIndex) != null) {
-      return true;
-    }
     if (!this.isMysteryEncounterValidForWave(battleType, waveIndex)) {
       return false;
     }
@@ -3397,10 +3364,8 @@ export class BattleScene extends SceneBase {
     } else if (canBypass) {
       encounter = allMysteryEncounters[encounterType ?? -1];
       return encounter;
-    } else if (getDailyMysteryEncounter(this.currentBattle.waveIndex) == null) {
-      encounter = encounterType == null ? null : allMysteryEncounters[encounterType];
     } else {
-      encounter = allMysteryEncounters[getDailyMysteryEncounter(this.currentBattle.waveIndex)!];
+      encounter = null;
     }
 
     // Check for queued encounters first
@@ -3484,9 +3449,6 @@ export class BattleScene extends SceneBase {
             && disallowedGameModes.length > 0
             && disallowedGameModes.includes(this.gameMode.modeId)
           ) {
-            return false;
-          }
-          if (encounterCandidate.disallowedChallenges?.some(challenge => this.gameMode.hasChallenge(challenge))) {
             return false;
           }
           if (!encounterCandidate.meetsRequirements()) {

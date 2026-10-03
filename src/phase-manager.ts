@@ -43,7 +43,6 @@ import { LearnMovePhase } from "#phases/learn-move-phase";
 import { LevelCapPhase } from "#phases/level-cap-phase";
 import { LevelUpPhase } from "#phases/level-up-phase";
 import { LoadMoveAnimPhase } from "#phases/load-move-anim-phase";
-import { LoginPhase } from "#phases/login-phase";
 import { MessagePhase } from "#phases/message-phase";
 import { ModifierRewardPhase } from "#phases/modifier-reward-phase";
 import { MoneyRewardPhase } from "#phases/money-reward-phase";
@@ -149,7 +148,6 @@ const PHASES = Object.freeze({
   LevelCapPhase,
   LevelUpPhase,
   LoadMoveAnimPhase,
-  LoginPhase,
   MessagePhase,
   ModifierRewardPhase,
   MoneyRewardPhase,
@@ -245,16 +243,11 @@ export class PhaseManager {
 
   /**
    * Clear all previously set phases, then add a new {@linkcode TitlePhase} to transition to the title screen.
-   * @param addLogin - Whether to add a new {@linkcode LoginPhase} before the {@linkcode TitlePhase}
    * (but reset everything else).
    * Default `false`
    */
-  public toTitleScreen(addLogin = false): void {
+  public toTitleScreen(): void {
     this.clearAllPhases();
-
-    if (addLogin) {
-      this.unshiftNew("LoginPhase");
-    }
     this.unshiftNew("TitlePhase");
   }
 

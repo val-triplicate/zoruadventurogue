@@ -563,11 +563,6 @@ export class Arena {
   // TODO: The only place that doesn't pass an explicit `luckValue` parameter is Illusion's enemy overrides;
   // remove parameter & replace with `globalScene.getLuckValue` in a future refactor
   public randomSpecies(waveIndex: number, level: number, attempt = 0, luckValue = 0, isBoss?: boolean): PokemonSpecies {
-    const overrideSpecies = globalScene.gameMode.getOverrideSpecies(waveIndex);
-    if (overrideSpecies) {
-      return overrideSpecies;
-    }
-
     // Boss pool is 0-63, non Boss pool is 0-512
     const isBossSpecies =
       globalScene.getEncounterBossSegments(waveIndex, level) > 0
