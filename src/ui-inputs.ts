@@ -8,7 +8,6 @@ import { Button } from "#enums/buttons";
 import { GameSpeed } from "#enums/game-speed";
 import { UiMode } from "#enums/ui-mode";
 import { SettingsAudioUiHandler } from "#ui/audio-settings-ui-handler";
-import { GameChallengesUiHandler } from "#ui/challenges-select-ui-handler";
 import { SettingsDisplayUiHandler } from "#ui/display-settings-ui-handler";
 import { SettingsGamepadUiHandler } from "#ui/gamepad-settings-ui-handler";
 import { GeneralSettingsUiHandler } from "#ui/general-settings-ui-handler";
@@ -214,7 +213,6 @@ export class UiInputs {
   buttonCycleOption(button: Button): void {
     const whitelist = [
       StarterSelectUiHandler,
-      GameChallengesUiHandler,
       GeneralSettingsUiHandler,
       RunInfoUiHandler,
       SettingsDisplayUiHandler,

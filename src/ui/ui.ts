@@ -13,10 +13,8 @@ import { AlertModalUiHandler } from "#ui/alert-modal-ui-handler";
 import { SettingsAudioUiHandler } from "#ui/audio-settings-ui-handler";
 import { AutoCompleteUiHandler } from "#ui/autocomplete-ui-handler";
 import { AwaitableUiHandler } from "#ui/awaitable-ui-handler";
-import { BallUiHandler } from "#ui/ball-ui-handler";
 import { BattleMessageUiHandler } from "#ui/battle-message-ui-handler";
 import type { BgmBar } from "#ui/bgm-bar";
-import { ChangePasswordFormUiHandler } from "#ui/change-password-form-ui-handler";
 import { CommandUiHandler } from "#ui/command-ui-handler";
 import { ConfirmUiHandler } from "#ui/confirm-ui-handler";
 import { SettingsDisplayUiHandler } from "#ui/display-settings-ui-handler";
@@ -29,15 +27,12 @@ import { GeneralSettingsUiHandler } from "#ui/general-settings-ui-handler";
 import { KeyboardBindingUiHandler } from "#ui/keyboard-binding-ui-handler";
 import { SettingsKeyboardUiHandler } from "#ui/keyboard-settings-ui-handler";
 import { LoadingModalUiHandler } from "#ui/loading-modal-ui-handler";
-import { LoginFormUiHandler } from "#ui/login-form-ui-handler";
-import { LoginOrRegisterUiHandler } from "#ui/login-or-register-ui-handler";
 import { MenuUiHandler } from "#ui/menu-ui-handler";
 import { MessageUiHandler } from "#ui/message-ui-handler";
 import { ModifierSelectUiHandler } from "#ui/modifier-select-ui-handler";
 import { MysteryEncounterUiHandler } from "#ui/mystery-encounter-ui-handler";
 import { OptionSelectUiHandler } from "#ui/option-select-ui-handler";
 import { PartyUiHandler } from "#ui/party-ui-handler";
-import { RegistrationFormUiHandler } from "#ui/registration-form-ui-handler";
 import { RenameFormUiHandler } from "#ui/rename-form-ui-handler";
 import { RenameRunFormUiHandler } from "#ui/rename-run-ui-handler";
 import { RunHistoryUiHandler } from "#ui/run-history-ui-handler";
@@ -129,7 +124,6 @@ export class UI extends Phaser.GameObjects.Container {
       new TitleUiHandler(),
       new CommandUiHandler(),
       new FightUiHandler(),
-      new BallUiHandler(),
       new TargetSelectUiHandler(),
       new ModifierSelectUiHandler(),
       new SaveSlotSelectUiHandler(),
@@ -152,9 +146,6 @@ export class UI extends Phaser.GameObjects.Container {
       // end settings
       new AchvsUiHandler(),
       new GameStatsUiHandler(),
-      new LoginOrRegisterUiHandler(),
-      new LoginFormUiHandler(),
-      new RegistrationFormUiHandler(),
       new LoadingModalUiHandler(),
       new UnavailableModalUiHandler(),
       new RenameFormUiHandler(),
@@ -165,7 +156,6 @@ export class UI extends Phaser.GameObjects.Container {
       new AutoCompleteUiHandler(),
       new AdminUiHandler(),
       new MysteryEncounterUiHandler(),
-      new ChangePasswordFormUiHandler(),
       new AlertModalUiHandler(),
     ];
   }
