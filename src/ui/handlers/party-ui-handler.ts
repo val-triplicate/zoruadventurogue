@@ -613,7 +613,7 @@ export class PartyUiHandler extends MessageUiHandler {
     } else {
       filterResult = (this.selectFilter as PokemonSelectFilter)(pokemon);
       if (filterResult === null && this.partyUiMode === PartyUiMode.MOVE_MODIFIER) {
-        filterResult = this.moveSelectFilter(pokemon.moveset[this.optionsCursor]);
+        filterResult = this.moveSelectFilter(pokemon.moves[this.optionsCursor]);
       }
     }
     return filterResult;
@@ -1374,7 +1374,7 @@ export class PartyUiHandler extends MessageUiHandler {
           case PartyOption.MOVE_2:
           case PartyOption.MOVE_3:
           case PartyOption.MOVE_4: {
-            const move = pokemon.moveset[option - PartyOption.MOVE_1];
+            const move = pokemon.moves[option - PartyOption.MOVE_1];
             if (this.showMovePp) {
               const maxPP = move.getMovePp();
               const currPP = maxPP - move.ppUsed;
@@ -1799,7 +1799,7 @@ class PartySlot extends Phaser.GameObjects.Container {
     const slotInfoContainer = globalScene.add.container(0, 0);
     this.add(slotInfoContainer);
 
-    let displayName = this.pokemon.getNameToRender({ useIllusion: false });
+    let displayName = this.pokemon.getNameToRender();
     let nameTextWidth: number;
 
     const nameSizeTest = addTextObject(0, 0, displayName, TextStyle.PARTY);

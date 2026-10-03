@@ -4,7 +4,6 @@ import { applyAbAttrs, applyOnGainAbAttrs, applyOnLoseAbAttrs } from "#abilities
 import { generateMoveset } from "#ai/ai-moveset-gen";
 import type { Battle } from "#app/battle";
 import type { BattleScene } from "#app/battle-scene";
-import { PLAYER_PARTY_MAX_SIZE } from "#app/constants";
 import { audioManager } from "#app/global-audio-manager";
 import { timedEventManager } from "#app/global-event-manager";
 import { globalScene } from "#app/global-scene";
@@ -154,7 +153,6 @@ import {
   BooleanHolder,
   fixedInt,
   getIvsFromId,
-  isBetween,
   NumberHolder,
   randSeedInt,
   randSeedIntRange,
@@ -5550,47 +5548,6 @@ export class EnemyPokemon extends Pokemon {
       return BattlerIndex.ATTACKER;
     }
     return BattlerIndex.ENEMY + this.getFieldIndex();
-  }
-
-  /**
-   * Add a new pokemon to the player's party (at `slotIndex` if set).
-   * The new pokemon's visibility will be set to `false`.
-   * @param pokeballType - The type of pokeball the pokemon was caught with
-   * @param slotIndex - An optional index to place the pokemon in the party
-   * @returns The pokemon that was added or null if the pokemon could not be added
-   */
-  public addToParty(pokeballType: PokeballType, slotIndex = -1) {
-    const party = globalScene.getPlayerParty();
-    let ret: PlayerPokemon | null = null;
-
-    if (party.length < PLAYER_PARTY_MAX_SIZE) {
-      this.pokeball = pokeballType;
-      const newPokemon = globalScene.addPlayerPokemon(
-        this.species,
-        this.level,
-        this.abilityIndex,
-        this.formIndex,
-        this.gender,
-        this.shiny,
-        this.variant,
-        this.nature,
-        this,
-      );
-
-      if (isBetween(slotIndex, 0, PLAYER_PARTY_MAX_SIZE - 1)) {
-        party.splice(slotIndex, 0, newPokemon);
-      } else {
-        party.push(newPokemon);
-      }
-
-      // Hide the Pokemon since it is not on the field
-      newPokemon.setVisible(false);
-
-      ret = newPokemon;
-      globalScene.triggerPokemonFormChange(newPokemon, SpeciesFormChangeActiveTrigger, true);
-    }
-
-    return ret;
   }
 
   /**
