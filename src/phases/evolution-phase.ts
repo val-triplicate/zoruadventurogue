@@ -409,9 +409,7 @@ export class EvolutionPhase extends Phase {
   private postEvolve(evolvedPokemon: Pokemon): void {
     const learnSituation: LearnMoveSituation = this.fusionSpeciesEvolved
       ? LearnMoveSituation.EVOLUTION_FUSED
-      : this.pokemon.fusionSpecies
-        ? LearnMoveSituation.EVOLUTION_FUSED_BASE
-        : LearnMoveSituation.EVOLUTION;
+      : LearnMoveSituation.EVOLUTION;
     const levelMoves = this.pokemon
       .getLevelMoves({ startingLevel: this.lastLevel + 1, includeEvolutionMoves: true, learnSituation })
       .filter(lm => lm[0] === EVOLVE_MOVE);

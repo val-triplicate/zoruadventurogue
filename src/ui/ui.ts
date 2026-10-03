@@ -16,7 +16,6 @@ import { AwaitableUiHandler } from "#ui/awaitable-ui-handler";
 import { BallUiHandler } from "#ui/ball-ui-handler";
 import { BattleMessageUiHandler } from "#ui/battle-message-ui-handler";
 import type { BgmBar } from "#ui/bgm-bar";
-import { GameChallengesUiHandler } from "#ui/challenges-select-ui-handler";
 import { ChangePasswordFormUiHandler } from "#ui/change-password-form-ui-handler";
 import { CommandUiHandler } from "#ui/command-ui-handler";
 import { ConfirmUiHandler } from "#ui/confirm-ui-handler";
@@ -158,7 +157,6 @@ export class UI extends Phaser.GameObjects.Container {
       new RegistrationFormUiHandler(),
       new LoadingModalUiHandler(),
       new UnavailableModalUiHandler(),
-      new GameChallengesUiHandler(),
       new RenameFormUiHandler(),
       new RenameRunFormUiHandler(),
       new RunHistoryUiHandler(),

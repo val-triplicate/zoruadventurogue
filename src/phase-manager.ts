@@ -15,7 +15,6 @@ import { PHASE_START_COLOR } from "#constants/colors";
 import { MovePhaseTimingModifier } from "#enums/move-phase-timing-modifier";
 import type { Pokemon } from "#field/pokemon";
 import { AddEnemyBuffModifierPhase } from "#phases/add-enemy-buff-modifier-phase";
-import { AttemptCapturePhase } from "#phases/attempt-capture-phase";
 import { AttemptRunPhase } from "#phases/attempt-run-phase";
 import { BattleEndPhase } from "#phases/battle-end-phase";
 import { BerryPhase } from "#phases/berry-phase";
@@ -122,7 +121,6 @@ import type { NonEmptyTuple } from "type-fest";
  */
 const PHASES = Object.freeze({
   AddEnemyBuffModifierPhase,
-  AttemptCapturePhase,
   AttemptRunPhase,
   BattleEndPhase,
   BerryPhase,

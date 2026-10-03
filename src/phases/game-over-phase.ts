@@ -5,12 +5,9 @@ import { globalScene } from "#app/global-scene";
 import { settings } from "#app/global-settings-manager";
 import { speciesDataRegistry } from "#app/global-species-data-registry";
 import { bypassLogin } from "#constants/app-constants";
-import { modifierTypes } from "#data/data-lists";
 import { getCharVariantFromDialogue } from "#data/dialogue";
 import type { PokemonSpecies } from "#data/pokemon-species";
 import { BattleType } from "#enums/battle-type";
-import { ChallengeType } from "#enums/challenge-type";
-import { Challenges } from "#enums/challenges";
 import { PlayerGender } from "#enums/player-gender";
 import { TrainerType } from "#enums/trainer-type";
 import { UiMode } from "#enums/ui-mode";
@@ -18,7 +15,7 @@ import { Unlockables } from "#enums/unlockables";
 import type { Pokemon } from "#field/pokemon";
 import { BattlePhase } from "#phases/battle-phase";
 import type { EndCardPhase } from "#phases/end-card-phase";
-import { achvs, ChallengeAchv } from "#system/achv";
+import { achvs } from "#system/achv";
 import { ArenaData } from "#system/arena-data";
 import { ChallengeData } from "#system/challenge-data";
 import { ModifierData as PersistentModifierData } from "#system/modifier-data";
@@ -29,7 +26,6 @@ import { TrainerData } from "#system/trainer-data";
 import { trainerConfigs } from "#trainers/trainer-config";
 import type { SessionSaveData } from "#types/save-data";
 import type { ConfirmModeConfig } from "#types/ui-types";
-import { applyChallenges, isNuzlockeChallenge } from "#utils/challenge-utils";
 import { fixedInt, isLocalServerConnected } from "#utils/common";
 import { ValueHolder } from "#utils/value-holder";
 import i18next from "i18next";
@@ -137,10 +133,6 @@ export class GameOverPhase extends BattlePhase {
     const { gameMode } = globalScene;
     const { challenges, isClassic } = gameMode;
 
-    if (challenges.some(c => [Challenges.MOVESET_RANDOMIZER].includes(c.id) && c.value > 0)) {
-      return;
-    }
-
     let ribbonFlags = 0n;
     for (const challenge of challenges) {
       const ribbon = challenge.ribbonAwarded;
@@ -149,29 +141,14 @@ export class GameOverPhase extends BattlePhase {
       }
     }
 
-    // TODO: find a better way to handle blocking ribbons and achievements
-    // Block other ribbons if flip stats or inverse is active
-    const flip_or_inverse = ribbonFlags & (RibbonData.FLIP_STATS | RibbonData.INVERSE);
-    // Block other ribbons if passives on `all` is active
-    const passives = ribbonFlags & RibbonData.PASSIVE_CHALLENGE;
-    if (flip_or_inverse) {
-      ribbonFlags = flip_or_inverse;
-    } else if (challenges.some(c => c.id === Challenges.PASSIVES && c.value === 2)) {
-      ribbonFlags = passives;
-    } else {
-      if (isClassic) {
-        ribbonFlags |= RibbonData.CLASSIC;
-      }
-      if (isNuzlockeChallenge()) {
-        ribbonFlags |= RibbonData.NUZLOCKE;
-      }
+    if (isClassic) {
+      ribbonFlags |= RibbonData.CLASSIC;
     }
     // Award ribbons to all Pokémon in the player's party that are considered valid
     // for the current game mode and challenges (as in, they can be used in battle).
     for (const pokemon of globalScene.getPlayerParty()) {
       const species = pokemon.species;
       const challengeAllowed = new ValueHolder(true);
-      applyChallenges(ChallengeType.POKEMON_IN_BATTLE, pokemon, challengeAllowed);
       if (challengeAllowed.value) {
         awardRibbonsToSpeciesLine(species.speciesId, ribbonFlags as RibbonFlag);
       }
@@ -182,10 +159,9 @@ export class GameOverPhase extends BattlePhase {
     const doGameOver = (newClear: boolean) => {
       globalScene.disableMenu = true;
       globalScene.time.delayedCall(1000, () => {
-        let firstClear = false;
         if (this.isVictory) {
           if (globalScene.gameMode.isClassic) {
-            firstClear = globalScene.validateAchv(achvs.CLASSIC_VICTORY);
+            globalScene.validateAchv(achvs.CLASSIC_VICTORY);
             globalScene.validateAchv(achvs.UNEVOLVED_CLASSIC_VICTORY);
             globalScene.gameData.gameStats.sessionsWon++;
             for (const pokemon of globalScene.getPlayerParty()) {
@@ -211,20 +187,9 @@ export class GameOverPhase extends BattlePhase {
           globalScene.phaseManager.clearPhaseQueue();
           globalScene.ui.clearText();
 
-          if (this.isVictory && globalScene.gameMode.isChallenge) {
-            globalScene.gameMode.challenges.forEach(c => globalScene.validateAchvs(ChallengeAchv, c));
-          }
-
           const clear = (endCardPhase?: EndCardPhase) => {
             if (this.isVictory && newClear) {
               this.handleUnlocks();
-
-              for (const species of this.firstRibbons) {
-                globalScene.phaseManager.unshiftNew("RibbonModifierRewardPhase", modifierTypes.VOUCHER_PLUS, species);
-              }
-              if (!firstClear) {
-                globalScene.phaseManager.unshiftNew("GameOverModifierRewardPhase", modifierTypes.VOUCHER_PREMIUM);
-              }
             }
             this.getRunHistoryEntry().then(runHistoryEntry => {
               globalScene.gameData.saveRunHistory(runHistoryEntry, this.isVictory);
@@ -308,12 +273,6 @@ export class GameOverPhase extends BattlePhase {
       if (!globalScene.gameData.unlocks[Unlockables.ENDLESS_MODE]) {
         globalScene.phaseManager.unshiftNew("UnlockPhase", Unlockables.ENDLESS_MODE);
       }
-      if (
-        globalScene.getPlayerParty().filter(p => p.fusionSpecies).length > 0
-        && !globalScene.gameData.unlocks[Unlockables.SPLICED_ENDLESS_MODE]
-      ) {
-        globalScene.phaseManager.unshiftNew("UnlockPhase", Unlockables.SPLICED_ENDLESS_MODE);
-      }
       if (!globalScene.gameData.unlocks[Unlockables.MINI_BLACK_HOLE]) {
         globalScene.phaseManager.unshiftNew("UnlockPhase", Unlockables.MINI_BLACK_HOLE);
       }
@@ -358,6 +317,7 @@ export class GameOverPhase extends BattlePhase {
       pokeballCounts: globalScene.pokeballCounts,
       money: Math.floor(globalScene.money),
       score: globalScene.score,
+      name: "",
       waveIndex: globalScene.currentBattle.waveIndex,
       battleType: globalScene.currentBattle.battleType,
       trainer: globalScene.currentBattle.trainer ? new TrainerData(globalScene.currentBattle.trainer) : null,

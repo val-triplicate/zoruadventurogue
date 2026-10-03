@@ -14,7 +14,6 @@ import {
 } from "#modifiers/modifier";
 import type { CustomModifierSettings, ModifierType, ModifierTypeOption } from "#modifiers/modifier-type";
 import {
-  FusePokemonModifierType,
   getPlayerModifierTypeOptions,
   getPlayerShopModifierTypeOptionsForWave,
   PokemonModifierType,
@@ -174,11 +173,7 @@ export class SelectModifierPhase extends BattlePhase {
     modifierSelectCallback: ModifierSelectCallback,
   ): boolean {
     if (modifierType instanceof PokemonModifierType) {
-      if (modifierType instanceof FusePokemonModifierType) {
-        this.openFusionMenu(modifierType, cost, modifierSelectCallback);
-      } else {
-        this.openModifierMenu(modifierType, cost, modifierSelectCallback);
-      }
+      this.openModifierMenu(modifierType, cost, modifierSelectCallback);
     } else {
       this.applyModifier(modifierType.newModifier()!, cost);
     }

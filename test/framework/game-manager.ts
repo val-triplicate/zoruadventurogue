@@ -24,9 +24,7 @@ import { GameWrapper } from "#test/framework/game-wrapper";
 import type { InputsHandler } from "#test/framework/inputs-handler";
 import { PhaseInterceptor } from "#test/framework/phase-interceptor";
 import { TextInterceptor } from "#test/framework/text-interceptor";
-import { ChallengeModeHelper } from "#test/helpers/challenge-mode-helper";
 import { ClassicModeHelper } from "#test/helpers/classic-mode-helper";
-import { DailyModeHelper } from "#test/helpers/daily-mode-helper";
 import { FieldHelper } from "#test/helpers/field-helper";
 import { ModifierHelper } from "#test/helpers/modifiers-helper";
 import { MoveHelper } from "#test/helpers/move-helper";
@@ -64,8 +62,6 @@ export class GameManager {
   public readonly override: OverridesHelper;
   public readonly move: MoveHelper;
   public readonly classicMode: ClassicModeHelper;
-  public readonly dailyMode: DailyModeHelper;
-  public readonly challengeMode: ChallengeModeHelper;
   public readonly settings: SettingsHelper;
   public readonly reload: ReloadHelper;
   public readonly modifiers: ModifierHelper;
@@ -102,8 +98,6 @@ export class GameManager {
     this.override = new OverridesHelper(this);
     this.move = new MoveHelper(this);
     this.classicMode = new ClassicModeHelper(this);
-    this.dailyMode = new DailyModeHelper(this);
-    this.challengeMode = new ChallengeModeHelper(this);
     this.settings = new SettingsHelper(this);
     this.reload = new ReloadHelper(this);
     this.modifiers = new ModifierHelper(this);

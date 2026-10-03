@@ -12,7 +12,7 @@ import { MysteryEncounterType } from "#enums/mystery-encounter-type";
 import { PartyMemberStrength } from "#enums/party-member-strength";
 import type { SpeciesId } from "#enums/species-id";
 import type { DailySeedBoss } from "#types/daily-run";
-import type { Starter, StarterMoveset } from "#types/save-data";
+import type { Starter, TeamMemberMoveset } from "#types/save-data";
 import type { TupleRange } from "#types/type-helpers";
 import { isBetween, randSeedGauss, randSeedInt, randSeedItem } from "#utils/common";
 import { getEnumValues } from "#utils/enums";
@@ -143,7 +143,7 @@ function setDailyRunEventStarterMovesets(starters: StarterTuple): void {
     }
 
     const starter = starters[index];
-    starter.moveset = moveset as StarterMoveset;
+    starter.moveset = moveset as TeamMemberMoveset;
   }
 }
 
