@@ -23,7 +23,6 @@ export class SelectBiomePhase extends BattlePhase {
 
     if (
       (gameMode.isClassic && gameMode.isWaveFinal(nextWaveIndex + 9))
-      || (gameMode.isDaily && gameMode.isWaveFinal(nextWaveIndex))
       || (gameMode.hasShortBiomes && !(nextWaveIndex % 50))
     ) {
       this.setNextBiomeAndEnd(BiomeId.END);

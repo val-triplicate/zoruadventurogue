@@ -5,8 +5,6 @@ import { getPokeballAtlasKey } from "#data/pokeball";
 import { getTypeRgb } from "#data/type";
 import { BattleType } from "#enums/battle-type";
 import { Button } from "#enums/buttons";
-import { Challenges } from "#enums/challenges";
-import { TypeColor, TypeShadow } from "#enums/color";
 import { GameModes } from "#enums/game-modes";
 import type { MysteryEncounterType } from "#enums/mystery-encounter-type";
 import { PlayerGender } from "#enums/player-gender";
@@ -25,7 +23,6 @@ import { addBBCodeTextObject, addTextObject, getTextColor, RAINBOW_TINT } from "
 import { UiHandler } from "#ui/ui-handler";
 import { addWindow } from "#ui/ui-theme";
 import { formatFancyLargeNumber, formatLargeNumber, formatMoney, getBiomeName, getPlayTimeString } from "#utils/common";
-import { toCamelCase } from "#utils/strings";
 import i18next from "i18next";
 import RoundRectangle from "phaser3-rex-plugins/plugins/roundrectangle";
 
@@ -563,31 +560,6 @@ export class RunInfoUiHandler extends UiHandler {
     modeText.setPosition(7, 5);
     modeText.appendText(i18next.t("runHistory:mode") + ": ", false);
     switch (this.runInfo.gameMode) {
-      case GameModes.DAILY:
-        modeText.appendText(`${i18next.t("gameMode:dailyRun")}`, false);
-        break;
-      case GameModes.SPLICED_ENDLESS:
-        modeText.appendText(`${i18next.t("gameMode:endlessSpliced")}`, false);
-        break;
-      case GameModes.CHALLENGE: {
-        modeText.appendText(`${i18next.t("gameMode:challenge")}`, false);
-        modeText.appendText(`${i18next.t("runHistory:challengeRules")}: `);
-        modeText.setWrapMode(1); // wrap by word
-        modeText.setWrapWidth(500);
-        const rules: string[] = this.challengeParser();
-        if (rules) {
-          for (let i = 0; i < rules.length; i++) {
-            if (i > 0) {
-              modeText.appendText(" + ", false);
-            }
-            modeText.appendText(rules[i], false);
-          }
-        }
-        break;
-      }
-      case GameModes.ENDLESS:
-        modeText.appendText(`${i18next.t("gameMode:endless")}`, false);
-        break;
       case GameModes.CLASSIC:
         modeText.appendText(`${i18next.t("gameMode:classic")}`, false);
         break;
@@ -676,46 +648,6 @@ export class RunInfoUiHandler extends UiHandler {
     this.runInfoContainer.add(modeText);
     this.runInfoContainer.add(runInfoTextContainer);
     this.runContainer.add(this.runInfoContainer);
-  }
-
-  /**
-   * This function parses the Challenges section of the Run Entry and returns a list of active challenge.
-   * @returns string[] of active challenge names
-   */
-  private challengeParser(): string[] {
-    const rules: string[] = [];
-    for (const chal of this.runInfo.challenges) {
-      if (chal.value === 0) {
-        continue;
-      }
-
-      switch (chal.id) {
-        case Challenges.SINGLE_GENERATION:
-          rules.push(i18next.t(`runHistory:challengeMonoGen${chal.value}`));
-          break;
-        case Challenges.SINGLE_TYPE: {
-          const typeRule = PokemonType[chal.value - 1];
-          const typeTextColor = `[color=${TypeColor[typeRule]}]`;
-          const typeShadowColor = `[shadow=${TypeShadow[typeRule]}]`;
-          const typeText =
-            typeTextColor
-            + typeShadowColor
-            + i18next.t(`pokemonInfo:type.${toCamelCase(typeRule)}`)!
-            + "[/color][/shadow]";
-          rules.push(typeText);
-          break;
-        }
-        case Challenges.INVERSE_BATTLE:
-          rules.push(i18next.t("challenges:inverseBattle.shortName"));
-          break;
-        default: {
-          const localizationKey = toCamelCase(Challenges[chal.id]);
-          rules.push(i18next.t(`challenges:${localizationKey}.name`));
-          break;
-        }
-      }
-    }
-    return rules;
   }
 
   /**
@@ -823,34 +755,14 @@ export class RunInfoUiHandler extends UiHandler {
 
       // Shiny + Fusion Status
       const marksContainer = globalScene.add.container(0, 0);
-      if (pokemon.fusionSpecies) {
-        const splicedIcon = globalScene.add.image(0, 0, "icon_spliced");
-        splicedIcon.setScale(0.35);
-        splicedIcon.setOrigin(0, 0);
-        pokemon.isShiny()
-          ? splicedIcon.setPositionRelative(pokeInfoTextContainer, 35, 0)
-          : splicedIcon.setPositionRelative(pokeInfoTextContainer, 28, 0);
-        marksContainer.add(splicedIcon);
-        this.getUi().bringToTop(splicedIcon);
-      }
       if (pokemon.isShiny()) {
-        const doubleShiny = pokemon.isFusion() && pokemon.shiny && pokemon.fusionShiny;
-        const shinyStar = globalScene.add.image(0, 0, `shiny_star_small${doubleShiny ? "_1" : ""}`);
+        const shinyStar = globalScene.add.image(0, 0, "shiny_star_small");
         shinyStar.setOrigin(0, 0);
         shinyStar.setScale(0.65);
         shinyStar.setPositionRelative(pokeInfoTextContainer, 28, 0);
-        shinyStar.setTint(getVariantTint(doubleShiny ? pokemon.variant : pokemon.getVariant()));
+        shinyStar.setTint(getVariantTint(pokemon.getVariant()));
         marksContainer.add(shinyStar);
         this.getUi().bringToTop(shinyStar);
-        if (doubleShiny) {
-          const fusionShinyStar = globalScene.add.image(0, 0, "shiny_star_small_2");
-          fusionShinyStar.setOrigin(0, 0);
-          fusionShinyStar.setScale(0.5);
-          fusionShinyStar.setPosition(shinyStar.x + 1, shinyStar.y + 1);
-          fusionShinyStar.setTint(getVariantTint(pokemon.fusionVariant));
-          marksContainer.add(fusionShinyStar);
-          this.getUi().bringToTop(fusionShinyStar);
-        }
       }
 
       // Pokemon Moveset
@@ -1035,22 +947,14 @@ export class RunInfoUiHandler extends UiHandler {
       const speciesLoaded: Map<SpeciesId, boolean> = new Map<SpeciesId, boolean>();
       speciesLoaded.set(id, false);
 
-      const female = pkmn.gender === 1;
-      species.loadAssets(female, formIndex, shiny, variant, true).then(() => {
+      species.loadAssets(pkmn.gender, formIndex, shiny, variant, true).then(() => {
         speciesLoaded.set(id, true);
-        pokemonSprite.play(species.getSpriteKey(female, formIndex, shiny, variant));
+        pokemonSprite.play(species.getSpriteKey(pkmn.gender, formIndex, shiny, variant));
         pokemonSprite.setPipelineData("shiny", shiny);
         pokemonSprite.setPipelineData("variant", variant);
-        pokemonSprite.setPipelineData("spriteKey", species.getSpriteKey(female, formIndex, shiny, variant));
+        pokemonSprite.setPipelineData("spriteKey", species.getSpriteKey(pkmn.gender, formIndex, shiny, variant));
         pokemonSprite.setVisible(true);
       });
-      if (pkmn.isFusion()) {
-        const fusionIcon = globalScene.add.sprite(80 + 40 * i, 50 + row * 80, pkmn.getFusionIconAtlasKey());
-        fusionIcon.setName("sprite-fusion-icon");
-        fusionIcon.setOrigin(0.5, 0);
-        fusionIcon.setFrame(pkmn.getFusionIconId(true));
-        this.hallofFameContainer.add(fusionIcon);
-      }
       pkmn.destroy();
     });
     this.hallofFameContainer.setVisible(false);

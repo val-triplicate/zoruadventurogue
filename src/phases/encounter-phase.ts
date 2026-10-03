@@ -23,7 +23,6 @@ import { EncounterPhaseEvent } from "#events/battle-scene";
 import type { Pokemon } from "#field/pokemon";
 import {
   BoostBugSpawnModifier,
-  IvScannerModifier,
   overrideHeldItems,
   overrideModifiers,
   TurnHeldItemTransferModifier,
@@ -564,13 +563,6 @@ export class EncounterPhase extends BattlePhase {
       }
     });
 
-    if (![BattleType.TRAINER, BattleType.MYSTERY_ENCOUNTER].includes(globalScene.currentBattle.battleType)) {
-      const ivScannerModifier = globalScene.findModifier(m => m instanceof IvScannerModifier);
-      if (ivScannerModifier) {
-        enemyField.map(p => globalScene.phaseManager.pushNew("ScanIvsPhase", p.getBattlerIndex()));
-      }
-    }
-
     if (!this.loaded) {
       const availablePartyMembers = globalScene.getPokemonAllowedInBattle();
 
@@ -592,10 +584,7 @@ export class EncounterPhase extends BattlePhase {
         globalScene.phaseManager.pushNew("ToggleDoublePositionPhase", false);
       }
 
-      if (
-        globalScene.currentBattle.battleType !== BattleType.TRAINER
-        && (globalScene.currentBattle.waveIndex > 1 || !globalScene.gameMode.isDaily)
-      ) {
+      if (globalScene.currentBattle.battleType !== BattleType.TRAINER) {
         const minPartySize = globalScene.currentBattle.double ? 2 : 1;
         if (availablePartyMembers.length > minPartySize) {
           globalScene.phaseManager.pushNew("CheckSwitchPhase", 0, globalScene.currentBattle.double);

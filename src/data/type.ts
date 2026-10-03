@@ -1,6 +1,4 @@
-import { ChallengeType } from "#enums/challenge-type";
 import { PokemonType } from "#enums/pokemon-type";
-import { applyChallenges } from "#utils/challenge-utils";
 import { NumberHolder } from "#utils/common";
 
 // TODO: Expand granularity to account for other multipliers - this can actually go as far as 32x at some callsites
@@ -18,7 +16,6 @@ export type SingleTypeDamageMultiplier = 0 | 0.5 | 1 | 2;
  */
 export function getTypeDamageMultiplier(attackType: PokemonType, defType: PokemonType): SingleTypeDamageMultiplier {
   const multi = new NumberHolder(getTypeChartMultiplier(attackType, defType));
-  applyChallenges(ChallengeType.TYPE_EFFECTIVENESS, multi);
   return multi.value as SingleTypeDamageMultiplier;
 }
 

@@ -14,7 +14,6 @@ import { ArenaTagType } from "#enums/arena-tag-type";
 import { BattlerIndex } from "#enums/battler-index";
 import { BattlerTagLapseType } from "#enums/battler-tag-lapse-type";
 import { BattlerTagType } from "#enums/battler-tag-type";
-import { ChallengeType } from "#enums/challenge-type";
 import { CommonAnim } from "#enums/move-anims-common";
 import { MoveFlags } from "#enums/move-flags";
 import { MoveId } from "#enums/move-id";
@@ -30,7 +29,6 @@ import type { PokemonMove } from "#moves/pokemon-move";
 import { PokemonPhase } from "#phases/pokemon-phase";
 import type { Move, PreUseInterruptAttr } from "#types/move-types";
 import type { TurnMove } from "#types/turn-move";
-import { applyChallenges } from "#utils/challenge-utils";
 import { BooleanHolder, NumberHolder } from "#utils/common";
 import { enumValueToKey } from "#utils/enums";
 import { inSpeedOrder } from "#utils/speed-order-generator";
@@ -445,11 +443,7 @@ export class MovePhase extends PokemonPhase {
       console.warn(warningText);
 
       return true;
-    } else if (
-      this.pokemon.isPlayer()
-      && applyChallenges(ChallengeType.POKEMON_MOVE, moveId, usability) // check the value inside of usability after calling applyChallenges
-      && !usability.value
-    ) {
+    } else if (this.pokemon.isPlayer() && !usability.value) {
       failedText = i18next.t("battle:moveCannotUseChallenge", { moveName });
     } else {
       return false;

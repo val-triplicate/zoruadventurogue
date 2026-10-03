@@ -79,9 +79,7 @@ import { ResetStatusPhase } from "#phases/reset-status-phase";
 import { ReturnPhase } from "#phases/return-phase";
 import { RevivalBlessingPhase } from "#phases/revival-blessing-phase";
 import { RibbonModifierRewardPhase } from "#phases/ribbon-modifier-reward-phase";
-import { ScanIvsPhase } from "#phases/scan-ivs-phase";
 import { SelectBiomePhase } from "#phases/select-biome-phase";
-import { SelectChallengePhase } from "#phases/select-challenge-phase";
 import { SelectGenderPhase } from "#phases/select-gender-phase";
 import { SelectModifierPhase } from "#phases/select-modifier-phase";
 import { SelectStarterPhase } from "#phases/select-starter-phase";
@@ -182,9 +180,7 @@ const PHASES = Object.freeze({
   ReturnPhase,
   RevivalBlessingPhase,
   RibbonModifierRewardPhase,
-  ScanIvsPhase,
   SelectBiomePhase,
-  SelectChallengePhase,
   SelectGenderPhase,
   SelectModifierPhase,
   SelectStarterPhase,

@@ -77,14 +77,6 @@ export interface AchvUnlocks {
   [key: string]: number;
 }
 
-export interface VoucherUnlocks {
-  [key: string]: number;
-}
-
-export interface VoucherCounts {
-  [type: string]: number;
-}
-
 export type TeamMemberMoveset =
   | [MoveId]
   | [MoveId, MoveId]

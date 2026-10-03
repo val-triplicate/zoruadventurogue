@@ -15,7 +15,6 @@ import { Status } from "#data/status-effect";
 import type { AiType } from "#enums/ai-type";
 import { BattleType } from "#enums/battle-type";
 import type { BattlerTagType } from "#enums/battler-tag-type";
-import { ChallengeType } from "#enums/challenge-type";
 import { FieldPosition } from "#enums/field-position";
 import { ModifierPoolType } from "#enums/modifier-pool-type";
 import type { MoveId } from "#enums/move-id";
@@ -51,7 +50,6 @@ import type { RandomEncounterParams } from "#types/pokemon-common";
 import type { OptionSelectItem, OptionSelectModeConfig } from "#types/ui-types";
 import type { PartyOption, PokemonSelectFilter } from "#ui/party-ui-handler";
 import { coerceArray } from "#utils/array";
-import { applyChallenges } from "#utils/challenge-utils";
 import { BooleanHolder, randSeedInt, randSeedItem } from "#utils/common";
 import i18next from "i18next";
 
@@ -363,7 +361,6 @@ export async function initBattleWithEnemyConfig(partyConfig: EnemyPartyConfig): 
         const moves = config.moveSet.map(m => new PokemonMove(m));
         enemyPokemon.moveset = moves;
         enemyPokemon.summonData.moveset = moves;
-        applyChallenges(ChallengeType.ME_MOVESET_MODIFY, enemyPokemon);
       }
 
       // Set tags

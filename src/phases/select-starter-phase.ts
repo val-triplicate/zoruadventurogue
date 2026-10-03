@@ -5,12 +5,10 @@ import { activeOverrides } from "#app/overrides";
 import { Phase } from "#app/phase";
 import { SpeciesFormChangeMoveLearnedTrigger } from "#data/form-change-triggers";
 import { Gender } from "#data/gender";
-import { ChallengeType } from "#enums/challenge-type";
 import { UiMode } from "#enums/ui-mode";
 import { overrideHeldItems, overrideModifiers } from "#modifiers/modifier";
 import type { Starter } from "#types/save-data";
 import { SaveSlotUiMode } from "#ui/save-slot-select-ui-handler";
-import { applyChallenges } from "#utils/challenge-utils";
 
 export class SelectStarterPhase extends Phase {
   public readonly phaseName = "SelectStarterPhase";
@@ -94,16 +92,8 @@ export class SelectStarterPhase extends Phase {
         starterPokemon.teraType = starter.teraType;
       }
 
-      if (globalScene.gameMode.isSplicedOnly || activeOverrides.STARTER_FUSION_OVERRIDE) {
-        starterPokemon.generateFusionSpecies(true);
-      }
       starterPokemon.setVisible(false);
-      const chalApplied = applyChallenges(ChallengeType.STARTER_MODIFY, starterPokemon);
       party.push(starterPokemon);
-      if (chalApplied) {
-        // If any challenges modified the starter, it should update
-        loadPokemonAssets.push(starterPokemon.updateInfo());
-      }
       loadPokemonAssets.push(starterPokemon.loadAssets());
     });
     overrideModifiers();

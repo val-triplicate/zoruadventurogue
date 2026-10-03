@@ -5,9 +5,7 @@ import { PlayerGender } from "#enums/player-gender";
 import { TextStyle } from "#enums/text-style";
 import type { Achv } from "#system/achv";
 import { achvs } from "#system/achv";
-import type { Voucher } from "#system/voucher";
-import { getVoucherTypeIcon, getVoucherTypeName, vouchers } from "#system/voucher";
-import type { AchvUnlocks, VoucherUnlocks } from "#types/save-data";
+import type { AchvUnlocks } from "#types/save-data";
 import { MessageUiHandler } from "#ui/message-ui-handler";
 import { ScrollBar } from "#ui/scroll-bar";
 import { addTextObject } from "#ui/text";
@@ -16,7 +14,6 @@ import i18next from "i18next";
 
 const Page = {
   ACHIEVEMENTS: 0,
-  VOUCHERS: 1,
 } as const;
 type Page = (typeof Page)[keyof typeof Page];
 
@@ -51,8 +48,6 @@ export class AchvsUiHandler extends MessageUiHandler {
 
   private achvsName: string;
   private readonly achvsTotal: number = Object.keys(achvs).length;
-  private vouchersName: string;
-  private readonly vouchersTotal: number = Object.keys(vouchers).length;
   private currentTotal: number;
 
   private scrollBar: ScrollBar;
@@ -89,7 +84,6 @@ export class AchvsUiHandler extends MessageUiHandler {
     const genderStr = PlayerGender[genderIndex].toLowerCase();
 
     this.achvsName = i18next.t("achv:achievements.name", { context: genderStr });
-    this.vouchersName = i18next.t("voucher:vouchers");
 
     this.iconsBg = addWindow(0, this.headerBg.height, WIDTH - 2, HEIGHT - this.headerBg.height - 68).setOrigin(0);
 
@@ -202,37 +196,14 @@ export class AchvsUiHandler extends MessageUiHandler {
     );
   }
 
-  protected showVoucher(voucher: Voucher) {
-    const voucherUnlocks = globalScene.gameData.voucherUnlocks;
-    const unlocked = Object.hasOwn(voucherUnlocks, voucher.id);
-
-    this.titleText.setText(getVoucherTypeName(voucher.voucherType));
-    this.showText(voucher.description);
-    this.unlockText.setText(
-      unlocked ? new Date(voucherUnlocks[voucher.id]).toLocaleDateString() : i18next.t("voucher:locked"),
-    );
-  }
-
   // #region Input Processing
 
   /**
    * Submethod of {@linkcode processInput} that handles the action button input
    * @returns Whether the success sound should be played
    */
-  private processActionInput(): true {
-    this.setScrollCursor(0);
-    if (this.currentPage === Page.ACHIEVEMENTS) {
-      this.currentPage = Page.VOUCHERS;
-      this.updateVoucherIcons();
-    } else if (this.currentPage === Page.VOUCHERS) {
-      this.currentPage = Page.ACHIEVEMENTS;
-      this.updateAchvIcons();
-    }
-    this.setCursor(0, true);
-    this.scrollBar.setTotalRows(Math.ceil(this.currentTotal / this.COLS));
-    this.scrollBar.setScrollCursor(0);
-    this.mainContainer.update();
-    return true;
+  private processActionInput(): false {
+    return false;
   }
 
   /**
@@ -369,14 +340,6 @@ export class AchvsUiHandler extends MessageUiHandler {
         }
         this.showAchv(achvs[Object.keys(achvs)[cursor + this.scrollCursor * this.COLS]]);
         break;
-      case Page.VOUCHERS:
-        if (pageChange) {
-          this.titleBg.width = 220;
-          this.titleText.x = this.titleBg.width / 2;
-          this.scoreContainer.setVisible(false);
-        }
-        this.showVoucher(vouchers[Object.keys(vouchers)[cursor + this.scrollCursor * this.COLS]]);
-        break;
     }
     return ret;
   }
@@ -406,10 +369,6 @@ export class AchvsUiHandler extends MessageUiHandler {
         this.updateAchvIcons();
         this.showAchv(achvs[Object.keys(achvs)[this.cursor + this.scrollCursor * this.COLS]]);
         break;
-      case Page.VOUCHERS:
-        this.updateVoucherIcons();
-        this.showVoucher(vouchers[Object.keys(vouchers)[this.cursor + this.scrollCursor * this.COLS]]);
-        break;
     }
     return true;
   }
@@ -424,18 +383,10 @@ export class AchvsUiHandler extends MessageUiHandler {
    * @param totalItems - The total number of items.
    * @param forAchievements - `True` when updating icons for the achievements page, `false` for the vouchers page.
    */
-  private updateIcons<T extends boolean>(
-    items: T extends true ? Achv[] : Voucher[],
-    unlocks: T extends true ? AchvUnlocks : VoucherUnlocks,
-    headerText: string,
-    actionText: string,
-    totalItems: number,
-    forAchievements: T,
-  ): void {
+  private updateIcons(items: Achv[], unlocks: AchvUnlocks, headerText: string, totalItems: number): void {
     // type ItemType = T extends true ? Achv : Voucher;
     // type RangeType = ItemType[];
     this.headerText.text = headerText;
-    this.headerActionText.text = actionText;
     const textPosition = this.headerBgX - this.headerActionText.displayWidth - 8;
     this.headerActionText.setX(textPosition);
     this.headerActionButton.setX(textPosition - this.headerActionButton.displayWidth - 4);
@@ -449,15 +400,11 @@ export class AchvsUiHandler extends MessageUiHandler {
       const icon = this.icons[i];
       const unlocked = Object.hasOwn(unlocks, item.id);
       let tinted = !unlocked;
-      if (forAchievements) {
-        // Typescript cannot properly infer the type of `item` here, so we need to cast it
-        const achv = item as Achv;
-        const hidden = !unlocked && achv.secret && (!achv.parentId || !Object.hasOwn(unlocks, achv.parentId));
-        tinted &&= !hidden;
-        icon.setFrame(hidden ? "unknown" : achv.iconImage);
-      } else {
-        icon.setFrame(getVoucherTypeIcon((item as Voucher).voucherType));
-      }
+      // Typescript cannot properly infer the type of `item` here, so we need to cast it
+      const achv = item as Achv;
+      const hidden = !unlocked && achv.secret && (!achv.parentId || !Object.hasOwn(unlocks, achv.parentId));
+      tinted &&= !hidden;
+      icon.setFrame(hidden ? "unknown" : achv.iconImage);
 
       icon.setVisible(true);
       if (tinted) {
@@ -478,28 +425,7 @@ export class AchvsUiHandler extends MessageUiHandler {
    * Update the achievement icons displayed on the UI based on the current scroll cursor.
    */
   updateAchvIcons(): void {
-    this.updateIcons(
-      Object.values(achvs),
-      globalScene.gameData.achvUnlocks,
-      this.achvsName,
-      this.vouchersName,
-      this.achvsTotal,
-      true,
-    );
-  }
-
-  /**
-   * Update the voucher icons displayed on the UI based on the current scroll cursor.
-   */
-  updateVoucherIcons(): void {
-    this.updateIcons(
-      Object.values(vouchers),
-      globalScene.gameData.voucherUnlocks,
-      this.vouchersName,
-      this.achvsName,
-      this.vouchersTotal,
-      false,
-    );
+    this.updateIcons(Object.values(achvs), globalScene.gameData.achvUnlocks, this.achvsName, this.achvsTotal);
   }
 
   clear() {

@@ -17,7 +17,6 @@ import { BattlePhase } from "#phases/battle-phase";
 import type { EndCardPhase } from "#phases/end-card-phase";
 import { achvs } from "#system/achv";
 import { ArenaData } from "#system/arena-data";
-import { ChallengeData } from "#system/challenge-data";
 import { ModifierData as PersistentModifierData } from "#system/modifier-data";
 import { PokemonData } from "#system/pokemon-data";
 import { RibbonData, type RibbonFlag } from "#system/ribbon-data";
@@ -65,7 +64,7 @@ export class GameOverPhase extends BattlePhase {
     }
     // Otherwise, continue standard Game Over logic
 
-    if (this.isVictory && globalScene.gameMode.isEndless) {
+    if (this.isVictory) {
       const genderIndex = settings.general.playerGender;
       const genderStr = PlayerGender[genderIndex].toLowerCase();
       globalScene.ui.showDialogue(
@@ -131,15 +130,9 @@ export class GameOverPhase extends BattlePhase {
    */
   private awardRibbons(): void {
     const { gameMode } = globalScene;
-    const { challenges, isClassic } = gameMode;
+    const { isClassic } = gameMode;
 
     let ribbonFlags = 0n;
-    for (const challenge of challenges) {
-      const ribbon = challenge.ribbonAwarded;
-      if (challenge.value && ribbon) {
-        ribbonFlags |= ribbon;
-      }
-    }
 
     if (isClassic) {
       ribbonFlags |= RibbonData.CLASSIC;
@@ -162,7 +155,6 @@ export class GameOverPhase extends BattlePhase {
         if (this.isVictory) {
           if (globalScene.gameMode.isClassic) {
             globalScene.validateAchv(achvs.CLASSIC_VICTORY);
-            globalScene.validateAchv(achvs.UNEVOLVED_CLASSIC_VICTORY);
             globalScene.gameData.gameStats.sessionsWon++;
             for (const pokemon of globalScene.getPlayerParty()) {
               this.awardFirstClassicCompletion(pokemon);
@@ -171,7 +163,7 @@ export class GameOverPhase extends BattlePhase {
               }
             }
             this.awardRibbons();
-          } else if (globalScene.gameMode.isDaily && newClear) {
+          } else if (newClear) {
             globalScene.gameData.gameStats.dailyRunSessionsWon++;
             globalScene.validateAchv(achvs.DAILY_VICTORY);
           }
@@ -249,7 +241,7 @@ export class GameOverPhase extends BattlePhase {
           isVictory: this.isVictory,
           clientSessionId,
         })
-        .then(success => doGameOver(!globalScene.gameMode.isDaily || !!success))
+        .then(() => doGameOver(true))
         .catch(_err => {
           globalScene.phaseManager.clearPhaseQueue();
           globalScene.phaseManager.unshiftNew("MessagePhase", i18next.t("menu:serverCommunicationFailed"), 2500);
@@ -314,7 +306,6 @@ export class GameOverPhase extends BattlePhase {
         ? preWaveSessionData.enemyModifiers
         : globalScene.findModifiers(() => true, false).map(m => new PersistentModifierData(m, false)),
       arena: new ArenaData(globalScene.arena),
-      pokeballCounts: globalScene.pokeballCounts,
       money: Math.floor(globalScene.money),
       score: globalScene.score,
       name: "",
@@ -323,7 +314,6 @@ export class GameOverPhase extends BattlePhase {
       trainer: globalScene.currentBattle.trainer ? new TrainerData(globalScene.currentBattle.trainer) : null,
       gameVersion: globalScene.game.config.gameVersion,
       timestamp: Date.now(),
-      challenges: globalScene.gameMode.challenges.map(c => new ChallengeData(c)),
       mysteryEncounterType: globalScene.currentBattle.mysteryEncounter?.encounterType ?? -1,
       mysteryEncounterSaveData: globalScene.mysteryEncounterSaveData,
       playerFaints: globalScene.arena.playerFaints,

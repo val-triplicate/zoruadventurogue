@@ -4,7 +4,6 @@ import { settings } from "#app/global-settings-manager";
 import type { PlayerGender } from "#enums/player-gender";
 import { TextStyle } from "#enums/text-style";
 import { Achv } from "#system/achv";
-import { Voucher } from "#system/voucher";
 import { addTextObject } from "#ui/text";
 
 export class AchvBar extends Phaser.GameObjects.Container {
@@ -17,7 +16,7 @@ export class AchvBar extends Phaser.GameObjects.Container {
   private scoreText: Phaser.GameObjects.Text;
   private descriptionText: Phaser.GameObjects.Text;
 
-  private readonly queue: (Achv | Voucher)[] = [];
+  private readonly queue: Achv[] = [];
   private readonly playerGender: PlayerGender;
 
   public shown: boolean;
@@ -59,7 +58,7 @@ export class AchvBar extends Phaser.GameObjects.Container {
     this.shown = false;
   }
 
-  showAchv(achv: Achv | Voucher): void {
+  showAchv(achv: Achv): void {
     if (this.shown) {
       this.queue.push(achv);
       return;
@@ -71,11 +70,7 @@ export class AchvBar extends Phaser.GameObjects.Container {
     this.icon.setFrame(achv.getIconImage());
     this.titleText.setText(achv.name);
     this.scoreText.setVisible(achv instanceof Achv);
-    if (achv instanceof Achv) {
-      this.descriptionText.setText((achv as Achv).description);
-    } else if (achv instanceof Voucher) {
-      this.descriptionText.setText((achv as Voucher).description);
-    }
+    this.descriptionText.setText((achv as Achv).description);
 
     if (achv instanceof Achv) {
       this.scoreText.setText(`+${(achv as Achv).score}pt`);
