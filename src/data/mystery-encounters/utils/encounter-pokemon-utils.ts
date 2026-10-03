@@ -17,7 +17,6 @@ import {
   queueEncounterMessage,
   showEncounterText,
 } from "#mystery-encounters/encounter-dialogue-utils";
-import { achvs } from "#system/achv";
 import { randSeedInt } from "#utils/common";
 import i18next from "i18next";
 
@@ -472,29 +471,6 @@ export function getEncounterPokemonLevelForWave(levelAdditiveModifier = 0) {
 
   // Add a level scaling modifier that is (+1 level per 10 waves) * levelAdditiveModifier
   return baseLevel + Math.max(Math.round((currentBattle.waveIndex / 10) * levelAdditiveModifier), 0);
-}
-
-export async function addPokemonDataToDexAndValidateAchievements(pokemon: PlayerPokemon) {
-  const speciesForm = pokemon.getSpeciesForm();
-
-  if (speciesForm.abilityHidden && pokemon.abilityIndex === speciesForm.getAbilityCount() - 1) {
-    globalScene.validateAchv(achvs.HIDDEN_ABILITY);
-  }
-
-  if (pokemon.species.subLegendary) {
-    globalScene.validateAchv(achvs.CATCH_SUB_LEGENDARY);
-  }
-
-  if (pokemon.species.legendary) {
-    globalScene.validateAchv(achvs.CATCH_LEGENDARY);
-  }
-
-  if (pokemon.species.mythical) {
-    globalScene.validateAchv(achvs.CATCH_MYTHICAL);
-  }
-
-  globalScene.gameData.updateSpeciesDexIvs(pokemon.species.getRootSpeciesId(true), pokemon.ivs);
-  return globalScene.gameData.setPokemonCaught(pokemon, true, false, false);
 }
 
 /**

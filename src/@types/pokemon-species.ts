@@ -3,7 +3,6 @@ import type { Gender } from "#data/gender";
 import type { SpeciesFormChange } from "#data/pokemon-forms";
 import type { PokemonSpecies } from "#data/pokemon-species";
 import type { AbilityId } from "#enums/ability-id";
-import type { EggTier } from "#enums/egg-type";
 import type { MoveId } from "#enums/move-id";
 import type { Nature } from "#enums/nature";
 import type { Origin } from "#enums/origin";
@@ -36,8 +35,6 @@ export interface PokemonSpeciesData {
   evolutions: SpeciesFormEvolution[];
   prevolution: SpeciesId | null;
   formChanges?: SpeciesFormChange[];
-  /** The egg tier of the Pokémon. Should be omitted for non starters */
-  eggTier?: EggTier;
   /** The passive ability of the species or a mapping of its formIndex to a passive ability */
   passives: AbilityId | PokemonSpeciesPassives;
   /** An array of level moves shared across **all** forms */

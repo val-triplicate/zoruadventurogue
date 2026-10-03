@@ -238,23 +238,6 @@ export class SpeciesDataRegistry {
   }
 
   /**
-   * Retrieve the corresponding starter for a given species.
-   * @param speciesId - The {@linkcode SpeciesId} to get the starter for
-   * @param getSpecies - (Default `false`) Whether to return the {@linkcode PokemonSpecies} instead of a {@linkcode SpeciesId}.
-   * @returns The starter {@linkcode SpeciesId} or {@linkcode PokemonSpecies}
-   */
-  public getStarter(speciesId: SpeciesId, getSpecies?: false): StarterSpeciesId;
-  public getStarter(speciesId: SpeciesId, getSpecies: true): PokemonSpecies;
-  public getStarter(speciesId: SpeciesId, getSpecies = false): StarterSpeciesId | PokemonSpecies {
-    const speciesData = this.getSpeciesData(speciesId);
-    // only need to check if the species is a starter because of pikachu :/
-    if (getSpecies) {
-      return this.isStarter(speciesId) ? speciesData.species : this.getSpecies(speciesData.starter);
-    }
-    return this.isStarter(speciesId) ? (speciesId as StarterSpeciesId) : speciesData.starter;
-  }
-
-  /**
    * Get all starters.
    * @param getSpecies - (Default `false`) Whether to return {@linkcode PokemonSpecies} instead of {@linkcode SpeciesId}.
    * @returns An array of all starter {@linkcode SpeciesId}s or {@linkcode PokemonSpecies}s

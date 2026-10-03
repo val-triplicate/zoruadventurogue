@@ -1,7 +1,6 @@
 import { pokerogueApi } from "#api/api";
 import { clientSessionId, getSessionDataLocalStorageKey, loggedInUser, updateUserInfo } from "#app/account";
 import { defaultStarterSpecies, defaultTeams, saveKey } from "#app/constants";
-import { getGameMode } from "#app/game-mode";
 import { audioManager } from "#app/global-audio-manager";
 import { globalScene } from "#app/global-scene";
 import { settings } from "#app/global-settings-manager";
@@ -23,7 +22,6 @@ import { BattleType } from "#enums/battle-type";
 import type { Device } from "#enums/devices";
 import { DexAttr } from "#enums/dex-attr";
 import { GameDataType } from "#enums/game-data-type";
-import { GameModes } from "#enums/game-modes";
 import { Nature } from "#enums/nature";
 import { PlayerGender } from "#enums/player-gender";
 import { SpeciesId } from "#enums/species-id";
@@ -709,7 +707,6 @@ export class GameData {
       modifiers: globalScene.findModifiers(() => true).map(m => new PersistentModifierData(m, true)),
       enemyModifiers: globalScene.findModifiers(() => true, false).map(m => new PersistentModifierData(m, false)),
       arena: new ArenaData(globalScene.arena),
-      pokeballCounts: globalScene.pokeballCounts,
       money: Math.floor(globalScene.money),
       score: globalScene.score,
       waveIndex: globalScene.currentBattle.waveIndex,
@@ -823,8 +820,6 @@ export class GameData {
       }
     }
 
-    globalScene.gameMode = getGameMode(GameModes.CLASSIC);
-
     globalScene.setSeed(fromSession.seed || globalScene.game.config.seed[0]);
     globalScene.resetSeed();
 
@@ -843,13 +838,6 @@ export class GameData {
       pokemon.setVisible(false);
       loadPokemonAssets.push(pokemon.loadAssets(false));
       party.push(pokemon);
-    }
-
-    Object.keys(globalScene.pokeballCounts).forEach((key: string) => {
-      globalScene.pokeballCounts[key] = fromSession.pokeballCounts[key] || 0;
-    });
-    if (activeOverrides.POKEBALL_OVERRIDE.active) {
-      globalScene.pokeballCounts = activeOverrides.POKEBALL_OVERRIDE.pokeballs;
     }
 
     globalScene.money = Math.floor(fromSession.money || 0);
@@ -1523,168 +1511,6 @@ export class GameData {
         this.gameStats.shinyPokemonSeen++;
       }
     }
-  }
-
-  /**
-   *
-   * @param pokemon
-   * @param incrementCount
-   * @param fromEgg
-   * @param showMessage
-   * @returns `true` if Pokemon catch unlocked a new starter, `false` if Pokemon catch did not unlock a starter
-   */
-  // TODO: This return value is exclusively used inside Weird Dream (which manually displays the "new starter unlocked" message),
-  // all for the purposes of playing a level up fanfare if 1+ species were unlocked.
-  // Given its only use is effectively useless, we should consider removing this return value at a future date
-  async setPokemonCaught(
-    pokemon: Pokemon,
-    incrementCount = true,
-    fromEgg = false,
-    showMessage = true,
-  ): Promise<boolean> {
-    // If incrementCount === false (not a catch scenario), only update the pokemon's dex data if the Pokemon has already been marked as caught in dex
-    // Prevents form changes, nature changes, etc. from unintentionally updating the dex data of a "rental" pokemon
-    const speciesRootForm = pokemon.species.getRootSpeciesId();
-    if (!incrementCount && !globalScene.gameData.dexData[speciesRootForm].caughtAttr) {
-      return Promise.resolve(false);
-    }
-    return this.setPokemonSpeciesCaught(pokemon, pokemon.species, incrementCount, fromEgg, showMessage);
-  }
-
-  /**
-   *
-   * @param pokemon
-   * @param species
-   * @param incrementCount
-   * @param fromEgg
-   * @param showMessage
-   * @returns `true` if Pokemon catch unlocked a new starter, `false` if Pokemon catch did not unlock a starter
-   */
-  // TODO: This logic should emphatically go somewhere else
-  private async setPokemonSpeciesCaught(
-    pokemon: Pokemon,
-    species: PokemonSpecies,
-    incrementCount = true,
-    fromEgg = false,
-    showMessage = true,
-  ): Promise<boolean> {
-    const dexEntry = this.dexData[species.speciesId];
-    const caughtAttr = dexEntry.caughtAttr;
-    const formIndex = pokemon.formIndex;
-
-    // This makes sure that we do not try to unlock data which cannot be unlocked
-    const dexAttr = pokemon.getDexAttr() & species.getFullUnlocksData();
-
-    // Mark as caught
-    dexEntry.caughtAttr |= dexAttr;
-
-    // If the caught form is a battleform, we want to also mark the base form as caught.
-    // This snippet assumes that the base form has formIndex equal to 0, which should be
-    // always true except for the case of Urshifu.
-    const formKey = pokemon.getFormKey();
-    if (formIndex > 0) {
-      // In case a Pikachu with formIndex > 0 was unlocked, base form Pichu is also unlocked
-      if (pokemon.species.speciesId === SpeciesId.PIKACHU && species.speciesId === SpeciesId.PICHU) {
-        dexEntry.caughtAttr |= globalScene.gameData.getFormAttr(0);
-      }
-      if (pokemon.species.speciesId === SpeciesId.URSHIFU) {
-        if (formIndex === 2) {
-          dexEntry.caughtAttr |= globalScene.gameData.getFormAttr(0);
-        } else if (formIndex === 3) {
-          dexEntry.caughtAttr |= globalScene.gameData.getFormAttr(1);
-        }
-      } else if (pokemon.species.speciesId === SpeciesId.ZYGARDE) {
-        if (formIndex === 4) {
-          dexEntry.caughtAttr |= globalScene.gameData.getFormAttr(2);
-        } else if (formIndex === 5) {
-          dexEntry.caughtAttr |= globalScene.gameData.getFormAttr(3);
-        }
-      } else {
-        const allFormChanges = speciesDataRegistry.getFormChanges(species.speciesId);
-        const toCurrentFormChanges = allFormChanges.filter(f => f.formKey === formKey);
-        if (toCurrentFormChanges.length > 0) {
-          // Needs to do this or Castform can unlock the wrong form, etc.
-          dexEntry.caughtAttr |= globalScene.gameData.getFormAttr(0);
-        }
-      }
-    }
-
-    // Unlock ability
-    if (speciesDataRegistry.isStarter(species.speciesId)) {
-      this.starterData[species.speciesId].abilityAttr |=
-        pokemon.abilityIndex !== 1 || pokemon.species.ability2 ? 1 << pokemon.abilityIndex : AbilityAttr.ABILITY_HIDDEN;
-    }
-
-    // Unlock nature
-    dexEntry.natureAttr |= 1 << (pokemon.nature + 1);
-
-    const prevolution = speciesDataRegistry.getPrevolution(species.speciesId);
-    const newCatch = !caughtAttr;
-
-    if (incrementCount) {
-      if (fromEgg) {
-        dexEntry.hatchedCount++;
-        this.gameStats.pokemonHatched++;
-        if (pokemon.species.subLegendary) {
-          this.gameStats.subLegendaryPokemonHatched++;
-        } else if (pokemon.species.legendary) {
-          this.gameStats.legendaryPokemonHatched++;
-        } else if (pokemon.species.mythical) {
-          this.gameStats.mythicalPokemonHatched++;
-        }
-        if (pokemon.isShiny()) {
-          this.gameStats.shinyPokemonHatched++;
-        }
-      } else {
-        dexEntry.caughtCount++;
-        this.gameStats.pokemonCaught++;
-        if (pokemon.species.subLegendary) {
-          this.gameStats.subLegendaryPokemonCaught++;
-        } else if (pokemon.species.legendary) {
-          this.gameStats.legendaryPokemonCaught++;
-        } else if (pokemon.species.mythical) {
-          this.gameStats.mythicalPokemonCaught++;
-        }
-        if (pokemon.isShiny()) {
-          this.gameStats.shinyPokemonCaught++;
-        }
-      }
-    }
-
-    const checkPrevolution = async (newStarter: boolean) => {
-      if (prevolution == null) {
-        return newStarter;
-      }
-      return await this.setPokemonSpeciesCaught(
-        pokemon,
-        speciesDataRegistry.getSpecies(prevolution),
-        incrementCount,
-        fromEgg,
-        showMessage,
-      );
-    };
-
-    if (!newCatch || !speciesDataRegistry.isStarter(species.speciesId)) {
-      return await checkPrevolution(false);
-    }
-    // TODO: This will skip unlocking a pre-evolution if the player catches an evolved form that is itself a starter.
-    // (This only affects Pikachu, which is the only evolved starter Pokemon, but should be fixed anyways)
-    // Better yet, rework this entire function to not do 10 different things at once
-    if (!showMessage) {
-      return true;
-    }
-    audioManager.playSound("se/level_up_fanfare");
-
-    // TODO: Remove and replace with a simpler check if the return value is found to be unnecessary
-    return new Promise(resolve =>
-      globalScene.ui.showText(
-        i18next.t("battle:addedAsAStarter", { pokemonName: species.name }),
-        null,
-        async () => resolve(await checkPrevolution(true)),
-        null,
-        true,
-      ),
-    );
   }
 
   /**
