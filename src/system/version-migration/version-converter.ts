@@ -65,49 +65,16 @@ const LATEST_VERSION = version;
 
 // Add migrator imports below
 
-import * as v1_0_3 from "#system/v1_0_3";
-import * as v1_0_4 from "#system/v1_0_4";
-import * as v1_7_0 from "#system/v1_7_0";
-import * as v1_8_3 from "#system/v1_8_3";
-import * as v1_9_0 from "#system/v1_9_0";
-import * as v1_10_0 from "#system/v1_10_0";
-import * as v1_11_19 from "#system/v1_11_19";
-import * as v1_12_0_0 from "#system/v1_12_0_0";
-import * as v1_12_0_1 from "#system/v1_12_0_1";
-import * as v1_12_0_3 from "#system/v1_12_0_3";
-import * as v1_12_0_10 from "#system/v1_12_0_10";
-import * as v1_12_1_0 from "#system/v1_12_1_0";
-
 // To add a new set of migrators, add them to the appropriate array of migrators
 
 /** All system save migrators */
-const systemMigrators: SystemSaveMigrator[] = [
-  ...v1_0_3.systemMigrators,
-  ...v1_0_4.systemMigrators,
-  ...v1_7_0.systemMigrators,
-  ...v1_8_3.systemMigrators,
-  ...v1_12_0_0.systemMigrators,
-  ...v1_12_0_1.systemMigrators,
-  ...v1_12_0_3.systemMigrators,
-  ...v1_12_0_10.systemMigrators,
-  ...v1_12_1_0.systemMigrators,
-];
+const systemMigrators: SystemSaveMigrator[] = [];
 
 /** All session save migrators */
-const sessionMigrators: SessionSaveMigrator[] = [
-  ...v1_0_4.sessionMigrators,
-  ...v1_7_0.sessionMigrators,
-  ...v1_9_0.sessionMigrators,
-  ...v1_10_0.sessionMigrators,
-  ...v1_12_0_0.sessionMigrators,
-];
+const sessionMigrators: SessionSaveMigrator[] = [];
 
 /** All settings migrators */
-const settingsMigrators: SettingsSaveMigrator[] = [
-  ...v1_0_4.settingsMigrators,
-  ...v1_11_19.settingsMigrators,
-  ...v1_12_1_0.settingsMigrators,
-];
+const settingsMigrators: SettingsSaveMigrator[] = [];
 
 // Ensure the migrators are in the correct order so that they are consistently applied from oldest to newest
 sortMigrators(systemMigrators);
