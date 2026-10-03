@@ -565,15 +565,6 @@ export class RunInfoUiHandler extends UiHandler {
         break;
     }
 
-    // If the player achieves a personal best in Endless, the mode text will be tinted similarly to SSS luck to celebrate their achievement.
-    if (
-      (this.runInfo.gameMode === GameModes.ENDLESS || this.runInfo.gameMode === GameModes.SPLICED_ENDLESS)
-      && this.runInfo.waveIndex === globalScene.gameData.gameStats.highestEndlessWave
-    ) {
-      modeText.appendText(` [${i18next.t("runHistory:personalBest")}]`);
-      modeText.setTint(...RAINBOW_TINT);
-    }
-
     // Duration + Money
     const runInfoTextContainer = globalScene.add.container(0, 0);
     // Japanese is set to a greater line spacing of 35px in addBBCodeTextObject() if lineSpacing < 12.

@@ -3,7 +3,7 @@ import "#app/extensions"; // Setup Phaser extension methods/etc
 import { initAbilities } from "#abilities/init-abilities";
 import { initGlobalAudioManager } from "#app/global-audio-manager";
 import { initSettingsManager } from "#app/global-settings-manager";
-import { initTeamMemberDataRegistry } from "#data/character-registry";
+import { initCharacterRegistry } from "#data/character-registry";
 import { initTrainerTypeDialogue } from "#data/dialogue";
 import { initSpeciesDataRegistry } from "#data/species-data-registry";
 import { initTeamDataRegistry } from "#data/team-registry";
@@ -23,7 +23,7 @@ export async function initializeGame(): Promise<void> {
   await initSettingsManager();
   initSpeciesDataRegistry();
   initTeamDataRegistry();
-  initTeamMemberDataRegistry();
+  initCharacterRegistry();
   await initGlobalAudioManager();
   initModifierTypes();
   initModifierPools();

@@ -153,9 +153,9 @@ export function getTeamDataEntry(teamMemberId: CharacterId): TeamSaveDataEntry {
 export function getDefaultIconProps(id: CharacterId): IconProps {
   const teamMember = characterRegistry.getCharacter(id);
   // Default is female only for species where malePercent is not null but 0
-  const gender = teamMember.identity?.gender || Gender.GENDERLESS;
-  const formIndex = teamMember.identity?.formIndex || 0;
-  const identity = teamMember.identity;
+  const gender = teamMember?.identity?.gender || Gender.GENDERLESS;
+  const formIndex = teamMember?.identity?.formIndex || 0;
+  const identity = teamMember?.identity;
 
   if (identity?.variants?.unshiny) {
     return { shiny: false, gender, variant: 0, formIndex };
