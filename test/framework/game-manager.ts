@@ -8,7 +8,6 @@ import { BattlerIndex } from "#enums/battler-index";
 import { Button } from "#enums/buttons";
 import { GameModes } from "#enums/game-modes";
 import type { MysteryEncounterType } from "#enums/mystery-encounter-type";
-import type { PokeballType } from "#enums/pokeball";
 import type { SpeciesId } from "#enums/species-id";
 import { UiMode } from "#enums/ui-mode";
 import type { EnemyPokemon, PlayerPokemon } from "#field/pokemon";
@@ -36,7 +35,6 @@ import { SettingsHelper } from "#test/helpers/settings-helper";
 import { MockFetch } from "#test/mocks/mock-fetch";
 import { generateStarters } from "#test/utils/game-manager-utils";
 import type { PhaseString } from "#types/phase-types";
-import type { BallUiHandler } from "#ui/ball-ui-handler";
 import type { BattleMessageUiHandler } from "#ui/battle-message-ui-handler";
 import type { CommandUiHandler } from "#ui/command-ui-handler";
 import type { AwaitableUiHandler } from "#ui/handlers/awaitable-ui-handler";
@@ -122,7 +120,7 @@ export class GameManager {
 
     this.gameWrapper.scene = this.scene;
 
-    this.scene.phaseManager.toTitleScreen(true);
+    this.scene.phaseManager.toTitleScreen();
     this.scene.phaseManager.shiftPhase();
   }
 
@@ -187,8 +185,6 @@ export class GameManager {
    * @returns A promise that resolves when the title phase is reached.
    */
   async runToTitle(): Promise<void> {
-    // Go to login phase and skip past it
-    await this.phaseInterceptor.to("LoginPhase", false);
     this.phaseInterceptor.shiftPhase();
     await this.phaseInterceptor.to("TitlePhase");
   }
@@ -199,11 +195,11 @@ export class GameManager {
    * @param species - Array of {@linkcode SpeciesId}s to start the final battle with.
    * @param mode - The {@linkcode GameModes} to spawn the final boss encounter in.
    */
-  async runToFinalBossEncounter(species: SpeciesId[], mode: GameModes) {
+  async runToFinalBossEncounter(species: SpeciesId[]) {
     await this.runToTitle();
 
     this.onNextPrompt("TitlePhase", UiMode.TITLE, () => {
-      this.scene.gameMode = getGameMode(mode);
+      this.scene.gameMode = getGameMode();
       const starters = generateStarters(this.scene, species);
       const selectStarterPhase = new SelectStarterPhase();
       this.scene.phaseManager.pushPhase(new EncounterPhase(false));
@@ -239,7 +235,7 @@ export class GameManager {
       "TitlePhase",
       UiMode.TITLE,
       () => {
-        this.scene.gameMode = getGameMode(GameModes.CLASSIC);
+        this.scene.gameMode = getGameMode();
         const starters = generateStarters(this.scene, speciesIds);
         const selectStarterPhase = new SelectStarterPhase();
         this.scene.phaseManager.pushPhase(new EncounterPhase(false));
@@ -496,24 +492,6 @@ export class GameManager {
       partyHandler.setCursor(slot);
       partyHandler.processInput(Button.ACTION); // select party slot
       partyHandler.processInput(Button.ACTION); // send out (or whatever option is at the top)
-    });
-  }
-
-  /**
-   * Select the BALL option from the command menu, then press Action; in the BALL
-   * menu, select a pokéball type and press Action again to throw it.
-   * @param ballIndex - The {@linkcode PokeballType} to throw
-   */
-  public doThrowPokeball(ballIndex: PokeballType) {
-    this.onNextPrompt("CommandPhase", UiMode.COMMAND, () => {
-      (this.scene.ui.getHandler() as CommandUiHandler).setCursor(1);
-      (this.scene.ui.getHandler() as CommandUiHandler).processInput(Button.ACTION);
-    });
-
-    this.onNextPrompt("CommandPhase", UiMode.BALL, () => {
-      const ballHandler = this.scene.ui.getHandler() as BallUiHandler;
-      ballHandler.setCursor(ballIndex);
-      ballHandler.processInput(Button.ACTION); // select ball and throw
     });
   }
 

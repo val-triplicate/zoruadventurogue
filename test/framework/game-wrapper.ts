@@ -36,7 +36,6 @@ export class GameWrapper {
     // TODO: Move these mocks elsewhere
     MoveAnim.prototype.getAnim = () => ({ frames: {} }) as any;
     Pokemon.prototype.enableMask = () => null;
-    Pokemon.prototype.updateFusionPalette = () => null;
     Pokemon.prototype.cry = () => null;
     Pokemon.prototype.faintCry = cb => {
       if (cb) {

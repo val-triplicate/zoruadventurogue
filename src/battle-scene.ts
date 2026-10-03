@@ -75,7 +75,6 @@ import {
   DoubleBattleChanceBoosterModifier,
   ExpBalanceModifier,
   ExpShareModifier,
-  FusePokemonModifier,
   HealingBoosterModifier,
   ModifierBar,
   MultipleParticipantExpBonusModifier,
@@ -2328,8 +2327,6 @@ export class BattleScene extends SceneBase {
               this.applyModifiers(HealingBoosterModifier, true, hpRestoreMultiplier);
               args.push(hpRestoreMultiplier.value);
             }
-          } else if (modifier instanceof FusePokemonModifier) {
-            args.push(this.getPokemonById(modifier.fusePokemonId) as PlayerPokemon);
           } else if (modifier instanceof RememberMoveModifier && cost != null) {
             args.push(cost);
           }

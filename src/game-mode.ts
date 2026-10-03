@@ -1,27 +1,11 @@
-import { FixedBattleConfig } from "#app/battle";
+import type { FixedBattleConfig } from "#app/battle";
 import { CHALLENGE_MODE_MYSTERY_ENCOUNTER_WAVES, CLASSIC_MODE_MYSTERY_ENCOUNTER_WAVES } from "#app/constants";
 import { globalScene } from "#app/global-scene";
-import { speciesDataRegistry } from "#app/global-species-data-registry";
 import { activeOverrides } from "#app/overrides";
-import { allChallenges, type Challenge, copyChallenge } from "#data/challenge";
-import {
-  getDailyEventSeedBoss,
-  getDailyForcedWaveSpecies,
-  getDailyStartingBiome,
-  getDailyStartingMoney,
-  getDailyTrainerManipulation,
-} from "#data/daily-run";
-import { parseDailySeed } from "#data/daily-seed-utils";
-import type { PokemonSpecies } from "#data/pokemon-species";
 import { BiomeId } from "#enums/biome-id";
-import { ChallengeType } from "#enums/challenge-type";
-import { Challenges } from "#enums/challenges";
 import { GameModes } from "#enums/game-modes";
-import { SpeciesId } from "#enums/species-id";
-import { classicFixedBattles, type FixedBattleConfigs } from "#trainers/fixed-battle-configs";
-import type { CustomDailyRunConfig } from "#types/daily-run";
-import { applyChallenges } from "#utils/challenge-utils";
-import { BooleanHolder, randSeedInt, randSeedItem } from "#utils/common";
+import type { FixedBattleConfigs } from "#trainers/fixed-battle-configs";
+import { BooleanHolder, randSeedInt } from "#utils/common";
 import i18next from "i18next";
 
 interface GameModeConfig {
@@ -41,17 +25,11 @@ interface GameModeConfig {
 export class GameMode implements GameModeConfig {
   public modeId: GameModes;
   public isClassic: boolean;
-  public isEndless: boolean;
-  public isDaily: boolean;
-  public dailyConfig?: CustomDailyRunConfig | undefined;
   public hasTrainers: boolean;
   public hasNoShop: boolean;
   public hasShortBiomes: boolean;
   public hasRandomBiomes: boolean;
   public hasRandomBosses: boolean;
-  public isSplicedOnly: boolean;
-  public isChallenge: boolean;
-  public challenges: Challenge[];
   public battleConfig: FixedBattleConfigs;
   public hasMysteryEncounters: boolean;
   public minMysteryEncounterWave: number;
@@ -59,72 +37,8 @@ export class GameMode implements GameModeConfig {
 
   constructor(modeId: GameModes, config: GameModeConfig, battleConfig?: FixedBattleConfigs) {
     this.modeId = modeId;
-    this.challenges = [];
     Object.assign(this, config);
-    if (this.isChallenge) {
-      this.challenges = allChallenges.map(c => copyChallenge(c));
-    }
     this.battleConfig = battleConfig || {};
-  }
-
-  /**
-   * Enables challenges if they are disabled and sets the specified challenge's value
-   * @param challenge - The challenge to set
-   * @param value - The value to give the challenge. Impact depends on the specific challenge
-   * @param severity - If provided, will override the given severity amount. Unused if `challenge` does not use severity
-   * @todo Add severity support to daily mode challenge setting
-   */
-  setChallengeValue(challenge: Challenges, value: number, severity?: number) {
-    if (!this.isChallenge) {
-      this.isChallenge = true;
-      this.challenges = allChallenges.map(c => copyChallenge(c));
-    }
-    this.challenges
-      .filter((chal: Challenge) => chal.id === challenge)
-      .forEach(chal => {
-        chal.value = value;
-        if (chal.hasSeverity()) {
-          chal.severity = severity ?? chal.severity;
-        }
-      });
-  }
-
-  /**
-   * Helper function to see if a GameMode has a specific challenge type
-   * @param challenge the Challenges it looks for
-   * @returns true if the game mode has that challenge
-   */
-  hasChallenge(challenge: Challenges): boolean {
-    return this.challenges.some(c => c.id === challenge && c.value !== 0);
-  }
-
-  /**
-   * Helper function to see if a GameMode has any challenges, needed in tests
-   * @returns true if the game mode has at least one challenge
-   */
-  hasAnyChallenges(): boolean {
-    return this.challenges.length > 0;
-  }
-
-  /**
-   * Helper function to see if the game mode is using fresh start
-   * @returns true if a fresh start challenge is being applied
-   */
-  isFreshStartChallenge(): boolean {
-    return this.hasChallenge(Challenges.FRESH_START);
-  }
-
-  /**
-   * Helper function to see if the game mode is using fresh start
-   * @returns true if a fresh start challenge is being applied
-   */
-  isFullFreshStartChallenge(): boolean {
-    for (const challenge of this.challenges) {
-      if (challenge.id === Challenges.FRESH_START && challenge.value === 1) {
-        return true;
-      }
-    }
-    return false;
   }
 
   /**
@@ -138,12 +52,7 @@ export class GameMode implements GameModeConfig {
     if (activeOverrides.STARTING_LEVEL_OVERRIDE > 0) {
       return activeOverrides.STARTING_LEVEL_OVERRIDE;
     }
-    switch (this.modeId) {
-      case GameModes.DAILY:
-        return 20;
-      default:
-        return 5;
-    }
+    return 5;
   }
 
   /**
@@ -156,18 +65,7 @@ export class GameMode implements GameModeConfig {
     if (activeOverrides.STARTING_MONEY_OVERRIDE > 0) {
       return activeOverrides.STARTING_MONEY_OVERRIDE;
     }
-
-    switch (this.modeId) {
-      // biome-ignore lint/suspicious/noFallthroughSwitchClause: Intentional
-      case GameModes.DAILY: {
-        const dailyStartingMoney = getDailyStartingMoney();
-        if (dailyStartingMoney != null) {
-          return dailyStartingMoney;
-        }
-      }
-      default:
-        return 1000;
-    }
+    return 1000;
   }
 
   /**
@@ -181,12 +79,7 @@ export class GameMode implements GameModeConfig {
       return activeOverrides.STARTING_BIOME_OVERRIDE;
     }
 
-    switch (this.modeId) {
-      case GameModes.DAILY:
-        return getDailyStartingBiome();
-      default:
-        return BiomeId.TOWN;
-    }
+    return BiomeId.TOWN;
   }
 
   getWaveForDifficulty(waveIndex: number, ignoreCurveChanges = false): number {
@@ -206,14 +99,6 @@ export class GameMode implements GameModeConfig {
   public isWaveTrainer(waveIndex: number): boolean {
     const { arena, offsetGym } = globalScene;
 
-    // Daily spawns trainers on floors 5, 15, 20, 25, 30, 35, 40, and 45
-    if (this.isDaily) {
-      const trainerManipulation = getDailyTrainerManipulation(waveIndex);
-      if (trainerManipulation != null) {
-        return trainerManipulation;
-      }
-      return waveIndex % 10 === 5 || (!(waveIndex % 10) && waveIndex > 10 && !this.isWaveFinal(waveIndex));
-    }
     if (waveIndex % 30 === (offsetGym ? 0 : 20) && !this.isWaveFinal(waveIndex)) {
       return true;
     }
@@ -263,28 +148,6 @@ export class GameMode implements GameModeConfig {
           && (biomeType !== BiomeId.END || this.isClassic || this.isWaveFinal(waveIndex))
         );
     }
-  }
-
-  getOverrideSpecies(waveIndex: number): PokemonSpecies | null {
-    if (this.isDaily && this.isWaveFinal(waveIndex)) {
-      const eventBoss = getDailyEventSeedBoss();
-      if (eventBoss?.speciesId != null) {
-        // Cannot set form index here, it will be overriden when adding it as enemy pokemon.
-        return speciesDataRegistry.getSpecies(eventBoss.speciesId);
-      }
-
-      const allFinalBossSpecies = speciesDataRegistry.getAllSpecies().filter(s => {
-        return (
-          (s.subLegendary || s.legendary || s.mythical)
-          && s.baseTotal >= 600
-          && s.speciesId !== SpeciesId.ETERNATUS
-          && s.speciesId !== SpeciesId.ARCEUS
-        );
-      });
-      return randSeedItem(allFinalBossSpecies);
-    }
-
-    return getDailyForcedWaveSpecies(waveIndex);
   }
 
   /**
@@ -355,11 +218,7 @@ export class GameMode implements GameModeConfig {
    * @returns If this game mode has a fixed battle on this wave
    */
   isFixedBattle(waveIndex: number): boolean {
-    const dummyConfig = new FixedBattleConfig();
-    return (
-      Object.hasOwn(this.battleConfig, waveIndex)
-      || applyChallenges(ChallengeType.FIXED_BATTLES, waveIndex, dummyConfig)
-    );
+    return Object.hasOwn(this.battleConfig, waveIndex);
   }
 
   /**
@@ -368,10 +227,6 @@ export class GameMode implements GameModeConfig {
    * @returns The fixed battle for this wave.
    */
   getFixedBattle(waveIndex: number): FixedBattleConfig | undefined {
-    const challengeConfig = new FixedBattleConfig();
-    if (applyChallenges(ChallengeType.FIXED_BATTLES, waveIndex, challengeConfig)) {
-      return challengeConfig;
-    }
     return this.battleConfig[waveIndex];
   }
 
@@ -381,7 +236,6 @@ export class GameMode implements GameModeConfig {
    */
   public getShopStatus(): boolean {
     const status = new BooleanHolder(!this.hasNoShop);
-    applyChallenges(ChallengeType.SHOP, status);
     return status.value;
   }
 
@@ -438,18 +292,6 @@ export class GameMode implements GameModeConfig {
     }
   }
 
-  /**
-   * Sets the daily config if the seed is a custom seed.
-   * @param seed - The seed to check
-   * @returns The seed to use.
-   * @remarks
-   * If it is not a custom seed, it will return the original seed.
-   */
-  public trySetCustomDailyConfig(seed: string): string {
-    this.dailyConfig = parseDailySeed(seed);
-    return this.dailyConfig?.seed ?? seed;
-  }
-
   static getModeName(modeId: GameModes): string {
     switch (modeId) {
       case GameModes.CLASSIC:
@@ -466,43 +308,6 @@ export class GameMode implements GameModeConfig {
   }
 }
 
-export function getGameMode(gameMode: GameModes): GameMode {
-  switch (gameMode) {
-    case GameModes.CLASSIC:
-      return new GameMode(
-        GameModes.CLASSIC,
-        { isClassic: true, hasTrainers: true, hasMysteryEncounters: true },
-        classicFixedBattles,
-      );
-    case GameModes.ENDLESS:
-      return new GameMode(GameModes.ENDLESS, {
-        isEndless: true,
-        hasShortBiomes: true,
-        hasRandomBosses: true,
-      });
-    case GameModes.SPLICED_ENDLESS:
-      return new GameMode(GameModes.SPLICED_ENDLESS, {
-        isEndless: true,
-        hasShortBiomes: true,
-        hasRandomBosses: true,
-        isSplicedOnly: true,
-      });
-    case GameModes.DAILY:
-      return new GameMode(GameModes.DAILY, {
-        isDaily: true,
-        hasTrainers: true,
-        hasNoShop: true,
-      });
-    case GameModes.CHALLENGE:
-      return new GameMode(
-        GameModes.CHALLENGE,
-        {
-          isClassic: true,
-          hasTrainers: true,
-          isChallenge: true,
-          hasMysteryEncounters: true,
-        },
-        classicFixedBattles,
-      );
-  }
+export function getGameMode(): GameMode {
+  return new GameMode(GameModes.CLASSIC, { isClassic: true, hasTrainers: true, hasMysteryEncounters: true });
 }

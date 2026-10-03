@@ -6,7 +6,6 @@ import { Phase } from "#app/phase";
 import { BattleType } from "#enums/battle-type";
 import { GameModes } from "#enums/game-modes";
 import { UiMode } from "#enums/ui-mode";
-import { Unlockables } from "#enums/unlockables";
 import { getBiomeKey } from "#field/arena";
 import type { OptionSelectItem, OptionSelectModeConfig } from "#types/ui-types";
 import { SaveSlotUiMode } from "#ui/save-slot-select-ui-handler";
@@ -67,7 +66,7 @@ export class TitlePhase extends Phase {
   }
 
   private async showOptions(lastSessionSlot: number): Promise<void> {
-    const { gameData, ui } = globalScene;
+    const { ui } = globalScene;
     const options: OptionSelectItem[] = [];
     // Add a "continue" menu if the session slot ID is >-1
     if (lastSessionSlot > NO_SAVE_SLOT) {
@@ -104,31 +103,6 @@ export class TitlePhase extends Phase {
               return true;
             },
           });
-          if (gameData.isUnlocked(Unlockables.ENDLESS_MODE)) {
-            newGameOptions.push({
-              label: GameMode.getModeName(GameModes.CHALLENGE),
-              handler: () => {
-                setModeAndEnd(GameModes.CHALLENGE);
-                return true;
-              },
-            });
-            newGameOptions.push({
-              label: GameMode.getModeName(GameModes.ENDLESS),
-              handler: () => {
-                setModeAndEnd(GameModes.ENDLESS);
-                return true;
-              },
-            });
-            if (gameData.isUnlocked(Unlockables.SPLICED_ENDLESS_MODE)) {
-              newGameOptions.push({
-                label: GameMode.getModeName(GameModes.SPLICED_ENDLESS),
-                handler: () => {
-                  setModeAndEnd(GameModes.SPLICED_ENDLESS);
-                  return true;
-                },
-              });
-            }
-          }
           // Cancel button = back to title
           newGameOptions.push({
             label: i18next.t("menu:cancel"),
@@ -214,16 +188,12 @@ export class TitlePhase extends Phase {
 
   // TODO: Refactor this
   end(): void {
-    if (!this.loaded && !globalScene.gameMode.isDaily) {
-      globalScene.gameMode = getGameMode(this.gameMode);
-      if (this.gameMode === GameModes.CHALLENGE) {
-        globalScene.phaseManager.pushNew("SelectChallengePhase");
-      } else {
-        globalScene.phaseManager.pushNew("SelectStarterPhase");
-      }
-      globalScene.newArena(globalScene.gameMode.getStartingBiome());
-    } else {
+    if (this.loaded) {
       audioManager.playBgm();
+    } else {
+      globalScene.gameMode = getGameMode();
+      globalScene.phaseManager.pushNew("SelectStarterPhase");
+      globalScene.newArena(globalScene.gameMode.getStartingBiome());
     }
 
     globalScene.phaseManager.pushNew("EncounterPhase", this.loaded);
@@ -236,10 +206,7 @@ export class TitlePhase extends Phase {
         globalScene.phaseManager.pushNew("SummonPhase", 1, true, true);
       }
 
-      if (
-        globalScene.currentBattle.battleType !== BattleType.TRAINER
-        && (globalScene.currentBattle.waveIndex > 1 || !globalScene.gameMode.isDaily)
-      ) {
+      if (globalScene.currentBattle.battleType !== BattleType.TRAINER) {
         const minPartySize = globalScene.currentBattle.double ? 2 : 1;
         if (availablePartyMembers > minPartySize) {
           globalScene.phaseManager.pushNew("CheckSwitchPhase", 0, globalScene.currentBattle.double);
