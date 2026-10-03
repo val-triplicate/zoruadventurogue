@@ -96,13 +96,6 @@ export class TitlePhase extends Phase {
               return true;
             },
           });
-          newGameOptions.push({
-            label: i18next.t("menu:dailyRun"),
-            handler: () => {
-              this.initDailyRun();
-              return true;
-            },
-          });
           // Cancel button = back to title
           newGameOptions.push({
             label: i18next.t("menu:cancel"),

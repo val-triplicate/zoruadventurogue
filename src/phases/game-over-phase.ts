@@ -12,21 +12,17 @@ import { PlayerGender } from "#enums/player-gender";
 import { TrainerType } from "#enums/trainer-type";
 import { UiMode } from "#enums/ui-mode";
 import { Unlockables } from "#enums/unlockables";
-import type { Pokemon } from "#field/pokemon";
 import { BattlePhase } from "#phases/battle-phase";
 import type { EndCardPhase } from "#phases/end-card-phase";
 import { achvs } from "#system/achv";
 import { ArenaData } from "#system/arena-data";
 import { ModifierData as PersistentModifierData } from "#system/modifier-data";
 import { PokemonData } from "#system/pokemon-data";
-import { RibbonData, type RibbonFlag } from "#system/ribbon-data";
-import { awardRibbonsToSpeciesLine } from "#system/ribbon-methods";
 import { TrainerData } from "#system/trainer-data";
 import { trainerConfigs } from "#trainers/trainer-config";
 import type { SessionSaveData } from "#types/save-data";
 import type { ConfirmModeConfig } from "#types/ui-types";
 import { fixedInt, isLocalServerConnected } from "#utils/common";
-import { ValueHolder } from "#utils/value-holder";
 import i18next from "i18next";
 
 export class GameOverPhase extends BattlePhase {
@@ -124,30 +120,6 @@ export class GameOverPhase extends BattlePhase {
     });
   }
 
-  /**
-   * Submethod of {@linkcode handleGameOver} that awards ribbons to Pokémon in the player's party
-   * based on the current game mode and challenges.
-   */
-  private awardRibbons(): void {
-    const { gameMode } = globalScene;
-    const { isClassic } = gameMode;
-
-    let ribbonFlags = 0n;
-
-    if (isClassic) {
-      ribbonFlags |= RibbonData.CLASSIC;
-    }
-    // Award ribbons to all Pokémon in the player's party that are considered valid
-    // for the current game mode and challenges (as in, they can be used in battle).
-    for (const pokemon of globalScene.getPlayerParty()) {
-      const species = pokemon.species;
-      const challengeAllowed = new ValueHolder(true);
-      if (challengeAllowed.value) {
-        awardRibbonsToSpeciesLine(species.speciesId, ribbonFlags as RibbonFlag);
-      }
-    }
-  }
-
   handleGameOver(): void {
     const doGameOver = (newClear: boolean) => {
       globalScene.disableMenu = true;
@@ -156,15 +128,7 @@ export class GameOverPhase extends BattlePhase {
           if (globalScene.gameMode.isClassic) {
             globalScene.validateAchv(achvs.CLASSIC_VICTORY);
             globalScene.gameData.gameStats.sessionsWon++;
-            for (const pokemon of globalScene.getPlayerParty()) {
-              this.awardFirstClassicCompletion(pokemon);
-              if (pokemon.species.getRootSpeciesId() !== pokemon.species.getRootSpeciesId(true)) {
-                this.awardFirstClassicCompletion(pokemon, true);
-              }
-            }
-            this.awardRibbons();
           } else if (newClear) {
-            globalScene.gameData.gameStats.dailyRunSessionsWon++;
             globalScene.validateAchv(achvs.DAILY_VICTORY);
           }
         }
@@ -274,15 +238,6 @@ export class GameOverPhase extends BattlePhase {
       ) {
         globalScene.phaseManager.unshiftNew("UnlockPhase", Unlockables.EVIOLITE);
       }
-    }
-  }
-
-  awardFirstClassicCompletion(pokemon: Pokemon, forStarter = false): void {
-    const speciesId = speciesDataRegistry.getSpecies(pokemon.species.speciesId);
-    const speciesRibbonCount = globalScene.gameData.incrementRibbonCount(speciesId, forStarter);
-    // first time classic win, award voucher
-    if (speciesRibbonCount === 1) {
-      this.firstRibbons.push(speciesDataRegistry.getSpecies(pokemon.species.getRootSpeciesId(forStarter)));
     }
   }
 

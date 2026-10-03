@@ -1,15 +1,15 @@
+import { characterRegistry } from "#app/global-character-data-registry";
 import { globalScene } from "#app/global-scene";
-import { teamMemberDataRegistry } from "#app/global-team-member-data-registry";
 import { Gender } from "#data/gender";
 import type { PokemonSpecies } from "#data/pokemon-species";
-import type { TeamMemberId } from "#enums/team-member-id";
+import type { CharacterId } from "#enums/character-id";
 import { TextStyle } from "#enums/text-style";
-import type { TeamMemberData } from "#types/pokemon-species";
-import type { DexAttrProps } from "#types/save-data";
+import type { Character } from "#types/pokemon-species";
+import type { IconProps } from "#types/save-data";
 import { addTextObject } from "#ui/text";
 
-export class StarterContainer extends Phaser.GameObjects.Container {
-  public teamMemberId: TeamMemberId;
+export class CharacterContainer extends Phaser.GameObjects.Container {
+  public charId: CharacterId;
   public species: PokemonSpecies;
   public icon: Phaser.GameObjects.Sprite;
   public shinyIcons: Phaser.GameObjects.Image[] = [];
@@ -20,12 +20,12 @@ export class StarterContainer extends Phaser.GameObjects.Container {
   public classicWinIcon: Phaser.GameObjects.Image;
   public cost = 0;
 
-  constructor(teamMemberData: TeamMemberData) {
+  constructor(character: Character) {
     super(globalScene, 0, 0);
 
-    const defaultProps = globalScene.gameData.getTeamMemberDefaultDexAttrProps(teamMemberData.teamMemberId);
+    const defaultProps = globalScene.gameData.getDefaultIconProps(character.id);
 
-    this.setTeamMember(teamMemberData.teamMemberId, defaultProps);
+    this.setCharacter(character.id, defaultProps);
 
     const starterPassiveBg = globalScene.add.image(2, 5, "passive_bg");
     starterPassiveBg.setOrigin(0, 0);
@@ -72,8 +72,8 @@ export class StarterContainer extends Phaser.GameObjects.Container {
     this.classicWinIcon = classicWinIcon;
   }
 
-  public setTeamMember(teamMemberId: TeamMemberId, props: DexAttrProps) {
-    this.species = teamMemberDataRegistry.getSpecies(teamMemberId);
+  public setCharacter(teamMemberId: CharacterId, props: IconProps) {
+    this.species = characterRegistry.getSpecies(teamMemberId);
 
     let { shiny, formIndex, gender, variant } = props;
 

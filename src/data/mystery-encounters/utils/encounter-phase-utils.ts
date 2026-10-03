@@ -259,10 +259,6 @@ export async function initBattleWithEnemyConfig(partyConfig: EnemyPartyConfig): 
       enemyPokemon.resetSummonData();
     }
 
-    if ((!loaded && partyConfig.countAsSeen == null) || partyConfig.countAsSeen) {
-      globalScene.gameData.setPokemonSeen(enemyPokemon, true, !!(trainerType || trainerConfig));
-    }
-
     if (partyConfig?.pokemonConfigs && e < partyConfig.pokemonConfigs.length) {
       const config = partyConfig.pokemonConfigs[e];
 

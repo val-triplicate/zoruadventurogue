@@ -4,8 +4,7 @@ import { TextStyle } from "#enums/text-style";
 import type { UiTheme } from "#enums/ui-theme";
 import type { DropDown } from "#ui/dropdown";
 import { DropDownType } from "#ui/dropdown";
-import type { PokedexMonContainer } from "#ui/pokedex-mon-container";
-import type { StarterContainer } from "#ui/starter-container";
+import type { CharacterContainer } from "#ui/starter-container";
 import { addTextObject, getTextColor } from "#ui/text";
 import { addWindow, WindowVariant } from "#ui/ui-theme";
 
@@ -204,7 +203,7 @@ export class FilterBar extends Phaser.GameObjects.Container {
    * @param container the StarterContainer to compare position against
    * @returns the index of the closest filter
    */
-  getNearestFilter(container: StarterContainer | PokedexMonContainer): number {
+  getNearestFilter(container: CharacterContainer): number {
     const midx = container.x + container.icon.displayWidth / 2;
     let nearest = 0;
     let nearestDist = 1000;

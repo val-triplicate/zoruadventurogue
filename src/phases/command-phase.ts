@@ -1,7 +1,6 @@
 import type { TurnCommand } from "#app/battle";
 import { globalScene } from "#app/global-scene";
 import { settings } from "#app/global-settings-manager";
-import { speciesDataRegistry } from "#app/global-species-data-registry";
 import { getPokemonNameWithAffix } from "#app/messages";
 import { TrappedTag } from "#data/battler-tags";
 import { AbilityId } from "#enums/ability-id";
@@ -337,54 +336,6 @@ export class CommandPhase extends FieldPhase {
   }
 
   /**
-   * Helper method for {@linkcode handleBallCommand} that checks if a pokeball can be thrown
-   * and displays the appropriate error message.
-   *
-   * @remarks
-   * The pokeball may not be thrown if any of the following are true:
-   * - It is a trainer battle
-   * - The player is in the {@linkcode BiomeId.END | End} biome and
-   *   - it is not classic mode; or
-   *   - the player has not caught the target before and the player is still missing more than one starter
-   * - The player is in a mystery encounter that disallows catching the pokemon
-   * @returns Whether a pokeball can be thrown
-   */
-  private checkCanUseBall(): boolean {
-    const { arena, currentBattle, gameData, gameMode } = globalScene;
-    const { battleType } = currentBattle;
-    const { biomeId } = arena;
-    const { isClassic } = gameMode;
-    const { dexData } = gameData;
-
-    const isClassicFinalBoss = gameMode.isBattleClassicFinalBoss(globalScene.currentBattle.waveIndex);
-    const someUncaughtSpeciesOnField = globalScene
-      .getEnemyField()
-      .some(p => p.isActive() && !dexData[p.species.speciesId].caughtAttr);
-    const missingMultipleStarters =
-      gameData.getStarterCount(d => !!d.caughtAttr) < speciesDataRegistry.getAllStarters().length - 1;
-
-    if (biomeId === BiomeId.END && battleType === BattleType.WILD) {
-      if (isClassic && !isClassicFinalBoss && someUncaughtSpeciesOnField) {
-        // Uncatchable paradox mons in classic and endless
-        this.queueShowText("battle:noPokeballForce");
-      } else if (isClassic && isClassicFinalBoss && missingMultipleStarters) {
-        // Uncatchable final boss in classic, endless and daily
-        this.queueShowText("battle:noPokeballForceFinalBoss");
-      } else {
-        return true;
-      }
-    } else if (battleType === BattleType.TRAINER) {
-      this.queueShowText("battle:noPokeballTrainer");
-    } else if (currentBattle.isBattleMysteryEncounter() && !currentBattle.mysteryEncounter!.catchAllowed) {
-      this.queueShowText("battle:noPokeballMysteryEncounter");
-    } else {
-      return true;
-    }
-
-    return false;
-  }
-
-  /**
    * Helper method for {@linkcode handleCommand} that handles the logic when the selected command is to use a pokeball.
    *
    * @param cursor - The index of the pokeball to use
@@ -395,10 +346,6 @@ export class CommandPhase extends FieldPhase {
       .getEnemyField()
       .filter(p => p.isActive(true))
       .map(p => p.getBattlerIndex());
-
-    if (!this.checkCanUseBall()) {
-      return false;
-    }
 
     if (targets.length > 1) {
       this.queueShowText("battle:noPokeballMulti");

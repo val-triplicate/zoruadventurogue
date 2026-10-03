@@ -1,36 +1,30 @@
 import { pokerogueApi } from "#api/api";
 import { clientSessionId, getSessionDataLocalStorageKey, loggedInUser, updateUserInfo } from "#app/account";
 import { defaultTeams, saveKey } from "#app/constants";
-import { audioManager } from "#app/global-audio-manager";
+import { characterRegistry } from "#app/global-character-data-registry";
 import { globalScene } from "#app/global-scene";
 import { settings } from "#app/global-settings-manager";
-import { speciesDataRegistry } from "#app/global-species-data-registry";
-import { teamDataRegistry } from "#app/global-team-data-registry";
-import { teamMemberDataRegistry } from "#app/global-team-member-data-registry";
+import { teamRegistry } from "#app/global-team-data-registry";
 import { activeOverrides } from "#app/overrides";
 import { isIos } from "#app/touch-controls";
 import { Tutorial } from "#app/tutorial";
-import { teamMemberMoveOptions } from "#balance/egg-moves";
 import { bypassLogin, isBeta, isDev, systemSaveShortKeyMap } from "#constants/app-constants";
 import { EntryHazardTag } from "#data/arena-tag";
-import { allMoves } from "#data/data-lists";
 import { Gender } from "#data/gender";
-import type { PokemonSpecies } from "#data/pokemon-species";
 import { loadPositionalTag } from "#data/positional-tags/load-positional-tag";
 import { BattleType } from "#enums/battle-type";
+import type { CharacterId } from "#enums/character-id";
 import type { Device } from "#enums/devices";
 import { DexAttr } from "#enums/dex-attr";
 import { GameDataType } from "#enums/game-data-type";
 import type { Nature } from "#enums/nature";
 import { PlayerGender } from "#enums/player-gender";
-import { SpeciesId } from "#enums/species-id";
 import { StatusEffect } from "#enums/status-effect";
-import type { TeamMemberId } from "#enums/team-member-id";
 import { TrainerVariant } from "#enums/trainer-variant";
 import { UiMode } from "#enums/ui-mode";
 import { Unlockables } from "#enums/unlockables";
 import { ArenaTagAddedEvent, TerrainChangedEvent, WeatherChangedEvent } from "#events/arena";
-import type { EnemyPokemon, PlayerPokemon, Pokemon } from "#field/pokemon";
+import type { EnemyPokemon, PlayerPokemon } from "#field/pokemon";
 // biome-ignore lint/performance/noNamespaceImport: Something weird is going on here and I don't want to touch it
 import * as Modifier from "#modifiers/modifier";
 import { MysteryEncounterSaveData } from "#mystery-encounters/mystery-encounter-save-data";
@@ -41,18 +35,15 @@ import { ArenaData, type SerializedArenaData } from "#system/arena-data";
 import { GameStats } from "#system/game-stats";
 import { ModifierData as PersistentModifierData } from "#system/modifier-data";
 import { PokemonData } from "#system/pokemon-data";
-import { RibbonData } from "#system/ribbon-data";
 import { TrainerData } from "#system/trainer-data";
 import { applySessionVersionMigration, applySystemVersionMigration } from "#system/version-converter";
-import type { DexData, DexEntry, TeamDexData } from "#types/dex-data";
 import type {
   AchvUnlocks,
   AppliedMigrators,
-  DexAttrProps,
+  IconProps,
   RunHistoryData,
   SeenDialogues,
   SessionSaveData,
-  StarterData,
   SystemSaveData,
   TeamSaveData,
   TutorialFlags,
@@ -79,12 +70,8 @@ const ErrorMessages = {
 export class GameData {
   public trainerId: number;
   public secretId: number;
-
-  public dexData: DexData;
-  private defaultDexData: DexData | null;
-
-  public starterData: StarterData;
   public teamSaveData: TeamSaveData;
+  public charPreferenceData: TeamSaveData;
 
   public gameStats: GameStats;
   public runHistory: RunHistoryData;
@@ -109,7 +96,6 @@ export class GameData {
       this.trainerId = randInt(65536);
       this.secretId = randInt(65536);
     }
-    this.starterData = {};
     this.gameStats = new GameStats();
     this.runHistory = {};
     this.unlocks = {
@@ -120,7 +106,6 @@ export class GameData {
     };
     this.achvUnlocks = {};
     this.unlockPity = [0, 0, 0, 0];
-    this.initDexData();
     this.initTeamMemberData();
   }
 
@@ -130,8 +115,6 @@ export class GameData {
       secretId: this.secretId,
       // TODO: save some settings (such as player gender) separately, outside of system data
       gender: settings.general.playerGender,
-      dexData: this.dexData,
-      starterData: this.starterData,
       teamSaveData: this.teamSaveData,
       gameStats: this.gameStats,
       unlocks: this.unlocks,
@@ -153,55 +136,6 @@ export class GameData {
       return true;
     }
     return this.unlocks[unlockable];
-  }
-
-  /**
-   * @returns Whether the system data is valid
-   */
-  private validateSystemData(data: SystemSaveData): boolean {
-    if (data.starterData == null) {
-      console.error("Starter data missing!");
-      return false;
-    }
-
-    let dataValidated = true;
-
-    for (const speciesId of speciesDataRegistry.getAllStarters()) {
-      const starterEntry = data.starterData[speciesId];
-      const dexEntry = data.dexData[speciesId];
-
-      const species = SpeciesId[speciesId];
-
-      if (starterEntry == null) {
-        console.error("Missing starter data for %s (%d)!", species, speciesId);
-        dataValidated = false;
-        continue;
-      }
-      if (dexEntry == null) {
-        console.error("Missing dex data for %s (%d)!", species, speciesId);
-        dataValidated = false;
-        continue;
-      }
-
-      const hasStarterData =
-        starterEntry.abilityAttr > 0
-        || starterEntry.eggMoves > 0
-        || starterEntry.moveset != null
-        || starterEntry.passiveAttr > 0
-        || starterEntry.valueReduction > 0;
-
-      const noDexData = dexEntry.caughtCount === 0 && dexEntry.hatchedCount === 0 && dexEntry.caughtAttr === 0n;
-
-      if (hasStarterData && noDexData) {
-        console.error("Corrupt save data detected!");
-        console.warn("Species: %s (%d)", species, speciesId);
-        console.warn(starterEntry);
-        console.warn(dexEntry);
-        dataValidated = false;
-      }
-    }
-
-    return dataValidated;
   }
 
   private async showInvalidSaveModal<const T>(
@@ -230,10 +164,6 @@ export class GameData {
 
   public async saveSystem(): Promise<boolean> {
     const data = this.getSystemSaveData();
-
-    if (!this.validateSystemData(data)) {
-      return this.reinitializeSaveData({ message: ErrorMessages.FAILED_VALIDATION });
-    }
     globalScene.ui.savingIcon.show();
 
     const maxIntAttrValue = 0x80000000;
@@ -312,11 +242,8 @@ export class GameData {
     applySystemVersionMigration(systemData);
 
     this.appliedMigrators = systemData.appliedMigrators;
-
     this.trainerId = systemData.trainerId;
     this.secretId = systemData.secretId;
-
-    this.starterData = systemData.starterData;
 
     if (systemData.gameStats) {
       this.gameStats = systemData.gameStats;
@@ -337,10 +264,6 @@ export class GameData {
         }
       }
     }
-
-    this.dexData = Object.assign(this.dexData, systemData.dexData);
-    this.consolidateDexData(this.dexData);
-    this.defaultDexData = null;
 
     // Ensure that the player gender in settings matches the player gender in system data
     if (systemData.gender !== PlayerGender.UNSET && systemData.gender !== settings.general.playerGender) {
@@ -460,9 +383,6 @@ export class GameData {
     const parsedData = JSON.parse(dataStr, (k: string, v: any) => {
       if (k === "gameStats") {
         return new GameStats(v);
-      }
-      if (k === "ribbons") {
-        return RibbonData.fromJSON(v);
       }
 
       return k.endsWith("Attr") && !["natureAttr", "abilityAttr", "passiveAttr"].includes(k) ? BigInt(v ?? 0) : v;
@@ -1115,10 +1035,6 @@ export class GameData {
       ? GameData.parseSystemData(decrypt(localStorage.getItem(`data_${loggedInUser?.username}`)!, bypassLogin))
       : this.getSystemSaveData(); // TODO: is this bang correct?
 
-    if (!this.validateSystemData(systemData)) {
-      return this.reinitializeSaveData({ message: ErrorMessages.FAILED_VALIDATION });
-    }
-
     // Saving icon should go after validation to avoid confusing users.
     if (sync) {
       globalScene.ui.savingIcon.show();
@@ -1312,7 +1228,7 @@ export class GameData {
                 dataStr = this.convertSystemDataStr(dataStr);
                 dataStr = dataStr.replace(/"playTime":\d+/, `"playTime":${this.gameStats.playTime + 60}`);
                 const systemData = GameData.parseSystemData(dataStr);
-                valid = !!systemData.dexData && !!systemData.timestamp;
+                valid = !!systemData.timestamp;
                 break;
               }
               case GameDataType.SESSION: {
@@ -1401,257 +1317,53 @@ export class GameData {
     }
   }
 
-  private initDexData(): void {
-    const data: DexData = {};
-    const teamData: TeamDexData = {};
-
-    for (const species of speciesDataRegistry.getAllSpecies()) {
-      data[species.speciesId] = {
-        seenAttr: 0n,
-        caughtAttr: 0n,
-        natureAttr: 0,
-        seenCount: 0,
-        caughtCount: 0,
-        hatchedCount: 0,
-        ivs: [0, 0, 0, 0, 0, 0],
-        ribbons: new RibbonData(0),
-      };
-    }
-
-    for (const team of teamDataRegistry.getAllTeams()) {
-      teamData[team.teamId] = {
-        isUnlocked: false,
-        abilitiesUnlocked: false,
-        passivesUnlocked: false,
-        runCount: 0n,
-        winCount: 0n,
-      };
-    }
-
-    for (const teamId of defaultTeams) {
-      teamData[teamId].isUnlocked = true;
-    }
-
-    this.defaultDexData = { ...data };
-    this.dexData = data;
-  }
-
   private initTeamMemberData(): void {
     const teamSaveData: TeamSaveData = {};
 
-    const teamMemberIds = teamMemberDataRegistry.getAllTeamMemberIds();
+    const teamMemberIds = characterRegistry.getAllCharacterIds();
     for (const teamMemberId of teamMemberIds) {
-      const teamId = teamDataRegistry.getTeamIdOf(teamMemberId);
+      const teamId = teamRegistry.getTeamIdOf(teamMemberId);
       teamSaveData[teamMemberId] = {
-        unlocked: (teamId && defaultTeams.includes(teamId)) || false,
-        boss1WinCount: 0,
-        boss2WinCount: 0,
-        boss3WinCount: 0,
+        isTeamUnlocked: (teamId && defaultTeams.includes(teamId)) || false,
+        isAbilityUnlocked: false,
+        isPassiveUnlocked: false,
+        runCount: 0n,
+        winCount: 0n,
       };
     }
 
     this.teamSaveData = teamSaveData;
   }
 
-  setPokemonSeen(pokemon: Pokemon, incrementCount = true, trainer = false): void {
-    // Some Mystery Encounters block updates to these stats
-    if (
-      globalScene.currentBattle?.isBattleMysteryEncounter()
-      && globalScene.currentBattle.mysteryEncounter?.preventGameStatsUpdates
-    ) {
-      return;
-    }
-    const dexEntry = this.dexData[pokemon.species.speciesId];
-    dexEntry.seenAttr |= pokemon.getDexAttr();
-    if (incrementCount) {
-      dexEntry.seenCount++;
-      this.gameStats.pokemonSeen++;
-      if (!trainer && pokemon.species.subLegendary) {
-        this.gameStats.subLegendaryPokemonSeen++;
-      } else if (!trainer && pokemon.species.legendary) {
-        this.gameStats.legendaryPokemonSeen++;
-      } else if (!trainer && pokemon.species.mythical) {
-        this.gameStats.mythicalPokemonSeen++;
-      }
-      if (!trainer && pokemon.isShiny()) {
-        this.gameStats.shinyPokemonSeen++;
-      }
-    }
-  }
-
-  /**
-   * Increase the number of classic ribbons won with this species.
-   * @param species - The species to increment the ribbon count for
-   * @param forStarter - If true, will increment the ribbon count for the root species of the given species
-   * @returns The number of classic wins after incrementing.
-   */
-  incrementRibbonCount(species: PokemonSpecies, forStarter = false): number {
-    const speciesIdToIncrement: SpeciesId = species.getRootSpeciesId(forStarter);
-
-    if (!this.starterData[speciesIdToIncrement].classicWinCount) {
-      this.starterData[speciesIdToIncrement].classicWinCount = 0;
-    }
-
-    if (!this.starterData[speciesIdToIncrement].classicWinCount) {
-      globalScene.gameData.gameStats.ribbonsOwned++;
-    }
-
-    const ribbonsInStats: number = globalScene.gameData.gameStats.ribbonsOwned;
-
-    if (ribbonsInStats >= 100) {
-      globalScene.validateAchv(achvs._100_RIBBONS);
-    }
-    if (ribbonsInStats >= 75) {
-      globalScene.validateAchv(achvs._75_RIBBONS);
-    }
-    if (ribbonsInStats >= 50) {
-      globalScene.validateAchv(achvs._50_RIBBONS);
-    }
-    if (ribbonsInStats >= 25) {
-      globalScene.validateAchv(achvs._25_RIBBONS);
-    }
-    if (ribbonsInStats >= 10) {
-      globalScene.validateAchv(achvs._10_RIBBONS);
-    }
-
-    return ++this.starterData[speciesIdToIncrement].classicWinCount;
-  }
-
-  /**
-   * @param showMessage - (Default `true`) Whether to display a message for the unlocked egg move
-   * @param prependSpeciesToMessage - (Default `false`) Whether to change the message from "X Egg Move Unlocked!" to "Bulbasaur X Egg Move Unlocked!"
-   */
-  async setEggMoveUnlocked(
-    species: PokemonSpecies,
-    eggMoveIndex: number,
-    showMessage = true,
-    prependSpeciesToMessage = false,
-  ): Promise<boolean> {
-    const { speciesId } = species;
-    if (!Object.hasOwn(teamMemberMoveOptions, speciesId) || !teamMemberMoveOptions[speciesId][eggMoveIndex]) {
-      return false;
-    }
-
-    if (!this.starterData[speciesId].eggMoves) {
-      this.starterData[speciesId].eggMoves = 0;
-    }
-
-    const value = 1 << eggMoveIndex;
-
-    if (this.starterData[speciesId].eggMoves & value) {
-      return false;
-    }
-
-    this.starterData[speciesId].eggMoves |= value;
-    if (!showMessage) {
-      return true;
-    }
-    audioManager.playSound("se/level_up_fanfare");
-    const moveName = allMoves[teamMemberMoveOptions[speciesId][eggMoveIndex]].name;
-    let message = prependSpeciesToMessage ? species.getName() + " " : "";
-    message +=
-      eggMoveIndex === 3
-        ? i18next.t("egg:rareEggMoveUnlock", { moveName })
-        : i18next.t("egg:eggMoveUnlock", { moveName });
-
-    return new Promise(resolve => globalScene.ui.showText(message, null, () => resolve(true), null, true));
-  }
-
-  /** Return whether the root species of a given `PokemonSpecies` has been unlocked in the dex */
-  isRootSpeciesUnlocked(species: PokemonSpecies): boolean {
-    return !!this.dexData[species.getRootSpeciesId()]?.caughtAttr;
-  }
-
-  /**
-   * Unlocks the given {@linkcode Nature} for a {@linkcode PokemonSpecies} and its prevolutions.
-   * Will fail silently if root species has not been unlocked
-   */
-  unlockSpeciesNature(species: PokemonSpecies, nature: Nature): void {
-    if (!this.isRootSpeciesUnlocked(species)) {
-      return;
-    }
-
-    //recursively unlock nature for species and prevolutions
-    let { speciesId } = species;
-    do {
-      this.dexData[speciesId].natureAttr |= 1 << (nature + 1);
-      speciesId = speciesDataRegistry.getPrevolution(speciesId)!;
-    } while (speciesId != null);
-  }
-
-  updateSpeciesDexIvs(speciesId: SpeciesId, ivs: number[]): void {
-    let dexEntry: DexEntry;
-    do {
-      dexEntry = globalScene.gameData.dexData[speciesId];
-      const dexIvs = dexEntry.ivs;
-      for (let i = 0; i < dexIvs.length; i++) {
-        dexIvs[i] = Math.max(dexIvs[i], ivs[i]);
-      }
-      if (dexIvs.every(iv => iv === 31)) {
-        globalScene.validateAchv(achvs.PERFECT_IVS);
-      }
-      speciesId = speciesDataRegistry.getPrevolution(speciesId)!;
-    } while (speciesId != null);
-  }
-
-  getSpeciesCount(dexEntryPredicate: (entry: DexEntry) => boolean): number {
-    const dexKeys = Object.keys(this.dexData);
-    let speciesCount = 0;
-    for (const s of dexKeys) {
-      if (dexEntryPredicate(this.dexData[s])) {
-        speciesCount++;
-      }
-    }
-    return speciesCount;
-  }
-
-  getStarterCount(dexEntryPredicate: (entry: DexEntry) => boolean): number {
-    const starterKeys = speciesDataRegistry.getAllStarters();
-    let starterCount = 0;
-    for (const s of starterKeys) {
-      const starterDexEntry = this.dexData[s];
-      if (dexEntryPredicate(starterDexEntry)) {
-        starterCount++;
-      }
-    }
-    return starterCount;
-  }
-
-  getTeamMemberDefaultDexAttrProps(teamMemberId: TeamMemberId, defaultIsShiny = true): DexAttrProps {
-    const teamMember = teamMemberDataRegistry.getTeamMember(teamMemberId);
-    const dexAttr = teamMember.shinyAttr || 1n;
+  public getDefaultIconProps(charId: CharacterId): IconProps {
+    const teamMember = characterRegistry.getCharacter(charId);
     // Default is female only for species where malePercent is not null but 0
-    const gender = teamMember.gender;
-    const formIndex = 0;
-    let variant: Variant = 0;
-    let shiny = false;
-    // Set shiny to true if requested, OR if non-shiny version is uncaught
-    if (defaultIsShiny || !(dexAttr & DexAttr.NON_SHINY)) {
-      // Default shiny is true if caught
-      shiny = !!(dexAttr & DexAttr.SHINY);
-      // Default is the highest variant
-      if (dexAttr & DexAttr.VARIANT_3) {
-        variant = 2;
-      } else if (dexAttr & DexAttr.VARIANT_2) {
-        variant = 1;
-      }
-    }
+    const gender = teamMember.identity?.gender || Gender.GENDERLESS;
+    const formIndex = teamMember.identity?.formIndex || 0;
+    const identity = teamMember.identity;
 
-    return {
-      shiny,
-      gender,
-      variant,
-      formIndex,
-    };
+    if (identity?.variants?.unshiny) {
+      return { shiny: false, gender, variant: 0, formIndex };
+    }
+    if (identity?.variants?.standard) {
+      return { shiny: true, gender, variant: 0, formIndex };
+    }
+    if (identity?.variants?.rare) {
+      return { shiny: false, gender, variant: 1, formIndex };
+    }
+    if (identity?.variants?.epic) {
+      return { shiny: false, gender, variant: 2, formIndex };
+    }
+    return { shiny: false, gender, variant: 0, formIndex };
   }
 
   /**
-   * Converts Pokédex attributes from a `bigint` to a readable {@linkcode DexAttrProps} interface.
+   * Converts Pokédex attributes from a `bigint` to a readable {@linkcode IconProps} interface.
    *
    * @param dexAttr - The Pokédex attribute to convert
-   * @returns the attributes in {@linkcode DexAttrProps} format
+   * @returns the attributes in {@linkcode IconProps} format
    */
-  getDexAttrProps(dexAttr: bigint): DexAttrProps {
+  getDexAttrProps(dexAttr: bigint): IconProps {
     const shiny = !(dexAttr & DexAttr.NON_SHINY);
     const gender = Gender.GENDERLESS; // TODO: Uh-oh!
     let variant: Variant = 0;
@@ -1672,17 +1384,6 @@ export class GameData {
     };
   }
 
-  /**
-   * Checks whether a species has a specified ability index unlocked for its starter
-   * @param species - The species to check
-   * @param abilityIndex - The ability index to check
-   * @returns Whether that starter has that ability index unlocked
-   */
-  public checkStarterAbilityIndexUnlocked(species: PokemonSpecies, abilityIndex: number): boolean {
-    const abilityAttr = this.starterData[species.getRootSpeciesId(true)].abilityAttr;
-    return !!(abilityAttr & (1 << abilityIndex));
-  }
-
   getDexAttrLuck(dexAttr: bigint): number {
     return dexAttr & DexAttr.SHINY ? (dexAttr & DexAttr.VARIANT_3 ? 3 : dexAttr & DexAttr.VARIANT_2 ? 2 : 1) : 0;
   }
@@ -1697,15 +1398,12 @@ export class GameData {
     return ret;
   }
 
-  /**
-   * Checks if a species has a particular nature unlocked
-   * @param species - The species to check
-   * @param nature - The Nature to look for
-   * @returns Whether that species has the specified nature unlocked
-   */
-  public checkSpeciesNatureUnlocked(species: PokemonSpecies, nature: Nature): boolean {
-    const dexEntry = this.dexData[species.speciesId];
-    return !!(dexEntry.natureAttr & (1 << (nature + 1)));
+  getAllNatures(): Nature[] {
+    const ret: Nature[] = [];
+    for (let n = 0; n < 25; n++) {
+      ret.push(n);
+    }
+    return ret;
   }
 
   getFormIndex(attr: bigint): number {
@@ -1721,20 +1419,5 @@ export class GameData {
 
   getFormAttr(formIndex: number): bigint {
     return BigInt(1) << BigInt(7 + formIndex);
-  }
-
-  consolidateDexData(dexData: DexData): void {
-    for (const k of Object.keys(dexData)) {
-      const entry = dexData[k] as DexEntry;
-      if (!Object.hasOwn(entry, "hatchedCount")) {
-        entry.hatchedCount = 0;
-      }
-      if (!Object.hasOwn(entry, "natureAttr") || (entry.caughtAttr && !entry.natureAttr)) {
-        entry.natureAttr = this.defaultDexData?.[k].natureAttr || 1 << randInt(25, 1);
-      }
-      if (!Object.hasOwn(entry, "ribbons")) {
-        entry.ribbons = new RibbonData(0);
-      }
-    }
   }
 }

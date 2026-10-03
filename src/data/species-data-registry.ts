@@ -1,5 +1,5 @@
+import { characterRegistry } from "#app/global-character-data-registry";
 import { setSpeciesDataRegistry } from "#app/global-species-data-registry";
-import { teamMemberDataRegistry } from "#app/global-team-member-data-registry";
 import { initGenerationOne } from "#balance/generation-01";
 import { initGenerationTwo } from "#balance/generation-02";
 import { initGenerationThree } from "#balance/generation-03";
@@ -14,10 +14,10 @@ import { SpeciesFormChangeItemTrigger } from "#data/form-change-triggers";
 import { SpeciesFormChange } from "#data/pokemon-forms";
 import type { PokemonSpecies, PokemonSpeciesForm } from "#data/pokemon-species";
 import type { AbilityId } from "#enums/ability-id";
+import type { CharacterId } from "#enums/character-id";
 import type { MoveId } from "#enums/move-id";
 import { SpeciesFormKey } from "#enums/species-form-key";
 import type { SpeciesId } from "#enums/species-id";
-import type { TeamMemberId } from "#enums/team-member-id";
 import type { LevelMoves } from "#types/level-moves";
 import type { PokemonSpeciesData, SpeciesDataMap } from "#types/pokemon-species";
 import type { StarterSpeciesId } from "#types/starter-species-id";
@@ -137,11 +137,11 @@ export class SpeciesDataRegistry {
 
   /**
    * Get the species data for a given team member ID.
-   * @param teamMemberId - The {@linkcode TeamMemberId} of the team member to get data for
+   * @param teamMemberId - The {@linkcode CharacterId} of the team member to get data for
    * @returns The {@linkcode PokemonSpecies}
    */
-  public getSpeciesFromTeamMemberId(teamMemberId: TeamMemberId): PokemonSpecies {
-    return this.getSpecies(teamMemberDataRegistry.getTeamMember(teamMemberId).speciesId);
+  public getSpeciesFromTeamMemberId(teamMemberId: CharacterId): PokemonSpecies {
+    return this.getSpecies(characterRegistry.getCharacter(teamMemberId).speciesId);
   }
 
   /**

@@ -14,7 +14,6 @@ import { BattlerIndex } from "#enums/battler-index";
 import { BiomeId } from "#enums/biome-id";
 import { FieldPosition } from "#enums/field-position";
 import { ModifierPoolType } from "#enums/modifier-pool-type";
-import { MysteryEncounterMode } from "#enums/mystery-encounter-mode";
 import { PlayerGender } from "#enums/player-gender";
 import { SpeciesId } from "#enums/species-id";
 import { TrainerSlot } from "#enums/trainer-slot";
@@ -141,15 +140,6 @@ export class EncounterPhase extends BattlePhase {
       if (e < (battle.double ? 2 : 1)) {
         enemyPokemon.setX(-66 + enemyPokemon.getFieldPositionOffset()[0]);
         enemyPokemon.fieldSetup(true);
-      }
-
-      if (!this.loaded) {
-        globalScene.gameData.setPokemonSeen(
-          enemyPokemon,
-          true,
-          battle.battleType === BattleType.TRAINER
-            || battle?.mysteryEncounter?.encounterMode === MysteryEncounterMode.TRAINER_BATTLE,
-        );
       }
 
       if (enemyPokemon.species.speciesId === SpeciesId.ETERNATUS) {

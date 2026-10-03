@@ -1,16 +1,11 @@
+import { characterRegistry } from "#app/global-character-data-registry";
 import { globalScene } from "#app/global-scene";
-import { teamMemberDataRegistry } from "#app/global-team-member-data-registry";
-import { teamMemberMoveOptions } from "#balance/egg-moves";
 import { Gender } from "#data/gender";
-import { AbilityAttr } from "#enums/ability-attr";
-import { DexAttr } from "#enums/dex-attr";
+import type { CharacterId } from "#enums/character-id";
 import type { MoveId } from "#enums/move-id";
 import { Nature } from "#enums/nature";
-import type { TeamMemberId } from "#enums/team-member-id";
-import { RibbonData } from "#system/ribbon-data";
-import type { DexEntry } from "#types/dex-data";
-import type { DexAttrProps, StarterDataEntry, StarterPreferences, TeamMemberPreferences } from "#types/save-data";
-import type { DefinedSpeciesDetails, SpeciesDetails } from "#types/starter-select-types";
+import type { CharacterPreferences, IconProps, TeamSaveDataEntry } from "#types/save-data";
+import type { DefinedSpeciesDetails } from "#types/starter-select-types";
 import type { StarterSpeciesId } from "#types/starter-species-id";
 import { SortCriteria, type SortDirection } from "#ui/dropdown";
 import { deepCopy } from "#utils/data";
@@ -151,157 +146,51 @@ export function getStarterSelectTextSettings(): StarterSelectLanguageSetting {
   return textSettings;
 }
 
-/**
- * Return a copy of the dex data and starter data for a given species,
- * modifying it by applying any challenges that restrict which options should be available.
- *
- * @param speciesId - The species id to get data for
- * @param applyChallenge - (Default `true`) Whether the current challenges should be taken into account
- * @returns A copy of the starter's {@linkcode DexEntry} and {@linkcode StarterDataEntry}
- */
-export function getTeamMemberDataEntry(teamMemberId: TeamMemberId): {
-  dexEntry: DexEntry;
-  starterDataEntry: StarterDataEntry;
-} {
-  const originalDexEntry = globalScene.gameData.dexData[teamMemberId];
-  const dexEntry: DexEntry = { ...originalDexEntry };
-  dexEntry.ivs = [...originalDexEntry.ivs];
-  dexEntry.ribbons = new RibbonData(originalDexEntry.ribbons.getRibbons());
-  const starterDataEntry: StarterDataEntry = deepCopy(globalScene.gameData.starterData[teamMemberId]);
-  return { dexEntry, starterDataEntry };
+export function getTeamDataEntry(teamMemberId: CharacterId): TeamSaveDataEntry {
+  return deepCopy(globalScene.gameData.teamSaveData[teamMemberId]);
 }
 
-/**
- * Creates a temporary dex attr props that will be used to check whether a pokemon is valid for a challenge
- * and to display the correct shiny, variant, and form based on the starter preferences
- *
- * @param speciesId - The id of the species to get props for
- * @param starterPreferences - (Optional) The {@linkcode StarterPreferences} of the starter
- * @returns the dex props as a `bigint`
- */
-export function getDexAttrFromPreferences(
-  teamMemberId: TeamMemberId,
-  teamMemberPreferences: TeamMemberPreferences = {},
-): bigint {
-  let props = 0n;
-  const { dexEntry } = getTeamMemberDataEntry(teamMemberId);
-  const caughtAttr = dexEntry.caughtAttr;
+export function getDefaultIconProps(charId: CharacterId): IconProps {
+  const teamMember = characterRegistry.getCharacter(charId);
+  // Default is female only for species where malePercent is not null but 0
+  const gender = teamMember.identity?.gender || Gender.GENDERLESS;
+  const formIndex = teamMember.identity?.formIndex || 0;
+  const identity = teamMember.identity;
 
-  /*
-   * This checks the gender of the pokemon by checking:
-   * - That the starter preferences for the species exist, and if so, if it's female.
-   *   If so, it'll add `DexAttr.FEMALE` to our temp props
-   * - If the `caughtAttr` for the pokemon is female and NOT male - this means that the ONLY gender we've gotten is female,
-   *   and we need to add `DexAttr.FEMALE` to our temp props
-   *
-   * If neither of these pass, we add `DexAttr.MALE` to our temp props
-   */
-  if (
-    teamMemberPreferences.gender === Gender.FEMALE
-    || ((caughtAttr & DexAttr.FEMALE) > 0n && (caughtAttr & DexAttr.MALE) === 0n)
-  ) {
-    props += DexAttr.FEMALE;
-  } else {
-    props += DexAttr.MALE;
+  if (identity?.variants?.unshiny) {
+    return { shiny: false, gender, variant: 0, formIndex };
   }
-
-  // This part is very similar to above, but instead of for gender, it checks for shiny within starter preferences.
-  // If they're not there, it enables shiny state by default if any shiny was caught
-  if (teamMemberPreferences.shiny || ((caughtAttr & DexAttr.SHINY) > 0n && teamMemberPreferences?.shiny !== false)) {
-    props += DexAttr.SHINY;
-    if (teamMemberPreferences.variant !== undefined) {
-      props += BigInt(Math.pow(2, teamMemberPreferences.variant)) * DexAttr.DEFAULT_VARIANT;
-    } else if ((caughtAttr & DexAttr.VARIANT_3) > 0) {
-      props += DexAttr.VARIANT_3;
-    } else if ((caughtAttr & DexAttr.VARIANT_2) > 0) {
-      props += DexAttr.VARIANT_2;
-    } else {
-      props += DexAttr.DEFAULT_VARIANT;
-    }
-  } else {
-    props += DexAttr.NON_SHINY;
-    // we add the default variant here because non shiny versions are listed as default variant
-    props += DexAttr.DEFAULT_VARIANT;
+  if (identity?.variants?.standard) {
+    return { shiny: true, gender, variant: 0, formIndex };
   }
-
-  if (teamMemberPreferences.formIndex) {
-    props += BigInt(Math.pow(2, teamMemberPreferences.formIndex)) * DexAttr.DEFAULT_FORM;
-  } else {
-    // Get the first unlocked form
-    props += globalScene.gameData.getFormAttr(globalScene.gameData.getFormIndex(caughtAttr));
+  if (identity?.variants?.rare) {
+    return { shiny: false, gender, variant: 1, formIndex };
   }
-
-  return props;
+  if (identity?.variants?.epic) {
+    return { shiny: false, gender, variant: 2, formIndex };
+  }
+  return { shiny: false, gender, variant: 0, formIndex };
 }
 
-/**
- * Convert starter preferences to dex props, which are used as an input by various functions.
- *
- * If any preferences are undefined, the default value for the species is given, based on its caught data.
- * @param starterId - The {@linkcode StarterSpeciesId | starter} to get dex props for
- * @param starterPreferences - (Optional) The {@linkcode StarterPreferences} for the species
- * @returns The {@linkcode DexAttrProps} for the starter
- */
-export function getStarterDexAttrPropsFromPreferences(
-  teamMemberId: TeamMemberId,
-  teamMemberPreferences: TeamMemberPreferences = {},
-): DexAttrProps {
-  // Shiny is always default, except in fresh start
-  const defaults = globalScene.gameData.getTeamMemberDefaultDexAttrProps(teamMemberId, true);
-
+export function getIconPropsFromPreferences(id: CharacterId, preferences: CharacterPreferences = {}): IconProps {
+  const defaults = getDefaultIconProps(id);
   return {
-    shiny: teamMemberPreferences.shiny ?? defaults.shiny,
-    variant: teamMemberPreferences.variant ?? defaults.variant,
-    gender: teamMemberPreferences.gender ?? Gender.NONBINARY,
-    formIndex: teamMemberPreferences.formIndex ?? defaults.formIndex,
+    shiny: preferences.shiny ?? defaults.shiny,
+    variant: preferences.variant ?? defaults.variant,
+    gender: preferences.gender ?? Gender.GENDERLESS,
+    formIndex: preferences.formIndex ?? defaults.formIndex,
   };
 }
 
-function getStarterDefaultAbilityIndex(teamMemberId: TeamMemberId): number {
-  const { starterDataEntry: starterData } = getTeamMemberDataEntry(teamMemberId);
-  const abilityAttr = starterData.abilityAttr;
-  const species = teamMemberDataRegistry.getSpecies(teamMemberId);
+export function getStarterDetailsFromPreferences(id: CharacterId, preference: CharacterPreferences = {}) {
+  let { gender, formIndex, shiny, variant } = getIconPropsFromPreferences(id, preference);
 
-  if (abilityAttr & AbilityAttr.ABILITY_1) {
-    return 0;
-  }
-  if (!species.ability2 || abilityAttr & AbilityAttr.ABILITY_2) {
-    return 1;
-  }
-  return 2;
-}
-
-function getTeamMemberDefaultNature(teamMemberId: TeamMemberId): Nature {
-  const { dexEntry } = getTeamMemberDataEntry(teamMemberId);
-  for (let n = 0; n < 25; n++) {
-    if (dexEntry.natureAttr & (1 << (n + 1))) {
-      return n as Nature;
-    }
-  }
-  return Nature.HARDY;
-}
-
-/**
- * Convert starter preferences to {@linkcode SpeciesDetails} format.
- *
- * If any preferences are undefined, the default value for the species is given, based on its caught data.
- * @param starterId - The {@linkcode StarterSpeciesId | starter} to get dex props for
- * @param starterPreferences - (Optional) The {@linkcode StarterPreferences} for the species
- * @returns The data in `SpeciesDetails` format
- */
-export function getStarterDetailsFromPreferences(
-  teamMemberId: TeamMemberId,
-  teamMemberPreferences: TeamMemberPreferences = {},
-) {
-  let { gender, formIndex, shiny, variant } = getStarterDexAttrPropsFromPreferences(
-    teamMemberId,
-    teamMemberPreferences,
-  );
+  const char = characterRegistry.getCharacter(id);
   gender = gender || Gender.GENDERLESS;
-  const species = teamMemberDataRegistry.getSpecies(teamMemberId);
-  const abilityIndex = teamMemberPreferences.abilityIndex ?? getStarterDefaultAbilityIndex(teamMemberId);
-  const natureIndex = teamMemberPreferences.nature ?? getTeamMemberDefaultNature(teamMemberId);
-  const teraType = teamMemberPreferences.tera ?? species.type1;
+  const species = characterRegistry.getSpecies(id);
+  const abilityIndex = preference.abilityIndex ?? 0;
+  const natureIndex = preference.nature ?? char.identity?.nature ?? Nature.DOCILE;
+  const teraType = preference.tera ?? species.type1;
 
   return { shiny, formIndex, gender, variant, abilityIndex, natureIndex, teraType } satisfies DefinedSpeciesDetails;
 }
@@ -312,13 +201,13 @@ export function getStarterDetailsFromPreferences(
  * @param sort - The criteria by which the species hould be sorted
  * @param dir - The direction in which the species should be sorted
  */
-export function sortTeamMembers(teamMemberIds: TeamMemberId[], sort: SortCriteria, dir: SortDirection): void {
+export function sortTeamMembers(teamMemberIds: CharacterId[], sort: SortCriteria, dir: SortDirection): void {
   teamMemberIds.sort((a, b) => {
     switch (sort) {
       case SortCriteria.NUMBER:
         return (a - b) * -dir;
       case SortCriteria.NAME:
-        return teamMemberDataRegistry.getName(a).localeCompare(teamMemberDataRegistry.getName(b)) * -dir;
+        return characterRegistry.getName(a).localeCompare(characterRegistry.getName(b)) * -dir;
       default: // to make Biome happy
         sort satisfies never;
         return 0;
@@ -332,17 +221,6 @@ export function sortTeamMembers(teamMemberIds: TeamMemberId[], sort: SortCriteri
  * @param formIndex - The form index of the starter to get moves for
  * @returns An array of move IDs
  */
-export function getTeamMemberMoves(teamMemberId: TeamMemberId): MoveId[] {
-  const moves: MoveId[] = [];
-  const { starterDataEntry } = getTeamMemberDataEntry(teamMemberId);
-
-  if (Object.hasOwn(teamMemberMoveOptions, teamMemberId)) {
-    for (let em = 0; em < 4; em++) {
-      if (starterDataEntry.eggMoves & (1 << em)) {
-        moves.push(teamMemberMoveOptions[teamMemberId][em]);
-      }
-    }
-  }
-
-  return moves;
+export function getTeamMemberMoves(teamMemberId: CharacterId): MoveId[] {
+  return characterRegistry.getCharacter(teamMemberId).moves;
 }

@@ -4,7 +4,7 @@ import { Button } from "#enums/buttons";
 import { getStatKey, PERMANENT_STATS } from "#enums/stat";
 import { TextStyle } from "#enums/text-style";
 import { MessageUiHandler } from "#ui/message-ui-handler";
-import { addBBCodeTextObject, addTextObject, getTextColor } from "#ui/text";
+import { addBBCodeTextObject, addTextObject } from "#ui/text";
 import { addWindow } from "#ui/ui-theme";
 import i18next from "i18next";
 import type BBCodeText from "phaser3-rex-plugins/plugins/bbcodetext";
@@ -217,64 +217,6 @@ export class BattleMessageUiHandler extends MessageUiHandler {
         resolve();
       };
     });
-  }
-
-  promptIvs(pokemonId: number, ivs: number[]): Promise<void> {
-    return new Promise(resolve => {
-      globalScene.executeWithSeedOffset(() => {
-        let levelUpStatsValuesText = "";
-        for (const s of PERMANENT_STATS) {
-          levelUpStatsValuesText += `${this.getIvDescriptor(ivs[s], s, pokemonId)}\n`;
-        }
-        this.levelUpStatsValuesContent.text = levelUpStatsValuesText;
-        this.levelUpStatsIncrContent.setVisible(false);
-        this.levelUpStatsContainer.setVisible(true);
-        this.awaitingActionInput = true;
-        this.onActionInput = () => {
-          this.levelUpStatsContainer.setVisible(false);
-          resolve();
-        };
-      }, pokemonId);
-    });
-  }
-
-  getIvDescriptor(value: number, typeIv: number, pokemonId: number): string {
-    const starterSpecies = globalScene.getPokemonById(pokemonId)!.species.getRootSpeciesId(); // we are using getRootSpeciesId() here because we want to check against the baby form, not the mid form if it exists
-    const starterIvs: number[] = globalScene.gameData.dexData[starterSpecies].ivs;
-
-    // Function to wrap text in color based on comparison
-    const coloredText = (text: string, isBetter: boolean, ivValue) => {
-      let textStyle: TextStyle;
-      if (isBetter) {
-        if (ivValue === 31) {
-          textStyle = TextStyle.PERFECT_IV;
-        } else {
-          textStyle = TextStyle.SUMMARY_GREEN;
-        }
-      } else {
-        textStyle = TextStyle.WINDOW;
-      }
-      const color = getTextColor(textStyle, false);
-      return `[color=${color}][shadow=${getTextColor(textStyle, true)}]${text}[/shadow][/color]`;
-    };
-
-    if (value > 30) {
-      return coloredText(i18next.t("battleMessageUiHandler:ivBest"), value > starterIvs[typeIv], value);
-    }
-    if (value === 30) {
-      return coloredText(i18next.t("battleMessageUiHandler:ivFantastic"), value > starterIvs[typeIv], value);
-    }
-    if (value > 20) {
-      return coloredText(i18next.t("battleMessageUiHandler:ivVeryGood"), value > starterIvs[typeIv], value);
-    }
-    if (value > 10) {
-      return coloredText(i18next.t("battleMessageUiHandler:ivPrettyGood"), value > starterIvs[typeIv], value);
-    }
-    if (value > 0) {
-      return coloredText(i18next.t("battleMessageUiHandler:ivDecent"), value > starterIvs[typeIv], value);
-    }
-
-    return coloredText(i18next.t("battleMessageUiHandler:ivNoGood"), value > starterIvs[typeIv], value);
   }
 
   showNameText(name: string, iconFrame?: string): void {

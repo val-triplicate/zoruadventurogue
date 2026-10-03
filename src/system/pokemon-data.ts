@@ -4,7 +4,6 @@ import type { Gender } from "#data/gender";
 import { CustomPokemonData, PokemonBattleData, PokemonSummonData } from "#data/pokemon-data";
 import { Status } from "#data/status-effect";
 import { BattleType } from "#enums/battle-type";
-import type { BiomeId } from "#enums/biome-id";
 import type { MoveId } from "#enums/move-id";
 import { Nature } from "#enums/nature";
 import { PokeballType } from "#enums/pokeball";
@@ -36,11 +35,7 @@ export class PokemonData {
   public nature: Nature;
   public moveset: PokemonMove[];
   public status: Status | null;
-  public friendship: number;
   public metLevel: number;
-  public metBiome: BiomeId | -1; // -1 for starters
-  public metSpecies: SpeciesId;
-  public metWave: number; // 0 for unknown (previous saves), -1 for starters
   public luck: number;
   public pauseEvolutions: boolean;
   public pokerus: boolean;
@@ -48,16 +43,6 @@ export class PokemonData {
   public teraType: PokemonType;
   public isTerastallized: boolean;
   public stellarTypesBoosted: PokemonType[];
-
-  public fusionSpecies: SpeciesId;
-  public fusionFormIndex: number;
-  public fusionAbilityIndex: number;
-  public fusionShiny: boolean;
-  public fusionVariant: Variant;
-  public fusionGender: Gender;
-  public fusionLuck: number;
-  public fusionTeraType: PokemonType;
-
   public boss: boolean;
   public bossSegments: number;
 
@@ -111,11 +96,6 @@ export class PokemonData {
           source.status.freezeTurnsRemaining,
         )
       : null;
-    this.friendship = source.friendship ?? speciesDataRegistry.getSpecies(this.species).baseFriendship;
-    this.metLevel = source.metLevel || 5;
-    this.metBiome = source.metBiome ?? -1;
-    this.metSpecies = source.metSpecies;
-    this.metWave = source.metWave ?? (this.metBiome === -1 ? -1 : 0);
     this.luck = source.luck ?? (source.shiny ? source.variant + 1 : 0);
     this.pauseEvolutions = !!source.pauseEvolutions;
     this.pokerus = !!source.pokerus;
@@ -123,15 +103,6 @@ export class PokemonData {
     this.teraType = source.teraType as PokemonType;
     this.isTerastallized = !!source.isTerastallized;
     this.stellarTypesBoosted = source.stellarTypesBoosted ?? [];
-
-    this.fusionSpecies = sourcePokemon?.fusionSpecies?.speciesId ?? source.fusionSpecies;
-    this.fusionFormIndex = source.fusionFormIndex;
-    this.fusionAbilityIndex = source.fusionAbilityIndex;
-    this.fusionShiny = source.fusionShiny;
-    this.fusionVariant = source.fusionVariant;
-    this.fusionGender = source.fusionGender;
-    this.fusionLuck = source.fusionLuck ?? (source.fusionShiny ? source.fusionVariant + 1 : 0);
-    this.fusionTeraType = (source.fusionTeraType ?? 0) as PokemonType;
 
     this.boss = (source instanceof EnemyPokemon && !!source.bossSegments) || (!this.player && !!source.boss);
     this.bossSegments = source.bossSegments ?? 0;
@@ -156,14 +127,8 @@ export class PokemonData {
           this.gender,
           this.shiny,
           this.variant,
-          this.ivs,
           this.nature,
           this,
-          playerPokemon => {
-            if (this.nickname) {
-              playerPokemon.nickname = this.nickname;
-            }
-          },
         )
       : globalScene.addEnemyPokemon(
           species,

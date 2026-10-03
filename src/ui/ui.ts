@@ -19,7 +19,6 @@ import { ConfirmUiHandler } from "#ui/confirm-ui-handler";
 import { SettingsDisplayUiHandler } from "#ui/display-settings-ui-handler";
 import { EvolutionSceneUiHandler } from "#ui/evolution-scene-ui-handler";
 import { FightUiHandler } from "#ui/fight-ui-handler";
-import { GameStatsUiHandler } from "#ui/game-stats-ui-handler";
 import { GamepadBindingUiHandler } from "#ui/gamepad-binding-ui-handler";
 import { SettingsGamepadUiHandler } from "#ui/gamepad-settings-ui-handler";
 import { GeneralSettingsUiHandler } from "#ui/general-settings-ui-handler";
@@ -137,16 +136,15 @@ export class UI extends Phaser.GameObjects.Container {
       new KeyboardBindingUiHandler(),
       // end settings
       new AchvsUiHandler(),
-      new GameStatsUiHandler(),
       new LoadingModalUiHandler(),
-
       new UnavailableModalUiHandler(),
+
       new RenameFormUiHandler(),
       new RenameRunFormUiHandler(),
       new RunHistoryUiHandler(),
       new RunInfoUiHandler(),
-
       new TestDialogueUiHandler(),
+
       new AutoCompleteUiHandler(),
       new MysteryEncounterUiHandler(),
       new AlertModalUiHandler(),
