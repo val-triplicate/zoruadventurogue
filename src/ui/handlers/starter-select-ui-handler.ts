@@ -296,8 +296,8 @@ export class StarterSelectUiHandler extends MessageUiHandler {
     );
 
     const unlockedFilter = [
-      new DropDownOption("UNLOCKED", new DropDownLabel("UNLOCKED")),
-      new DropDownOption("LOCKED", new DropDownLabel("LOCKED")),
+      new DropDownOption("UNLOCKED", new DropDownLabel("Unlocked")),
+      new DropDownOption("LOCKED", new DropDownLabel("Locked")),
     ];
 
     filterBar.addFilter(
@@ -1376,8 +1376,8 @@ export class StarterSelectUiHandler extends MessageUiHandler {
   private filterStarters(): void {
     this.filteredCharIds = characterRegistry.getAllCharacterIds().filter(id => {
       const char = characterRegistry.getCharacter(id);
-      const starterId = char.speciesId;
-      const species = speciesDataRegistry.getSpecies(starterId);
+      const speciesId = char.speciesId;
+      const species = speciesDataRegistry.getSpecies(speciesId);
       const saveData = characterRegistry.getSaveData(id);
 
       // Type filter
@@ -1385,10 +1385,10 @@ export class StarterSelectUiHandler extends MessageUiHandler {
         .getVals(DropDownColumn.TYPES)
         .some(type => species.isOfType((type as number) - 1));
 
-      // Caught / Shiny filter
+      // Unlocked filter
       const isUnlocked = saveData?.isTeamUnlocked || false;
       const fitsUnlocked = this.filterBar.getVals(DropDownColumn.UNLOCKED).some(unlocked => {
-        return (unlocked === "NORMAL" && isUnlocked) || (unlocked === "UNCAUGHT" && !isUnlocked);
+        return (unlocked === "UNLOCKED" && isUnlocked) || (unlocked === "LOCKED" && !isUnlocked);
       });
 
       // Favorite Filter
