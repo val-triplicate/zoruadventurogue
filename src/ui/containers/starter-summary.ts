@@ -578,7 +578,7 @@ export class StarterSummary extends Phaser.GameObjects.Container {
       return;
     }
 
-    const isUnlocked = saveData.isPassiveUnlocked;
+    const isUnlocked = saveData?.isPassiveUnlocked || false;
     const isEnabled = isUnlocked && Passive.ENABLED;
 
     const textStyle = isUnlocked && isEnabled ? TextStyle.SUMMARY_ALT : TextStyle.SUMMARY_GRAY;

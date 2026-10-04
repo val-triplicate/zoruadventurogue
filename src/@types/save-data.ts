@@ -153,17 +153,17 @@ export class CharacterPreference {
   selectedMoves: MoveSet;
   unselectedMoves: MoveSet;
 
-  constructor(id: CharacterId, selections: CharacterPreferenceSelections) {
+  constructor(id: CharacterId, selections?: CharacterPreferenceSelections) {
     const char = characterRegistry.getCharacter(id);
     const defaults = getDefaultIconProps(id);
-    this.abilityIndex = selections.formIndex || 0;
-    this.passive = selections.passive || false;
-    this.favorite = selections.favorite || false;
-    this.gender = selections.gender ?? char.identity?.gender ?? Gender.GENDERLESS;
-    this.nature = selections.nature ?? char.identity?.nature ?? Nature.DOCILE;
-    this.shiny = selections.shiny ?? defaults.shiny;
-    this.variant = selections.variant ?? defaults.variant;
-    this.formIndex = selections.formIndex ?? defaults.formIndex;
+    this.abilityIndex = selections?.formIndex || 0;
+    this.passive = selections?.passive || false;
+    this.favorite = selections?.favorite || false;
+    this.gender = selections?.gender ?? char.identity?.gender ?? Gender.GENDERLESS;
+    this.nature = selections?.nature ?? char.identity?.nature ?? Nature.DOCILE;
+    this.shiny = selections?.shiny ?? defaults.shiny;
+    this.variant = selections?.variant ?? defaults.variant;
+    this.formIndex = selections?.formIndex ?? defaults.formIndex;
   }
 }
 

@@ -105,7 +105,7 @@ export class GameData {
     };
     this.achvUnlocks = {};
     this.unlockPity = [0, 0, 0, 0];
-    this.initTeamMemberData();
+    this.initCharacterData();
   }
 
   public getSystemSaveData(): SystemSaveData {
@@ -1316,14 +1316,13 @@ export class GameData {
     }
   }
 
-  private initTeamMemberData(): void {
+  private initCharacterData(): void {
     const teamSaveData: TeamSaveData = {};
 
-    const teamMemberIds = characterRegistry.getAllCharacterIds();
-    for (const teamMemberId of teamMemberIds) {
-      const teamId = teamRegistry.getTeamIdOf(teamMemberId);
-      teamSaveData[teamMemberId] = {
-        isTeamUnlocked: (teamId && defaultTeams.includes(teamId)) || false,
+    const teams = teamRegistry.getAllTeams();
+    for (const team of teams) {
+      teamSaveData[team.id] = {
+        isTeamUnlocked: (team && defaultTeams.includes(team.id)) || false,
         isAbilityUnlocked: false,
         isPassiveUnlocked: false,
         runCount: 0n,

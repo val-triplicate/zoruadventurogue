@@ -18,7 +18,6 @@ import { TextStyle } from "#enums/text-style";
 import { UiMode } from "#enums/ui-mode";
 import type { Variant } from "#sprites/variant";
 import { getVariantTint } from "#sprites/variant";
-import { achvs } from "#system/achv";
 import type { Character } from "#types/pokemon-species";
 import type { IconProps, MoveSet } from "#types/save-data";
 import type { CanCycle } from "#types/starter-select-types";
@@ -171,7 +170,6 @@ export class StarterSelectUiHandler extends MessageUiHandler {
   private hasSwappedMoves = false;
 
   protected blockInput = false;
-  private allowTera: boolean;
   private oldCursor = -1;
 
   public override setup(): void {
@@ -226,12 +224,12 @@ export class StarterSelectUiHandler extends MessageUiHandler {
 
     starterBoxContainer.add(this.cursorObj);
 
-    const allTeamMembers = characterRegistry.getAllCharacters();
+    const allCharacters = characterRegistry.getAllCharacters();
 
-    for (let i = 0; i < 81 && i < allTeamMembers.length; i++) {
+    for (let i = 0; i < 81 && i < allCharacters.length; i++) {
       const pos = calcStarterContainerPosition(i);
-      const starterContainer = new CharacterContainer(allTeamMembers[i]) //
-        .setVisible(false)
+      const starterContainer = new CharacterContainer(allCharacters[i]) //
+        .setVisible(characterRegistry.getSaveData(allCharacters[i]?.id)?.isTeamUnlocked || false)
         .setPosition(pos.x, pos.y);
       this.iconAnimHandler.addOrUpdate(starterContainer.icon, PokemonIconAnimMode.NONE);
       this.starterContainers.push(starterContainer);
@@ -239,17 +237,11 @@ export class StarterSelectUiHandler extends MessageUiHandler {
     }
 
     this.starterSummary = new StarterSummary(0, 0);
-
     this.instructionsContainer = new StarterSelectInstructionsContainer(0, 0);
-
     this.starterSelectMessageBoxContainer = globalScene.add.container(0, sHeight).setVisible(false);
-
-    this.starterSelectMessageBox = addWindow(1, -1, 318, 28) //
-      .setOrigin(0, 1);
+    this.starterSelectMessageBox = addWindow(1, -1, 318, 28).setOrigin(0, 1);
     this.starterSelectMessageBoxContainer.add(this.starterSelectMessageBox);
-
-    this.message = addTextObject(8, 8, "", TextStyle.WINDOW, { maxLines: 2 }) //
-      .setOrigin(0);
+    this.message = addTextObject(8, 8, "", TextStyle.WINDOW, { maxLines: 2 }).setOrigin(0);
     this.starterSelectMessageBoxContainer.add(this.message);
 
     // arrow icon for the message box
@@ -432,8 +424,6 @@ export class StarterSelectUiHandler extends MessageUiHandler {
 
   public override show(args: any[]): boolean {
     this.moveInfoOverlay.clear(); // clear this when removing a menu; the cancel button doesn't seem to trigger this automatically on controllers
-
-    this.allowTera = Object.hasOwn(globalScene.gameData.achvUnlocks, achvs.TERASTALLIZE.id);
 
     if (args.length > 0 && args[0] instanceof Function) {
       super.show(args);
@@ -1148,7 +1138,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
       });
     }
 
-    if (saveData.isPassiveUnlocked) {
+    if (saveData?.isPassiveUnlocked) {
       // this is for enabling and disabling the passive
       const label = i18next.t(
         preferences.passive ? "starterSelectUiHandler:disablePassive" : "starterSelectUiHandler:enablePassive",
@@ -1246,7 +1236,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
       [success, error] = this.processRandomCursorInput(button);
     } else if (button === Button.ACTION) {
       const saveData = characterRegistry.getSaveData(this.lastCharId);
-      if (!saveData.isTeamUnlocked) {
+      if (!saveData?.isTeamUnlocked) {
         error = true;
       } else if (this.partyTeamMemberIds.length <= 6) {
         this.openPokemonMenu();
@@ -1360,7 +1350,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
 
   protected updateInstructions(): void {
     const saveData = characterRegistry.getSaveData(this.lastCharId);
-    this.instructionsContainer.updateInstructions(this.canCycle, saveData.isTeamUnlocked, this.filterMode);
+    this.instructionsContainer.updateInstructions(this.canCycle, saveData?.isTeamUnlocked, this.filterMode);
   }
 
   protected updateStarters(): void {
@@ -1396,13 +1386,13 @@ export class StarterSelectUiHandler extends MessageUiHandler {
         .some(type => species.isOfType((type as number) - 1));
 
       // Caught / Shiny filter
-      const isUnlocked = saveData.isTeamUnlocked;
+      const isUnlocked = saveData?.isTeamUnlocked || false;
       const fitsUnlocked = this.filterBar.getVals(DropDownColumn.UNLOCKED).some(unlocked => {
         return (unlocked === "NORMAL" && isUnlocked) || (unlocked === "UNCAUGHT" && !isUnlocked);
       });
 
       // Favorite Filter
-      const isFavorite = saveData[starterId]?.favorite ?? false;
+      const isFavorite = characterRegistry.getPreferences(id).favorite || false;
       const fitsFavorite = this.filterBar.getVals(DropDownColumn.MISC).some(misc => {
         if (misc.val === "FAVORITE" && misc.state === DropDownState.ON) {
           return isFavorite;
@@ -1451,7 +1441,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
       );
       container.checkIconId(gender, formIndex, shiny, variant);
 
-      if (saveData.isTeamUnlocked) {
+      if (saveData?.isTeamUnlocked) {
         container.icon.clearTint();
       } else {
         container.icon.setTint(0);
@@ -1485,9 +1475,9 @@ export class StarterSelectUiHandler extends MessageUiHandler {
         container.shinyIcons[v].setTint(getVariantTint(setVariant));
       }
 
-      container.starterPassiveBgs.setVisible(saveData.isPassiveUnlocked);
-      container.hiddenAbilityIcon.setVisible(saveData.isAbilityUnlocked);
-      container.classicWinIcon.setVisible(saveData.winCount > 0).setTexture("champion_ribbon");
+      container.starterPassiveBgs.setVisible(saveData?.isPassiveUnlocked || false);
+      container.hiddenAbilityIcon.setVisible(saveData?.isAbilityUnlocked || false);
+      container.classicWinIcon.setVisible((saveData?.winCount || 0) > 0).setTexture("champion_ribbon");
       container.favoriteIcon.setVisible(characterRegistry.getPreferences(charId).favorite);
       this.setUpgradeAnimation(container);
     });
@@ -1588,7 +1578,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
     // Set the cursors, using preferences if possible, default options otherwise
     this.starterSummary.setCharacter(id);
 
-    if (saveData.isTeamUnlocked) {
+    if (saveData?.isTeamUnlocked) {
       this.setCharDetails(id);
       this.startIconAnimation(this.cursor);
     } else {
@@ -1599,7 +1589,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
   private setPartyStarter(charId: CharacterId): void {
     this.starterSummary.setCharacter(charId);
 
-    if (characterRegistry.getSaveData(charId).isTeamUnlocked) {
+    if (characterRegistry.getSaveData(charId)?.isTeamUnlocked) {
       this.setCharDetails(charId);
     }
   }

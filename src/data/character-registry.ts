@@ -1,7 +1,8 @@
 import { setCharacterRegistry } from "#app/global-character-data-registry";
 import { globalScene } from "#app/global-scene";
 import { speciesDataRegistry } from "#app/global-species-data-registry";
-import { initTeamMembers } from "#balance/custom-characters";
+import { teamRegistry } from "#app/global-team-data-registry";
+import { initCharacters } from "#balance/custom-characters";
 import type { CharacterId } from "#enums/character-id";
 import type { Character, CharacterDataMap, PreferenceDataMap } from "#types/pokemon-species";
 import type { CharacterPreference, TeamSaveDataEntry } from "#types/save-data";
@@ -16,7 +17,8 @@ export class CharacterRegistry {
   }
 
   constructor() {
-    this._data = Object.assign({} as CharacterDataMap, initTeamMembers());
+    this._data = Object.assign({} as CharacterDataMap, initCharacters());
+    this._preference_data = Object.assign({} as PreferenceDataMap, initCharacters());
   }
 
   public getAllCharacterIds(): CharacterId[] {
@@ -44,8 +46,9 @@ export class CharacterRegistry {
     return speciesDataRegistry.getPokemonSpeciesForm(this.getCharacter(id).speciesId, form);
   }
 
-  public getSaveData(id: CharacterId): TeamSaveDataEntry {
-    return globalScene.gameData.teamSaveData[id];
+  public getSaveData(id: CharacterId): TeamSaveDataEntry | undefined {
+    const teamId = teamRegistry.getTeamIdOf(id);
+    return teamId && globalScene.gameData.teamSaveData[teamId];
   }
 
   public getPreferences(id: CharacterId): CharacterPreference {
