@@ -1,11 +1,8 @@
 import { EVOLVE_MOVE, RELEARN_MOVE } from "#app/constants";
 import { EvoCondKey, EvolutionItem, SpeciesEvolution, SpeciesFormEvolution } from "#balance/pokemon-evolutions";
 import { GrowthRate } from "#data/exp";
-import { SpeciesFormChangeItemTrigger } from "#data/form-change-triggers";
-import { SpeciesFormChange } from "#data/pokemon-forms";
 import { PokemonForm, PokemonSpecies } from "#data/pokemon-species";
 import { AbilityId } from "#enums/ability-id";
-import { FormChangeItem } from "#enums/form-change-item";
 import { MoveId } from "#enums/move-id";
 import { PokemonType } from "#enums/pokemon-type";
 import { SpeciesFormKey } from "#enums/species-form-key";
@@ -251,14 +248,6 @@ export function initGenerationTwo(): SpeciesDataMapConfig {
     }),
     starter: SpeciesId.CHIKORITA,
     evolutions: [],
-    formChanges: [
-      new SpeciesFormChange({
-        speciesId: SpeciesId.MEGANIUM,
-        preFormKey: "",
-        evoFormKey: SpeciesFormKey.MEGA,
-        trigger: new SpeciesFormChangeItemTrigger(FormChangeItem.MEGANIUMITE),
-      }),
-    ],
     passives: {
       0: AbilityId.THICK_FAT,
       1: AbilityId.THICK_FAT,
@@ -808,14 +797,6 @@ export function initGenerationTwo(): SpeciesDataMapConfig {
     }),
     starter: SpeciesId.TOTODILE,
     evolutions: [],
-    formChanges: [
-      new SpeciesFormChange({
-        speciesId: SpeciesId.FERALIGATR,
-        preFormKey: "",
-        evoFormKey: SpeciesFormKey.MEGA,
-        trigger: new SpeciesFormChangeItemTrigger(FormChangeItem.FERALIGITE),
-      }),
-    ],
     passives: {
       0: AbilityId.STRONG_JAW,
       1: AbilityId.STRONG_JAW,
@@ -2855,15 +2836,6 @@ export function initGenerationTwo(): SpeciesDataMapConfig {
     }),
     starter: SpeciesId.MAREEP,
     evolutions: [],
-    formChanges: [
-      new SpeciesFormChange({
-        speciesId: SpeciesId.AMPHAROS,
-        preFormKey: "",
-        evoFormKey: SpeciesFormKey.MEGA,
-        trigger: new SpeciesFormChangeItemTrigger(FormChangeItem.AMPHAROSITE),
-        conditions: [],
-      }),
-    ],
     passives: {
       0: AbilityId.ELECTROMORPHOSIS,
       1: AbilityId.FLUFFY,
@@ -6109,15 +6081,6 @@ export function initGenerationTwo(): SpeciesDataMapConfig {
     }),
     starter: SpeciesId.ONIX,
     evolutions: [],
-    formChanges: [
-      new SpeciesFormChange({
-        speciesId: SpeciesId.STEELIX,
-        preFormKey: "",
-        evoFormKey: SpeciesFormKey.MEGA,
-        trigger: new SpeciesFormChangeItemTrigger(FormChangeItem.STEELIXITE),
-        conditions: [],
-      }),
-    ],
     passives: {
       0: AbilityId.ROCKY_PAYLOAD,
       1: AbilityId.SAND_SPIT,
@@ -6587,15 +6550,6 @@ export function initGenerationTwo(): SpeciesDataMapConfig {
     }),
     starter: SpeciesId.SCYTHER,
     evolutions: [],
-    formChanges: [
-      new SpeciesFormChange({
-        speciesId: SpeciesId.SCIZOR,
-        preFormKey: "",
-        evoFormKey: SpeciesFormKey.MEGA,
-        trigger: new SpeciesFormChangeItemTrigger(FormChangeItem.SCIZORITE),
-        conditions: [],
-      }),
-    ],
     passives: {
       0: AbilityId.TOUGH_CLAWS,
       1: AbilityId.TOUGH_CLAWS,
@@ -6827,15 +6781,6 @@ export function initGenerationTwo(): SpeciesDataMapConfig {
     starter: SpeciesId.HERACROSS,
     starterCost: 5,
     evolutions: [],
-    formChanges: [
-      new SpeciesFormChange({
-        speciesId: SpeciesId.HERACROSS,
-        preFormKey: "",
-        evoFormKey: SpeciesFormKey.MEGA,
-        trigger: new SpeciesFormChangeItemTrigger(FormChangeItem.HERACRONITE),
-        conditions: [],
-      }),
-    ],
     passives: {
       0: AbilityId.TECHNICIAN,
       1: AbilityId.TECHNICIAN,
@@ -8192,14 +8137,6 @@ export function initGenerationTwo(): SpeciesDataMapConfig {
     starter: SpeciesId.SKARMORY,
     starterCost: 4,
     evolutions: [],
-    formChanges: [
-      new SpeciesFormChange({
-        speciesId: SpeciesId.SKARMORY,
-        preFormKey: "",
-        evoFormKey: SpeciesFormKey.MEGA,
-        trigger: new SpeciesFormChangeItemTrigger(FormChangeItem.SKARMORITE),
-      }),
-    ],
     passives: {
       0: AbilityId.TOUGH_CLAWS,
       1: AbilityId.TOUGH_CLAWS,
@@ -8505,15 +8442,6 @@ export function initGenerationTwo(): SpeciesDataMapConfig {
     }),
     starter: SpeciesId.HOUNDOUR,
     evolutions: [],
-    formChanges: [
-      new SpeciesFormChange({
-        speciesId: SpeciesId.HOUNDOOM,
-        preFormKey: "",
-        evoFormKey: SpeciesFormKey.MEGA,
-        trigger: new SpeciesFormChangeItemTrigger(FormChangeItem.HOUNDOOMINITE),
-        conditions: [],
-      }),
-    ],
     passives: {
       0: AbilityId.LIGHTNING_ROD,
       1: AbilityId.LIGHTNING_ROD,
@@ -10356,15 +10284,6 @@ export function initGenerationTwo(): SpeciesDataMapConfig {
     }),
     starter: SpeciesId.LARVITAR,
     evolutions: [],
-    formChanges: [
-      new SpeciesFormChange({
-        speciesId: SpeciesId.TYRANITAR,
-        preFormKey: "",
-        evoFormKey: SpeciesFormKey.MEGA,
-        trigger: new SpeciesFormChangeItemTrigger(FormChangeItem.TYRANITARITE),
-        conditions: [],
-      }),
-    ],
     passives: {
       0: AbilityId.SOLID_ROCK,
       1: AbilityId.SOLID_ROCK,

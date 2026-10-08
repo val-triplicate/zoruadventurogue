@@ -56,7 +56,6 @@ import i18next from "i18next";
 
 /**
  * Animates exclamation sprite over trainer's head at start of encounter
- * @param scene
  */
 export function doTrainerExclamation(): void {
   const exclamationSprite = globalScene.add.sprite(0, 0, "encounter_exclaim");
@@ -212,7 +211,7 @@ export async function initBattleWithEnemyConfig(partyConfig: EnemyPartyConfig): 
           enemySpecies = config.species;
           isBoss = config.isBoss;
           battle.enemyParty[e] = globalScene.addEnemyPokemon(
-            enemySpecies,
+            enemySpecies.speciesId,
             level,
             TrainerSlot.TRAINER,
             isBoss,
@@ -237,7 +236,7 @@ export async function initBattleWithEnemyConfig(partyConfig: EnemyPartyConfig): 
         }
 
         battle.enemyParty[e] = globalScene.addEnemyPokemon(
-          enemySpecies,
+          enemySpecies.speciesId,
           level,
           TrainerSlot.NONE,
           isBoss,
@@ -995,7 +994,7 @@ export function getRandomEncounterPokemon(params: RandomEncounterParams): EnemyP
       isBoss,
     );
   }
-  const ret = new EnemyPokemon(bossSpecies, level, TrainerSlot.NONE, isBoss);
+  const ret = new EnemyPokemon(bossSpecies.speciesId, level, TrainerSlot.NONE, isBoss);
   if (formIndex) {
     ret.formIndex = formIndex;
   }

@@ -5,7 +5,6 @@ import { getPokemonNameWithAffix } from "#app/messages";
 import { ConditionalProtectTag } from "#data/arena-tag";
 import { MoveAnim } from "#data/battle-anims";
 import { ProtectedTag, SemiInvulnerableTag, SubstituteTag, TypeBoostTag } from "#data/battler-tags";
-import { SpeciesFormChangePostMoveTrigger } from "#data/form-change-triggers";
 import type { TypeDamageMultiplier } from "#data/type";
 import { ArenaTagSide } from "#enums/arena-tag-side";
 import type { BattlerIndex } from "#enums/battler-index";
@@ -583,8 +582,6 @@ export class MoveEffectPhase extends PokemonPhase {
       this.applyOnTargetEffects(user, target, firstTarget, result);
     }
     if (this.lastHit) {
-      globalScene.triggerPokemonFormChange(user, SpeciesFormChangePostMoveTrigger);
-
       // Multi-hit check for Wimp Out/Emergency Exit
       if (user.turnData.hitCount > 1) {
         // TODO: Investigate why 0 is being passed for damage amount here

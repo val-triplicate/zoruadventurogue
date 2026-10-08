@@ -136,52 +136,8 @@ export function applyOnGainAbAttrs(params: AbAttrBaseParams): void {
 }
 
 /**
- * Apply the effects of abilities when they become active mid-turn from a Pokemon changing its form.
- *
- * @param params - The parameters to pass to the ability attribute's `apply` method
- * @remarks
- * In keeping with mainline behavior (such as Mega Tyranitar re-applying Sand Stream on Mega Evolving),
- * this will re-apply all relevant abilities **regardless** of whether the form change altered the ability or not.
- * @privateRemarks
- * This will not apply any attributes that extend off of `PostSummonFormChangeAbAttr` to prevent infinite loops,
- * and will only apply each unique `AbilityId` once per turn for a similar reason.
- */
-export function applyPostFormChangeAbAttrs(params: Omit<AbAttrBaseParams, "passive">): void {
-  const { pokemon } = params;
-  const { formChangeAbilitiesApplied } = pokemon.turnData;
-  const activeApplied = formChangeAbilitiesApplied.has(pokemon.getAbility().id);
-  const passiveApplied = formChangeAbilitiesApplied.has(pokemon.getPassiveAbility().id);
-
-  if (activeApplied && passiveApplied) {
-    return;
-  }
-
-  // Form change abilities currently don't work as passives, but no harm future-proofing it for later
-  let passive: boolean | undefined;
-  if (activeApplied) {
-    passive = true;
-    formChangeAbilitiesApplied.add(pokemon.getPassiveAbility().id);
-  } else if (passiveApplied) {
-    passive = false;
-    formChangeAbilitiesApplied.add(pokemon.getAbility().id);
-  } else {
-    formChangeAbilitiesApplied.add(pokemon.getPassiveAbility().id).add(pokemon.getAbility().id);
-  }
-
-  applyAbAttrsInternal(
-    "PostSummonAbAttr",
-    { ...params, passive },
-    {
-      attrFilter: attr => !attr.is("PostSummonFormChangeAbAttr") && !attr.is("PostSummonFormChangeByWeatherAbAttr"),
-    },
-  );
-}
-
-/**
  * Applies ability attributes which activate when the ability is lost or suppressed (i.e. primal weather)
  */
 export function applyOnLoseAbAttrs(params: AbAttrBaseParams): void {
   applySingleAbAttrs("PreLeaveFieldAbAttr", params);
-
-  applySingleAbAttrs("IllusionBreakAbAttr", params);
 }

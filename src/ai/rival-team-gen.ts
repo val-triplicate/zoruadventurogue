@@ -296,7 +296,7 @@ export function getRandomRivalPartyMemberFunc(
 
     // Filter the pool to its choices, or map it
 
-    let species: SpeciesId | SpeciesId[];
+    let speciesId: SpeciesId | SpeciesId[];
 
     // When converting pool to choices, base off of the reference config
     // to use for type balancing, as we only narrow based on what the slot
@@ -311,18 +311,18 @@ export function getRandomRivalPartyMemberFunc(
 
     const choice = randSeedItem(choices);
     if (typeof choice === "number") {
-      species = pool[choice] as SpeciesId;
+      speciesId = pool[choice] as SpeciesId;
       CHOSEN_RIVAL_ROLLS[slot] = [choice];
     } else {
-      species = pool[choice[0]][choice[1]];
+      speciesId = pool[choice[0]][choice[1]];
       CHOSEN_RIVAL_ROLLS[slot] = choice;
     }
-    if (Array.isArray(species)) {
-      species = randSeedItem(species);
+    if (Array.isArray(speciesId)) {
+      speciesId = randSeedItem(speciesId);
     }
 
     return globalScene.addEnemyPokemon(
-      speciesDataRegistry.getSpecies(species),
+      speciesId,
       level,
       TrainerSlot.TRAINER,
       undefined,

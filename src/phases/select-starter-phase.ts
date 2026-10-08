@@ -2,7 +2,6 @@ import { audioManager } from "#app/global-audio-manager";
 import { characterRegistry } from "#app/global-character-data-registry";
 import { globalScene } from "#app/global-scene";
 import { Phase } from "#app/phase";
-import { SpeciesFormChangeMoveLearnedTrigger } from "#data/form-change-triggers";
 import { UiMode } from "#enums/ui-mode";
 import type { PlayerPokemon } from "#field/pokemon";
 import { overrideHeldItems, overrideModifiers } from "#modifiers/modifier";
@@ -39,7 +38,8 @@ export class SelectStarterPhase extends Phase {
       const preferences = characterRegistry.getPreferences(pokemon.charId);
 
       const starterPokemon = globalScene.addPlayerPokemon(
-        pokemon.species,
+        pokemon.charId,
+        pokemon.species.speciesId,
         globalScene.gameMode.getStartingLevel(),
         pokemon.abilityIndex,
         pokemon.formIndex,
@@ -69,10 +69,6 @@ export class SelectStarterPhase extends Phase {
       globalScene.arena.init();
       globalScene.sessionPlayTime = 0;
       globalScene.lastSavePlayTime = 0;
-      // Ensures Keldeo (or any future Pokemon that have this type of form change) starts in the correct form
-      globalScene.getPlayerParty().forEach(p => {
-        globalScene.triggerPokemonFormChange(p, SpeciesFormChangeMoveLearnedTrigger);
-      });
       this.end();
     });
   }

@@ -10,8 +10,6 @@ import { initGenerationSeven } from "#balance/generation-07";
 import { initGenerationEight } from "#balance/generation-08";
 import { initGenerationNine } from "#balance/generation-09";
 import type { SpeciesFormEvolution } from "#balance/pokemon-evolutions";
-import { SpeciesFormChangeItemTrigger } from "#data/form-change-triggers";
-import { SpeciesFormChange } from "#data/pokemon-forms";
 import type { PokemonSpecies, PokemonSpeciesForm } from "#data/pokemon-species";
 import type { AbilityId } from "#enums/ability-id";
 import type { CharacterId } from "#enums/character-id";
@@ -48,7 +46,6 @@ export class SpeciesDataRegistry {
     );
 
     this.initPreEvolutions();
-    this.initReverseFormChanges();
   }
 
   // #region Initialization
@@ -88,34 +85,6 @@ export class SpeciesDataRegistry {
       setPrevo(starterId);
     }
   }
-
-  /**
-   * Initialize reverse form changes for all species.
-   */
-  private initReverseFormChanges(): void {
-    const allFormChanges = Object.values(this._data).flatMap(s => (s.formChanges ? [s.formChanges] : []));
-
-    for (const speciesFormChanges of allFormChanges) {
-      for (const formChange of speciesFormChanges) {
-        const itemTrigger = formChange.findTrigger(SpeciesFormChangeItemTrigger) as SpeciesFormChangeItemTrigger;
-        if (
-          itemTrigger
-          && !speciesFormChanges.find(c => formChange.formKey === c.preFormKey && formChange.preFormKey === c.formKey)
-        ) {
-          this._data[formChange.speciesId].formChanges?.push(
-            new SpeciesFormChange({
-              speciesId: formChange.speciesId,
-              preFormKey: formChange.formKey,
-              evoFormKey: formChange.preFormKey,
-              trigger: new SpeciesFormChangeItemTrigger(itemTrigger.item, false),
-            }),
-          );
-        }
-      }
-    }
-  }
-
-  // #endregion Initialization
 
   /**
    * Get the species data for a given species.
@@ -358,26 +327,6 @@ export class SpeciesDataRegistry {
   // TODO: once pikachu isn't a starter anymore, we can just check if it's not a starter
   public hasPrevolution(speciesId: SpeciesId): boolean {
     return this.getPrevolution(speciesId) !== null;
-  }
-
-  /**
-   * Get the form changes for a given species.
-   * @param speciesId - The {@linkcode SpeciesId} of the species to get form changes for
-   * @returns An array of {@linkcode SpeciesFormChange}s
-   */
-  public getFormChanges(speciesId: SpeciesId): SpeciesFormChange[] {
-    const speciesData = this.getSpeciesData(speciesId);
-    return speciesData.formChanges ?? [];
-  }
-
-  /**
-   * Checks if a given species has any form changes.
-   * @param speciesId - The {@linkcode SpeciesId} of the species to check
-   * @returns Whether the species has any form changes
-   */
-  public hasFormChanges(speciesId: SpeciesId): boolean {
-    const speciesData = this.getSpeciesData(speciesId);
-    return !!speciesData.formChanges && speciesData.formChanges.length > 0;
   }
 
   // #region Helpers

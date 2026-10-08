@@ -5,7 +5,6 @@ import { getPokemonNameWithAffix } from "#app/messages";
 import { activeOverrides } from "#app/overrides";
 import { initMoveAnim, loadMoveAnimAssets } from "#data/battle-anims";
 import { allMoves } from "#data/data-lists";
-import { SpeciesFormChangeMoveLearnedTrigger } from "#data/form-change-triggers";
 import { LearnMoveType } from "#enums/learn-move-type";
 import { MoveId } from "#enums/move-id";
 import { UiMode } from "#enums/ui-mode";
@@ -125,7 +124,7 @@ export class LearnMovePhase extends PlayerPartyMemberPokemonPhase {
         }
         const forgetSuccessText = i18next.t("battle:learnMoveForgetSuccess", {
           pokemonName: getPokemonNameWithAffix(pokemon),
-          moveName: pokemon.moveset[moveIndex]!.getName(),
+          moveName: pokemon.moves[moveIndex]!.getName(),
         });
         const fullText = [i18next.t("battle:countdownPoof"), forgetSuccessText, i18next.t("battle:learnMoveAnd")].join(
           "$",
@@ -225,7 +224,6 @@ export class LearnMovePhase extends PlayerPartyMemberPokemonPhase {
       learnMoveText,
       null,
       () => {
-        globalScene.triggerPokemonFormChange(pokemon, SpeciesFormChangeMoveLearnedTrigger, true);
         this.end();
       },
       this.messageMode === UiMode.EVOLUTION_SCENE ? 1000 : undefined,

@@ -541,6 +541,14 @@ export class StarterSummary extends Phaser.GameObjects.Container {
       });
     }
 
+    const preference = characterRegistry.getPreferences(id);
+    let moves = preference.selectedMoves;
+    if (!moves) {
+      moves = characterRegistry.getCharacter(id).movePool.slice(0, 4) as MoveSet;
+      preference.selectedMoves = moves;
+    }
+
+    this.updateMoveset(moves, 4);
     this.updatePassiveDisplay(id, formIndex);
 
     this.pokemonNatureText.setText(getNatureName(natureIndex, true, true, false));

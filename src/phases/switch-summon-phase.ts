@@ -4,7 +4,6 @@ import { globalScene } from "#app/global-scene";
 import { getPokemonNameWithAffix } from "#app/messages";
 import { SubstituteTag } from "#data/battler-tags";
 import { allMoves } from "#data/data-lists";
-import { SpeciesFormChangeActiveTrigger } from "#data/form-change-triggers";
 import { getPokeballTintColor } from "#data/pokeball";
 import { ArenaTagSide } from "#enums/arena-tag-side";
 import { Command } from "#enums/command";
@@ -110,7 +109,7 @@ export class SwitchSummonPhase extends SummonPhase {
     );
     audioManager.playSound("se/pb_rel");
     pokemon.hideInfo();
-    pokemon.tint(getPokeballTintColor(pokemon.getPokeball(true)), 1, 250, "Sine.easeIn");
+    pokemon.tint(getPokeballTintColor(pokemon.getPokeball()), 1, 250, "Sine.easeIn");
     globalScene.tweens.add({
       targets: pokemon,
       duration: 250,
@@ -260,10 +259,6 @@ export class SwitchSummonPhase extends SummonPhase {
     }
 
     this.lastPokemon.resetSummonData();
-
-    globalScene.triggerPokemonFormChange(pokemon, SpeciesFormChangeActiveTrigger, true);
-    // Reverts to weather-based forms when weather suppressors (Cloud Nine/Air Lock) are switched out
-    globalScene.arena.triggerWeatherBasedFormChanges(pokemon);
   }
 
   queuePostSummon(): void {

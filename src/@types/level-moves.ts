@@ -10,6 +10,4 @@ export interface LevelMoveContext {
   startingLevel: number;
   pokemonSpeciesForm: PokemonSpeciesForm;
   pokemonFormIndex: number;
-  fusionSpeciesForm?: PokemonSpeciesForm | undefined;
-  fusionFormIndex?: number | undefined;
 }

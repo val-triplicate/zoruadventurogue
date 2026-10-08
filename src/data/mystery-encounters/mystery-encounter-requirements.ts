@@ -1,9 +1,6 @@
 import { globalScene } from "#app/global-scene";
-import { speciesDataRegistry } from "#app/global-species-data-registry";
 import { allAbilities } from "#data/data-lists";
-import { SpeciesFormChangeItemTrigger } from "#data/form-change-triggers";
 import type { AbilityId } from "#enums/ability-id";
-import { FormChangeItem } from "#enums/form-change-item";
 import { MoveId } from "#enums/move-id";
 import type { MysteryEncounterType } from "#enums/mystery-encounter-type";
 import { Nature } from "#enums/nature";
@@ -566,19 +563,19 @@ export class MoveRequirement extends EncounterPokemonRequirement {
       return partyPokemon.filter(
         pokemon =>
           (!this.excludeDisallowedPokemon || pokemon.isAllowedInBattle())
-          && pokemon.moveset.some(move => move.moveId && this.requiredMoves.includes(move.moveId)),
+          && pokemon.moves.some(move => move.moveId && this.requiredMoves.includes(move.moveId)),
       );
     }
     // for an inverted query, we only want to get the pokemon that don't have ANY of the listed moves
     return partyPokemon.filter(
       pokemon =>
         (!this.excludeDisallowedPokemon || pokemon.isAllowedInBattle())
-        && !pokemon.moveset.some(move => move.moveId && this.requiredMoves.includes(move.moveId)),
+        && !pokemon.moves.some(move => move.moveId && this.requiredMoves.includes(move.moveId)),
     );
   }
 
   override getDialogueToken(pokemon?: PlayerPokemon): [string, string] {
-    const includedMoves = pokemon?.moveset.filter(move => move.moveId && this.requiredMoves.includes(move.moveId));
+    const includedMoves = pokemon?.moves.filter(move => move.moveId && this.requiredMoves.includes(move.moveId));
     if (includedMoves && includedMoves.length > 0 && includedMoves[0]) {
       return ["move", includedMoves[0].getName()];
     }
@@ -737,69 +734,6 @@ export class StatusEffectRequirement extends EncounterPokemonRequirement {
       return ["status", StatusEffect[reqStatus[0]]];
     }
     return ["status", ""];
-  }
-}
-
-/**
- * Finds if there are pokemon that can form change with a given item.
- * Notice that we mean specific items, like Charizardite, not the Mega Bracelet.
- * If you want to trigger the event based on the form change enabler, use PersistentModifierRequirement.
- */
-export class CanFormChangeWithItemRequirement extends EncounterPokemonRequirement {
-  requiredFormChangeItem: readonly FormChangeItem[];
-  minNumberOfPokemon: number;
-  invertQuery: boolean;
-
-  constructor(formChangeItem: FormChangeItem | readonly FormChangeItem[], minNumberOfPokemon = 1, invertQuery = false) {
-    super();
-    this.minNumberOfPokemon = minNumberOfPokemon;
-    this.invertQuery = invertQuery;
-    this.requiredFormChangeItem = coerceArray(formChangeItem);
-  }
-
-  override meetsRequirement(): boolean {
-    const partyPokemon = globalScene.getPlayerParty();
-    if (partyPokemon == null || this.requiredFormChangeItem?.length < 0) {
-      return false;
-    }
-    return this.queryParty(partyPokemon).length >= this.minNumberOfPokemon;
-  }
-
-  filterByForm(pokemon, formChangeItem) {
-    return (
-      speciesDataRegistry.hasFormChanges(pokemon.species.speciesId) // Get all form changes for this species with an item trigger, including any compound triggers
-      && speciesDataRegistry
-        .getFormChanges(pokemon.species.speciesId)
-        .filter(fc => fc.trigger.hasTriggerType(SpeciesFormChangeItemTrigger))
-        // Returns true if any form changes match this item
-        .flatMap(fc => fc.findTrigger(SpeciesFormChangeItemTrigger) as SpeciesFormChangeItemTrigger)
-        .flatMap(fc => fc.item)
-        .includes(formChangeItem)
-    );
-  }
-
-  override queryParty(partyPokemon: readonly PlayerPokemon[]): PlayerPokemon[] {
-    if (!this.invertQuery) {
-      return partyPokemon.filter(
-        pokemon =>
-          this.requiredFormChangeItem.filter(formChangeItem => this.filterByForm(pokemon, formChangeItem)).length > 0,
-      );
-    }
-    // for an inverted query, we only want to get the pokemon that don't have ANY of the listed formChangeItems
-    return partyPokemon.filter(
-      pokemon =>
-        this.requiredFormChangeItem.filter(formChangeItem => this.filterByForm(pokemon, formChangeItem)).length === 0,
-    );
-  }
-
-  override getDialogueToken(pokemon?: PlayerPokemon): [string, string] {
-    const requiredItems = this.requiredFormChangeItem.filter(formChangeItem =>
-      this.filterByForm(pokemon, formChangeItem),
-    );
-    if (requiredItems.length > 0) {
-      return ["formChangeItem", FormChangeItem[requiredItems[0]]];
-    }
-    return ["formChangeItem", ""];
   }
 }
 

@@ -4,7 +4,6 @@ import { globalScene } from "#app/global-scene";
 import { getPokemonNameWithAffix } from "#app/messages";
 import { allMoves } from "#data/data-lists";
 import { classicFinalBossDialogue } from "#data/dialogue";
-import { SpeciesFormChangeActiveTrigger } from "#data/form-change-triggers";
 import { ArenaTagSide } from "#enums/arena-tag-side";
 import { BattleType } from "#enums/battle-type";
 import type { BattlerIndex } from "#enums/battler-index";
@@ -117,7 +116,6 @@ export class FaintPhase extends PokemonPhase {
       null,
       true,
     );
-    globalScene.triggerPokemonFormChange(pokemon, SpeciesFormChangeActiveTrigger, true);
 
     pokemon.resetTera();
 

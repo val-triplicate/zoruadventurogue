@@ -2,7 +2,6 @@ import { applyAbAttrs } from "#abilities/apply-ab-attrs";
 import { globalScene } from "#app/global-scene";
 import { getPokemonNameWithAffix } from "#app/messages";
 import { CommonBattleAnim } from "#data/battle-anims";
-import { SpeciesFormChangeStatusEffectTrigger } from "#data/form-change-triggers";
 import { getStatusEffectObtainText } from "#data/status-effect";
 import type { BattlerIndex } from "#enums/battler-index";
 import { CommonAnim } from "#enums/move-anims-common";
@@ -57,7 +56,6 @@ export class ObtainStatusEffectPhase extends PokemonPhase {
     new CommonBattleAnim(CommonAnim.POISON + (this.statusEffect - 1), pokemon).play(false, () => {
       globalScene.phaseManager.queueMessage(this.statusMessage);
       if (this.statusEffect && this.statusEffect !== StatusEffect.FAINT) {
-        globalScene.triggerPokemonFormChange(pokemon, SpeciesFormChangeStatusEffectTrigger, true);
         // If the status was applied from a move, ensure abilities are not ignored for follow-up triggers.
         // TODO: Ensure this isn't breaking any other phases unshifted afterwards
         globalScene.arena.setIgnoreAbilities(false);

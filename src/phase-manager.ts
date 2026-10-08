@@ -28,12 +28,9 @@ import { DancerPhase } from "#phases/dancer-phase";
 import { DynamicPhaseMarker } from "#phases/dynamic-phase-marker";
 import { EncounterPhase } from "#phases/encounter-phase";
 import { EndCardPhase } from "#phases/end-card-phase";
-import { EndEvolutionPhase } from "#phases/end-evolution-phase";
 import { EnemyCommandPhase } from "#phases/enemy-command-phase";
-import { EvolutionPhase } from "#phases/evolution-phase";
 import { ExpPhase } from "#phases/exp-phase";
 import { FaintPhase } from "#phases/faint-phase";
-import { FormChangePhase } from "#phases/form-change-phase";
 import { GameOverModifierRewardPhase } from "#phases/game-over-modifier-reward-phase";
 import { GameOverPhase } from "#phases/game-over-phase";
 import { HideAbilityPhase } from "#phases/hide-ability-phase";
@@ -74,7 +71,6 @@ import { PositionalTagPhase } from "#phases/positional-tag-phase";
 import { PostGameOverPhase } from "#phases/post-game-over-phase";
 import { PostSummonPhase } from "#phases/post-summon-phase";
 import { PostTurnStatusEffectPhase } from "#phases/post-turn-status-effect-phase";
-import { QuietFormChangePhase } from "#phases/quiet-form-change-phase";
 import { ResetStatusPhase } from "#phases/reset-status-phase";
 import { ReturnPhase } from "#phases/return-phase";
 import { RevivalBlessingPhase } from "#phases/revival-blessing-phase";
@@ -101,7 +97,6 @@ import { TrainerVictoryPhase } from "#phases/trainer-victory-phase";
 import { TurnEndPhase } from "#phases/turn-end-phase";
 import { TurnInitPhase } from "#phases/turn-init-phase";
 import { TurnStartPhase } from "#phases/turn-start-phase";
-import { UnavailablePhase } from "#phases/unavailable-phase";
 import { UnlockPhase } from "#phases/unlock-phase";
 import { VictoryPhase } from "#phases/victory-phase";
 import { WeatherEffectPhase } from "#phases/weather-effect-phase";
@@ -131,12 +126,9 @@ const PHASES = Object.freeze({
   DynamicPhaseMarker,
   EncounterPhase,
   EndCardPhase,
-  EndEvolutionPhase,
   EnemyCommandPhase,
-  EvolutionPhase,
   ExpPhase,
   FaintPhase,
-  FormChangePhase,
   GameOverPhase,
   GameOverModifierRewardPhase,
   HideAbilityPhase,
@@ -175,7 +167,6 @@ const PHASES = Object.freeze({
   PostGameOverPhase,
   PostSummonPhase,
   PostTurnStatusEffectPhase,
-  QuietFormChangePhase,
   ResetStatusPhase,
   ReturnPhase,
   RevivalBlessingPhase,
@@ -202,7 +193,6 @@ const PHASES = Object.freeze({
   TurnEndPhase,
   TurnInitPhase,
   TurnStartPhase,
-  UnavailablePhase,
   UnlockPhase,
   VictoryPhase,
   WeatherEffectPhase,

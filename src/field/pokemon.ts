@@ -36,12 +36,6 @@ import {
 } from "#data/battler-tags";
 import { allAbilities, allMoves } from "#data/data-lists";
 import { getLevelTotalExp } from "#data/exp";
-import {
-  SpeciesFormChangeActiveTrigger,
-  SpeciesFormChangeLapseTeraTrigger,
-  SpeciesFormChangeMoveLearnedTrigger,
-  SpeciesFormChangePostMoveTrigger,
-} from "#data/form-change-triggers";
 import { Gender } from "#data/gender";
 import type { VariableMoveTypeAttr } from "#data/moves/move";
 import { getNatureStatMultiplier } from "#data/nature";
@@ -53,7 +47,6 @@ import {
   PokemonTurnData,
   PokemonWaveData,
 } from "#data/pokemon-data";
-import type { SpeciesFormChange } from "#data/pokemon-forms";
 import type { PokemonSpecies, PokemonSpeciesForm } from "#data/pokemon-species";
 import { getStatusEffectHealText, getStatusEffectOverlapText, Status } from "#data/status-effect";
 import { getTerrainBlockMessage, TerrainType } from "#data/terrain";
@@ -175,6 +168,7 @@ import { getBaseLearnableMoveSource, getLevelMoves } from "./learnsets";
 type LearnableLevelMoves = [level: number | null, move: MoveId, source: LearnableMoveSource][];
 
 export abstract class Pokemon extends Phaser.GameObjects.Container {
+  public characterId: CharacterId;
   /**
    * This pokemon's {@link https://bulbapedia.bulbagarden.net/wiki/Personality_value | Personality value/PID},
    * used to determine various parameters of this Pokemon.
@@ -210,7 +204,6 @@ export abstract class Pokemon extends Phaser.GameObjects.Container {
    */
   public status: Status | null;
   public luck: number;
-  public pauseEvolutions: boolean;
   /**
    * Indicates whether this Pokémon has left or is about to leave the field
    * @remarks
@@ -271,7 +264,7 @@ export abstract class Pokemon extends Phaser.GameObjects.Container {
   constructor(
     x: number,
     y: number,
-    species: PokemonSpecies,
+    speciesId: SpeciesId,
     level: number,
     abilityIndex?: number,
     formIndex?: number,
@@ -284,7 +277,7 @@ export abstract class Pokemon extends Phaser.GameObjects.Container {
   ) {
     super(globalScene, x, y);
 
-    this.species = species;
+    this.species = speciesDataRegistry.getSpecies(speciesId);
     this.pokeball = dataSource?.pokeball || PokeballType.POKEBALL;
     this.level = level;
 
@@ -302,7 +295,7 @@ export abstract class Pokemon extends Phaser.GameObjects.Container {
     if (variant !== undefined) {
       this.variant = variant;
     }
-    this.exp = dataSource?.exp || getLevelTotalExp(this.level, species.growthRate);
+    this.exp = dataSource?.exp || getLevelTotalExp(this.level, this.species.growthRate);
 
     if (dataSource) {
       this.id = dataSource.id;
@@ -318,7 +311,6 @@ export abstract class Pokemon extends Phaser.GameObjects.Container {
       this.moves = dataSource.moves;
       this.status = dataSource.status!; // TODO: is this bang correct?
       this.luck = dataSource.luck;
-      this.pauseEvolutions = dataSource.pauseEvolutions;
       this.usedTMs = dataSource.usedTMs ?? [];
       this.customPokemonData = new CustomPokemonData(dataSource.customPokemonData);
       this.teraType = dataSource.teraType;
@@ -333,7 +325,7 @@ export abstract class Pokemon extends Phaser.GameObjects.Container {
       }
 
       if (this.formIndex === undefined) {
-        this.formIndex = globalScene.getSpeciesFormIndex(species, this.gender, this.nature, this.isPlayer());
+        this.formIndex = globalScene.getSpeciesFormIndex(this.species, this.gender, this.nature, this.isPlayer());
       }
 
       if (this.shiny === undefined) {
@@ -2541,15 +2533,6 @@ export abstract class Pokemon extends Phaser.GameObjects.Container {
    */
   public generateAndPopulateMoveset(useRivalSignatures = false): void {
     generateMoveset(this, useRivalSignatures);
-
-    // Trigger FormChange, except for enemy Pokemon during Mystery Encounters, to avoid crashes
-    if (
-      this.isPlayer()
-      || !globalScene.currentBattle?.isBattleMysteryEncounter()
-      || !globalScene.currentBattle?.mysteryEncounter
-    ) {
-      globalScene.triggerPokemonFormChange(this, SpeciesFormChangeMoveLearnedTrigger);
-    }
   }
 
   /**
@@ -3878,40 +3861,6 @@ export abstract class Pokemon extends Phaser.GameObjects.Container {
   }
 
   /**
-   * Change this Pokémon's form to the specified form, loading the required
-   * assets and updating its stats and info display.
-   * @param formChange - The form to change to
-   * @returns A Promise that resolves once the form change has completed.
-   */
-  public async changeForm(formChange: SpeciesFormChange): Promise<void> {
-    this.formIndex = Math.max(
-      this.species.forms.findIndex(f => f.formKey === formChange.formKey),
-      0,
-    );
-    this.generateName();
-
-    const abilityCount = this.getSpeciesForm().getAbilityCount();
-    if (this.abilityIndex >= abilityCount) {
-      console.warn(
-        "Pokemon ability index out of bounds!"
-          + `Name: ${this.name}`
-          + `Old Ability Index: ${this.abilityIndex}`
-          + `Ability Count: ${abilityCount}`
-          + `Form Key: ${formChange.formKey}`,
-      );
-      this.abilityIndex = abilityCount - 1;
-    }
-
-    this.resetTeraOnMajorFormChange();
-    this.setScale(this.getSpriteScale());
-
-    await this.loadAssets();
-    this.calculateStats();
-    globalScene.updateModifiers(this.isPlayer(), true);
-    await Promise.all([this.updateInfo(this.isFainted()), globalScene.updateFieldScale()]);
-  }
-
-  /**
    * Play this Pokémon's cry sound
    * @param soundConfig - Optional sound configuration to apply to the cry
    * @param sceneOverride - Optional scene to use instead of the global scene
@@ -4403,9 +4352,6 @@ export abstract class Pokemon extends Phaser.GameObjects.Container {
    */
   public fieldSetup(resetSummonData?: boolean): void {
     this.switchOutStatus = false;
-    if (globalScene) {
-      globalScene.triggerPokemonFormChange(this, SpeciesFormChangePostMoveTrigger, true);
-    }
     // If this Pokemon has a Substitute when loading in, play an animation to add its sprite
     if (this.getTag(SubstituteTag)) {
       globalScene.triggerPokemonBattleAnim(this, PokemonAnimType.SUBSTITUTE_ADD);
@@ -4480,7 +4426,6 @@ export abstract class Pokemon extends Phaser.GameObjects.Container {
     this.stellarTypesBoosted = [];
     if (wasTerastallized) {
       this.updateSpritePipelineData();
-      globalScene.triggerPokemonFormChange(this, SpeciesFormChangeLapseTeraTrigger);
     }
   }
 
@@ -4650,7 +4595,6 @@ export abstract class Pokemon extends Phaser.GameObjects.Container {
     // Trigger abilities that activate upon leaving the field
     applyAbAttrs("PreLeaveFieldAbAttr", { pokemon: this });
     this.switchOutStatus = true;
-    globalScene.triggerPokemonFormChange(this, SpeciesFormChangeActiveTrigger, true);
     globalScene.field.remove(this, destroy);
   }
 
@@ -4761,7 +4705,7 @@ export class PlayerPokemon extends Pokemon {
 
   constructor(
     charId: CharacterId,
-    species: PokemonSpecies,
+    speciesId: SpeciesId,
     level: number,
     abilityIndex?: number,
     formIndex?: number,
@@ -4772,7 +4716,7 @@ export class PlayerPokemon extends Pokemon {
     dataSource?: Pokemon | PokemonData,
   ) {
     const maxIvs = [31, 31, 31, 31, 31, 31];
-    super(106, 148, species, level, abilityIndex, formIndex, gender, shiny, variant, maxIvs, nature, dataSource);
+    super(106, 148, speciesId, level, abilityIndex, formIndex, gender, shiny, variant, maxIvs, nature, dataSource);
 
     this.charId = charId;
     if (activeOverrides.STATUS_OVERRIDE) {
@@ -4936,7 +4880,7 @@ export class EnemyPokemon extends Pokemon {
   public readonly isPopulatedFromDataSource: boolean;
 
   constructor(
-    species: PokemonSpecies,
+    speciesId: SpeciesId,
     level: number,
     trainerSlot: TrainerSlot,
     boss: boolean,
@@ -4947,7 +4891,7 @@ export class EnemyPokemon extends Pokemon {
     super(
       236,
       84,
-      species,
+      speciesId,
       level,
       dataSource?.abilityIndex,
       dataSource?.formIndex,
@@ -4973,8 +4917,6 @@ export class EnemyPokemon extends Pokemon {
     if (activeOverrides.ENEMY_GENDER_OVERRIDE !== null) {
       this.gender = activeOverrides.ENEMY_GENDER_OVERRIDE;
     }
-
-    const speciesId = this.species.speciesId;
 
     if (
       speciesId in activeOverrides.ENEMY_FORM_OVERRIDES

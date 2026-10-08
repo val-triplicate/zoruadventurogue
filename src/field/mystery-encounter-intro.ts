@@ -1,4 +1,5 @@
 import { globalScene } from "#app/global-scene";
+import { Gender } from "#data/gender";
 import type { SpeciesId } from "#enums/species-id";
 import { getSpriteKeysFromSpecies } from "#mystery-encounters/encounter-pokemon-utils";
 import type { MysteryEncounter } from "#mystery-encounters/mystery-encounter";
@@ -97,7 +98,13 @@ export class MysteryEncounterIntroVisuals extends Phaser.GameObjects.Container {
       };
 
       if (result.species != null) {
-        const keys = getSpriteKeysFromSpecies(result.species, undefined, undefined, result.isShiny, result.variant);
+        const keys = getSpriteKeysFromSpecies(
+          result.species,
+          Gender.GENDERLESS,
+          undefined,
+          result.isShiny,
+          result.variant,
+        );
         result.spriteKey = keys.spriteKey;
         result.fileRoot = keys.fileRoot;
         result.isPokemon = true;

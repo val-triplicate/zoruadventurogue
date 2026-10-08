@@ -1,12 +1,10 @@
 import { applyAbAttrs } from "#abilities/apply-ab-attrs";
 import { globalScene } from "#app/global-scene";
-import { speciesDataRegistry } from "#app/global-species-data-registry";
 import { getPokemonNameWithAffix } from "#app/messages";
 import type { EntryHazardTag, SuppressAbilitiesTag } from "#data/arena-tag";
 import { type BattlerTag, CritBoostTag, SemiInvulnerableTag } from "#data/battler-tags";
 import { getBerryEffectFunc } from "#data/berry";
 import { allAbilities, allMoves } from "#data/data-lists";
-import { SpeciesFormChangeAbilityTrigger, SpeciesFormChangeWeatherTrigger } from "#data/form-change-triggers";
 import { getStatusEffectDescriptor, getStatusEffectHealText } from "#data/status-effect";
 import { TerrainType } from "#data/terrain";
 import type { Weather } from "#data/weather";
@@ -253,25 +251,6 @@ export class DoubleBattleChanceAbAttr extends AbAttr {
 
 export class PostBattleInitAbAttr extends AbAttr {
   declare private readonly _: never;
-}
-
-export class PostBattleInitFormChangeAbAttr extends PostBattleInitAbAttr {
-  private readonly formFunc: (p: Pokemon) => number;
-
-  constructor(formFunc: (p: Pokemon) => number) {
-    super(false);
-
-    this.formFunc = formFunc;
-  }
-
-  override canApply({ pokemon, simulated }: AbAttrBaseParams): boolean {
-    const formIndex = this.formFunc(pokemon);
-    return formIndex !== pokemon.formIndex && !simulated;
-  }
-
-  override apply({ pokemon }: AbAttrBaseParams): void {
-    globalScene.triggerPokemonFormChange(pokemon, SpeciesFormChangeAbilityTrigger, false);
-  }
 }
 
 type PreDefendAbAttrCondition = (pokemon: Pokemon, attacker: Pokemon, move: Move) => boolean;
@@ -2092,27 +2071,6 @@ export class PostVictoryStatStageChangeAbAttr extends PostVictoryAbAttr {
   }
 }
 
-export class PostVictoryFormChangeAbAttr extends PostVictoryAbAttr {
-  private readonly formFunc: (p: Pokemon) => number;
-
-  constructor(formFunc: (p: Pokemon) => number) {
-    super(true);
-
-    this.formFunc = formFunc;
-  }
-
-  override canApply({ pokemon }: AbAttrBaseParams): boolean {
-    const formIndex = this.formFunc(pokemon);
-    return formIndex !== pokemon.formIndex;
-  }
-
-  override apply({ simulated, pokemon }: AbAttrBaseParams): void {
-    if (!simulated) {
-      globalScene.triggerPokemonFormChange(pokemon, SpeciesFormChangeAbilityTrigger, false);
-    }
-  }
-}
-
 /**
  * Shared parameters used for abilities that apply an effect after a Pokemon (other than the user) is knocked out.
  */
@@ -2645,26 +2603,6 @@ export class PostSummonHealStatusAbAttr extends PostSummonRemoveEffectAbAttr {
   }
 }
 
-export class PostSummonFormChangeAbAttr extends PostSummonAbAttr {
-  private readonly formFunc: (p: Pokemon) => number;
-
-  constructor(formFunc: (p: Pokemon) => number) {
-    super(true);
-
-    this.formFunc = formFunc;
-  }
-
-  override canApply({ pokemon }: AbAttrBaseParams): boolean {
-    return this.formFunc(pokemon) !== pokemon.formIndex;
-  }
-
-  override apply({ pokemon, simulated }: AbAttrBaseParams): void {
-    if (!simulated) {
-      globalScene.triggerPokemonFormChange(pokemon, SpeciesFormChangeAbilityTrigger, false);
-    }
-  }
-}
-
 /**
  * Attempts to copy a pokemon's ability
  *
@@ -2850,52 +2788,6 @@ export class PostSummonTransformAbAttr extends PostSummonAbAttr {
 }
 
 /**
- * Reverts weather-based forms to their normal forms when the user is summoned.
- * Used by Cloud Nine and Air Lock.
- */
-export class PostSummonWeatherSuppressedFormChangeAbAttr extends PostSummonAbAttr {
-  override canApply(_params: AbAttrBaseParams): boolean {
-    return getPokemonWithWeatherBasedForms().length > 0;
-  }
-
-  /**
-   * Triggers {@linkcode Arena.triggerWeatherBasedFormChangesToNormal | triggerWeatherBasedFormChangesToNormal}
-   */
-  override apply({ simulated }: AbAttrBaseParams): void {
-    if (!simulated) {
-      globalScene.arena.triggerWeatherBasedFormChangesToNormal();
-    }
-  }
-}
-
-/**
- * Triggers weather-based form change when summoned into an active weather.
- * Used by Forecast and Flower Gift.
- */
-export class PostSummonFormChangeByWeatherAbAttr extends PostSummonAbAttr {
-  /**
-   * Determine if the pokemon has a forme change that is triggered by the weather
-   */
-  override canApply({ pokemon }: AbAttrBaseParams): boolean {
-    return speciesDataRegistry
-      .getFormChanges(pokemon.species.speciesId)
-      .some(fc => fc.findTrigger(SpeciesFormChangeWeatherTrigger) && fc.canChange(pokemon));
-  }
-
-  /**
-   * Calls the {@linkcode BattleScene.triggerPokemonFormChange | triggerPokemonFormChange} for both
-   * {@linkcode SpeciesFormChangeWeatherTrigger} and
-   * {@linkcode SpeciesFormChangeRevertWeatherFormTrigger} if it
-   * is the specific Pokemon and ability
-   */
-  override apply({ pokemon, simulated }: AbAttrBaseParams): void {
-    if (!simulated) {
-      globalScene.triggerPokemonFormChange(pokemon, SpeciesFormChangeWeatherTrigger);
-    }
-  }
-}
-
-/**
  * Attribute implementing the effects of {@link https://bulbapedia.bulbagarden.net/wiki/Commander_(Ability) | Commander}.
  *
  * When the source of an ability with this attribute detects a Dondozo as their active ally, the source "jumps
@@ -2981,27 +2873,6 @@ export class PreSwitchOutHealAbAttr extends PreSwitchOutAbAttr {
       const healAmount = toDmgValue(pokemon.getMaxHp() * 0.33);
       pokemon.heal(healAmount);
       pokemon.updateInfo();
-    }
-  }
-}
-
-/** Attribute for form changes that occur on switching out */
-export class PreSwitchOutFormChangeAbAttr extends PreSwitchOutAbAttr {
-  private readonly formFunc: (p: Pokemon) => number;
-
-  constructor(formFunc: (p: Pokemon) => number) {
-    super();
-
-    this.formFunc = formFunc;
-  }
-
-  override canApply({ pokemon }: AbAttrBaseParams): boolean {
-    return this.formFunc(pokemon) !== pokemon.formIndex;
-  }
-
-  override apply({ simulated, pokemon }: AbAttrBaseParams): void {
-    if (!simulated) {
-      globalScene.triggerPokemonFormChange(pokemon, SpeciesFormChangeAbilityTrigger, false);
     }
   }
 }
@@ -3847,79 +3718,6 @@ export abstract class PostWeatherChangeAbAttr extends AbAttr {
 }
 
 /**
- * Triggers weather-based form change when weather changes.
- *
- * @see {@link https://bulbapedia.bulbagarden.net/wiki/Forecast_(Ability) | Forecast (Bulbapedia)}
- * @see {@link https://bulbapedia.bulbagarden.net/wiki/Flower_Gift_(Ability) | Flower Gift (Bulbapedia)}
- *
- * @sealed
- */
-export class PostWeatherChangeFormChangeAbAttr extends PostWeatherChangeAbAttr {
-  private readonly ability: AbilityId;
-  private readonly formRevertingWeathers: readonly WeatherType[];
-
-  constructor(ability: AbilityId, formRevertingWeathers: readonly WeatherType[]) {
-    super(false);
-
-    this.ability = ability;
-    this.formRevertingWeathers = formRevertingWeathers;
-  }
-
-  override canApply({ pokemon }: AbAttrBaseParams): boolean {
-    const isCastformWithForecast =
-      pokemon.species.speciesId === SpeciesId.CASTFORM && this.ability === AbilityId.FORECAST;
-    const isCherrimWithFlowerGift =
-      pokemon.species.speciesId === SpeciesId.CHERRIM && this.ability === AbilityId.FLOWER_GIFT;
-
-    return isCastformWithForecast || isCherrimWithFlowerGift;
-  }
-
-  /**
-   * Calls {@linkcode Arena.triggerWeatherBasedFormChangesToNormal | triggerWeatherBasedFormChangesToNormal} when the
-   * weather changed to form-reverting weather, otherwise calls {@linkcode Arena.triggerWeatherBasedFormChanges | triggerWeatherBasedFormChanges}
-   */
-  override apply({ simulated }: AbAttrBaseParams): void {
-    if (simulated) {
-      return;
-    }
-
-    // TODO: investigate why this is not using the weatherType parameter
-    // and is instead reading the weather from the global scene
-    const weatherType = globalScene.arena.weather?.weatherType;
-
-    if (weatherType && this.formRevertingWeathers.includes(weatherType)) {
-      globalScene.arena.triggerWeatherBasedFormChangesToNormal();
-    } else {
-      globalScene.arena.triggerWeatherBasedFormChanges();
-    }
-  }
-}
-
-/**
- * Ability attribute to change Eiscue to Ice form if snowing or hailing.
- */
-// TODO: This is only required due to how tightly `PostWeatherChangeFormChangeAbAttr` is tied to its related abilities
-export class IceFaceFormChangeAbAttr extends PostWeatherChangeAbAttr {
-  private readonly formIndex: number;
-
-  constructor(formIndex: number) {
-    super();
-    this.formIndex = formIndex;
-  }
-
-  override canApply({ pokemon, weather }: PostWeatherChangeAbAttrParams): boolean {
-    return pokemon.formIndex === this.formIndex && (weather === WeatherType.HAIL || weather === WeatherType.SNOW);
-  }
-
-  override apply({ simulated, pokemon }: PostWeatherChangeAbAttrParams): void {
-    if (simulated) {
-      return;
-    }
-    globalScene.triggerPokemonFormChange(pokemon, SpeciesFormChangeAbilityTrigger);
-  }
-}
-
-/**
  * Adds a battler tag to the pokemon when the weather changes.
  * @sealed
  */
@@ -4384,28 +4182,6 @@ export class PostTurnHealAbAttr extends PostTurnAbAttr {
     }
   }
 }
-
-/** @sealed */
-export class PostTurnFormChangeAbAttr extends PostTurnAbAttr {
-  private readonly formFunc: (p: Pokemon) => number;
-
-  constructor(formFunc: (p: Pokemon) => number) {
-    super(true);
-
-    this.formFunc = formFunc;
-  }
-
-  override canApply({ pokemon }: AbAttrBaseParams): boolean {
-    return this.formFunc(pokemon) !== pokemon.formIndex;
-  }
-
-  override apply({ simulated, pokemon }: AbAttrBaseParams): void {
-    if (!simulated) {
-      globalScene.triggerPokemonFormChange(pokemon, SpeciesFormChangeAbilityTrigger, false);
-    }
-  }
-}
-
 /**
  * Damages sleeping opponents at the end of the turn.
  * @see {@link https://bulbapedia.bulbagarden.net/wiki/Bad_Dreams_(Ability) | Bad Dreams (Bulbapedia)}
@@ -4514,6 +4290,7 @@ export interface PostMoveUsedAbAttrParams extends AbAttrBaseParams {
  */
 abstract class PostMoveUsedAbAttr extends AbAttr {
   // biome-ignore lint/correctness/noUnusedFunctionParameters: psuedo-abstract method
+  // @ts-expect-error
   public override canApply(params: Closed<PostMoveUsedAbAttrParams>): boolean {
     return true;
   }
@@ -4874,47 +4651,6 @@ export abstract class PostFaintAbAttr extends AbAttr {
   }
 
   apply(_params: Closed<PostFaintAbAttrParams>): void {}
-}
-
-/**
- * Used for weather suppressing abilities to trigger weather-based form changes upon being fainted.
- * Used by Cloud Nine and Air Lock.
- * @sealed
- */
-export class PostFaintUnsuppressedWeatherFormChangeAbAttr extends PostFaintAbAttr {
-  override canApply(_params: PostFaintAbAttrParams): boolean {
-    return getPokemonWithWeatherBasedForms().length > 0;
-  }
-
-  /**
-   * Triggers {@linkcode Arena.triggerWeatherBasedFormChanges | triggerWeatherBasedFormChanges}
-   * when the user of the ability faints
-   */
-  override apply({ simulated }: PostFaintAbAttrParams): void {
-    if (!simulated) {
-      globalScene.arena.triggerWeatherBasedFormChanges();
-    }
-  }
-}
-
-export class PostFaintFormChangeAbAttr extends PostFaintAbAttr {
-  private readonly formFunc: (p: Pokemon) => number;
-
-  constructor(formFunc: (p: Pokemon) => number) {
-    super(true);
-
-    this.formFunc = formFunc;
-  }
-
-  override canApply({ pokemon }: AbAttrBaseParams): boolean {
-    return this.formFunc(pokemon) !== pokemon.formIndex;
-  }
-
-  override apply({ pokemon, simulated }: AbAttrBaseParams): void {
-    if (!simulated) {
-      globalScene.triggerPokemonFormChange(pokemon, SpeciesFormChangeAbilityTrigger, false);
-    }
-  }
 }
 
 export class PostFaintContactDamageAbAttr extends PostFaintAbAttr {
@@ -5405,74 +5141,6 @@ export class PostSummonStatStageChangeOnArenaAbAttr extends PostSummonStatStageC
   override canApply(params: AbAttrBaseParams): boolean {
     const side = params.pokemon.isPlayer() ? ArenaTagSide.PLAYER : ArenaTagSide.ENEMY;
     return (globalScene.arena.getTagOnSide(this.arenaTagType, side) ?? false) && super.canApply(params);
-  }
-}
-
-/**
- * Ability attribute to nullify damage from moves used against the user depending on their form.
- * This is used in the Disguise and Ice Face abilities.
- *
- * Does not apply to a user's substitute
- * @sealed
- */
-// TODO: This assumes the pokemon's base form has the damage immunity and its 1st form doesn't;
-// this should be reworked to not hardcode these assumptions
-export class FormBlockDamageAbAttr extends ReceivedMoveDamageMultiplierAbAttr {
-  private readonly formIndex: number;
-  /** The percentage of maximum HP to deal in recoil, or `0` to deal none. */
-  private readonly recoil: number;
-  /**
-   * The `i18n` locales key to show upon triggering.
-   * Within it, the following variables will be populated:
-   * - `pokemonNameWithAffix`: The name of the Pokémon with the ability
-   * - `abilityName`: The name of the ability being triggered
-   */
-  // TODO: Remove `abilityName` from contexts for greater translator freedoms & such
-  private readonly i18nKey: string;
-
-  constructor(
-    formIndex: number,
-    i18nKey: string,
-    recoil: number,
-    // TODO: Since only Ice Face uses this, should this simply take the move and nothing else?
-    condition: PokemonDefendCondition = () => true,
-  ) {
-    super(condition, 0);
-
-    this.formIndex = formIndex;
-    this.i18nKey = i18nKey;
-    this.recoil = recoil;
-  }
-
-  override canApply({ pokemon, opponent, move, damage }: PreDefendModifyDamageAbAttrParams): boolean {
-    // TODO: Investigate whether the substitute check can be removed, as it should be accounted for in the move effect phase
-    return (
-      damage.value > 0
-      && pokemon.formIndex === this.formIndex
-      && this.condition(pokemon, opponent, move)
-      && !move.hitsSubstitute(opponent, pokemon)
-    );
-  }
-
-  override apply({ pokemon, simulated, damage }: PreDefendModifyDamageAbAttrParams): void {
-    if (simulated) {
-      return;
-    }
-
-    damage.value = 0;
-    if (this.recoil > 0) {
-      pokemon.damageAndUpdate(toDmgValue(pokemon.getMaxHp() * this.recoil), {
-        result: HitResult.INDIRECT,
-        ignoreSegments: true,
-        ignoreFaintPhase: true,
-      });
-    }
-
-    globalScene.triggerPokemonFormChange(pokemon, SpeciesFormChangeAbilityTrigger);
-  }
-
-  override getTriggerMessage({ pokemon }: PreDefendModifyDamageAbAttrParams, abilityName: string): string {
-    return i18next.t(this.i18nKey, { pokemonNameWithAffix: getPokemonNameWithAffix(pokemon), abilityName });
   }
 }
 
@@ -6062,7 +5730,6 @@ export const AbilityAttrs = Object.freeze({
   FlinchStatStageChangeAbAttr,
   ForceSwitchOutImmunityAbAttr,
   ForewarnAbAttr,
-  FormBlockDamageAbAttr,
   FriskAbAttr,
   FullHpResistTypeAbAttr,
   GorillaTacticsAbAttr,
@@ -6101,7 +5768,6 @@ export const AbilityAttrs = Object.freeze({
   PostAttackStealHeldItemAbAttr,
   PostBattleAbAttr,
   PostBattleInitAbAttr,
-  PostBattleInitFormChangeAbAttr,
   PostBattleLootAbAttr,
   PostBiomeChangeAbAttr,
   PostBiomeChangeTerrainChangeAbAttr,
@@ -6128,7 +5794,6 @@ export const AbilityAttrs = Object.freeze({
   PostFaintAbAttr,
   PostFaintContactDamageAbAttr,
   PostFaintHPDamageAbAttr,
-  PostFaintUnsuppressedWeatherFormChangeAbAttr,
   PostIntimidateStatStageChangeAbAttr,
   PostItemLostAbAttr,
   PostItemLostApplyBattlerTagAbAttr,
@@ -6146,8 +5811,6 @@ export const AbilityAttrs = Object.freeze({
   PostSummonClearAllyStatStagesAbAttr,
   PostSummonCopyAbilityAbAttr,
   PostSummonCopyAllyStatsAbAttr,
-  PostSummonFormChangeAbAttr,
-  PostSummonFormChangeByWeatherAbAttr,
   PostSummonHealStatusAbAttr,
   PostSummonMessageAbAttr,
   PostSummonRemoveArenaTagAbAttr,
@@ -6160,20 +5823,15 @@ export const AbilityAttrs = Object.freeze({
   PostSummonUnnamedMessageAbAttr,
   PostSummonUserFieldRemoveStatusEffectAbAttr,
   PostSummonWeatherChangeAbAttr,
-  PostSummonWeatherSuppressedFormChangeAbAttr,
   PostTerrainChangeAbAttr,
   PostTurnAbAttr,
-  PostTurnFormChangeAbAttr,
   PostTurnHealAbAttr,
   PostTurnHurtIfSleepingAbAttr,
   PostTurnResetStatusAbAttr,
   PostTurnRestoreBerryAbAttr,
   PostTurnStatusHealAbAttr,
   PostVictoryAbAttr,
-  PostVictoryFormChangeAbAttr,
   PostWeatherChangeAbAttr,
-  PostWeatherChangeFormChangeAbAttr,
-  IceFaceFormChangeAbAttr,
   PostWeatherLapseAbAttr,
   PostWeatherLapseDamageAbAttr,
   PostWeatherLapseHealAbAttr,
@@ -6192,7 +5850,6 @@ export const AbilityAttrs = Object.freeze({
   PreStatStageChangeAbAttr,
   PreSummonAbAttr,
   PreSwitchOutAbAttr,
-  PreSwitchOutFormChangeAbAttr,
   PreSwitchOutHealAbAttr,
   PreSwitchOutResetStatusAbAttr,
   PreWeatherDamageAbAttr,

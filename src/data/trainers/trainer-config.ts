@@ -974,26 +974,18 @@ export function getRandomPartyMemberFunc(
   postProcess?: (enemyPokemon: EnemyPokemon) => void,
 ): PartyMemberFunc {
   return (level: number, strength: PartyMemberStrength, evoThresholdKind: EvoLevelThresholdKind) => {
-    let species: SpeciesId | readonly SpeciesId[] | typeof speciesPool = speciesPool;
+    let speciesId: SpeciesId | readonly SpeciesId[] | typeof speciesPool = speciesPool;
     do {
-      species = randSeedItem(species);
-    } while (typeof species !== "number");
+      speciesId = randSeedItem(speciesId);
+    } while (typeof speciesId !== "number");
 
     if (!ignoreEvolution) {
-      species = speciesDataRegistry
-        .getSpecies(species)
+      speciesId = speciesDataRegistry
+        .getSpecies(speciesId)
         .getTrainerSpeciesForLevel(level, true, strength, evoThresholdKind);
     }
 
-    return globalScene.addEnemyPokemon(
-      speciesDataRegistry.getSpecies(species),
-      level,
-      trainerSlot,
-      undefined,
-      false,
-      undefined,
-      postProcess,
-    );
+    return globalScene.addEnemyPokemon(speciesId, level, trainerSlot, undefined, false, undefined, postProcess);
   };
 }
 
@@ -1018,7 +1010,7 @@ function getSpeciesFilterRandomPartyMemberFunc(
         .getTrainerSpeciesForLevel(level, true, strength),
     );
 
-    return globalScene.addEnemyPokemon(species, level, trainerSlot, undefined, false, undefined, postProcess);
+    return globalScene.addEnemyPokemon(species.speciesId, level, trainerSlot, undefined, false, undefined, postProcess);
   };
 }
 

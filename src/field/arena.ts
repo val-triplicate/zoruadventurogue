@@ -8,7 +8,6 @@ import type { ArenaTag, ArenaTagTypeMap } from "#data/arena-tag";
 import { getArenaTag } from "#data/arena-tag";
 import { biomeBgmLoopPoints } from "#data/biome-bgm-loop-points";
 import { allBiomes } from "#data/data-lists";
-import { SpeciesFormChangeRevertWeatherFormTrigger, SpeciesFormChangeWeatherTrigger } from "#data/form-change-triggers";
 import type { PokemonSpecies } from "#data/pokemon-species";
 import type { PositionalTag } from "#data/positional-tags/positional-tag";
 import { PositionalTagManager } from "#data/positional-tags/positional-tag-manager";
@@ -20,7 +19,6 @@ import {
   getWeatherStartMessage,
   Weather,
 } from "#data/weather";
-import { AbilityId } from "#enums/ability-id";
 import { ArenaTagSide } from "#enums/arena-tag-side";
 import type { ArenaTagType } from "#enums/arena-tag-type";
 import type { BattlerIndex } from "#enums/battler-index";
@@ -320,40 +318,6 @@ export class Arena {
 
   public isMoveWeatherCancelled(user: Pokemon, move: Move): boolean {
     return !!this.weather && !this.weather.isEffectSuppressed() && this.weather.isMoveWeatherCancelled(user, move);
-  }
-
-  /**
-   * Function to trigger all weather based form changes
-   * @param source - The Pokemon causing the changes by removing itself from the field
-   */
-  public triggerWeatherBasedFormChanges(source?: Pokemon): void {
-    for (const p of inSpeedOrder(ArenaTagSide.BOTH)) {
-      // TODO - This is a bandaid. Abilities leaving the field needs a better approach than
-      // calling this method for every switch out that happens
-      if (p === source) {
-        continue;
-      }
-      const isCastformWithForecast = p.hasAbility(AbilityId.FORECAST) && p.species.speciesId === SpeciesId.CASTFORM;
-      const isCherrimWithFlowerGift = p.hasAbility(AbilityId.FLOWER_GIFT) && p.species.speciesId === SpeciesId.CHERRIM;
-
-      if (isCastformWithForecast || isCherrimWithFlowerGift) {
-        globalScene.triggerPokemonFormChange(p, SpeciesFormChangeWeatherTrigger);
-      }
-    }
-  }
-
-  /** Function to trigger all weather based form changes back into their normal forms */
-  public triggerWeatherBasedFormChangesToNormal(): void {
-    for (const p of inSpeedOrder(ArenaTagSide.BOTH)) {
-      const isCastformWithForecast =
-        p.hasAbility(AbilityId.FORECAST, false, true) && p.species.speciesId === SpeciesId.CASTFORM;
-      const isCherrimWithFlowerGift =
-        p.hasAbility(AbilityId.FLOWER_GIFT, false, true) && p.species.speciesId === SpeciesId.CHERRIM;
-
-      if (isCastformWithForecast || isCherrimWithFlowerGift) {
-        globalScene.triggerPokemonFormChange(p, SpeciesFormChangeRevertWeatherFormTrigger);
-      }
-    }
   }
 
   /** Sets a random weather based on the time of day and the current biome */

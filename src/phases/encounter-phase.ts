@@ -118,7 +118,7 @@ export class EncounterPhase extends BattlePhase {
             enemySpecies = getGoldenBugNetSpecies(level);
           }
           battle.enemyParty[e] = globalScene.addEnemyPokemon(
-            enemySpecies,
+            enemySpecies.speciesId,
             level,
             TrainerSlot.NONE,
             !!globalScene.getEncounterBossSegments(battle.waveIndex, level, enemySpecies),
@@ -532,7 +532,7 @@ export class EncounterPhase extends BattlePhase {
     const enemyField = globalScene.getEnemyField();
 
     enemyField.forEach((enemyPokemon, e) => {
-      if (enemyPokemon.isShiny(true)) {
+      if (enemyPokemon.isShiny()) {
         globalScene.phaseManager.unshiftNew("ShinySparklePhase", BattlerIndex.ENEMY + e);
       }
       /** This sets Eternatus' held item to be untransferrable, preventing it from being stolen */

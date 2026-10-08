@@ -1,5 +1,4 @@
 import { settings } from "#app/global-settings-manager";
-import { Gender } from "#data/gender";
 import type { Pokemon } from "#field/pokemon";
 import { hasExpSprite } from "#sprites/sprite-utils";
 import type { Variant, VariantSet } from "#sprites/variant";
@@ -17,12 +16,7 @@ const DUNDER_REGEX = /_{2}/g;
 export function getSpriteId(pokemon: Pokemon, ignoreOverride?: boolean): string {
   return pokemon
     .getSpeciesForm(ignoreOverride)
-    .getSpriteId(
-      pokemon.getGender(ignoreOverride) === Gender.FEMALE,
-      pokemon.formIndex,
-      pokemon.shiny,
-      pokemon.variant,
-    );
+    .getSpriteId(pokemon.getGender(ignoreOverride), pokemon.formIndex, pokemon.shiny, pokemon.variant);
 }
 
 export function getBattleSpriteId(pokemon: Pokemon, back?: boolean, ignoreOverride = false): string {
@@ -31,13 +25,7 @@ export function getBattleSpriteId(pokemon: Pokemon, back?: boolean, ignoreOverri
   }
   return pokemon
     .getSpeciesForm(ignoreOverride)
-    .getSpriteId(
-      pokemon.getGender(ignoreOverride) === Gender.FEMALE,
-      pokemon.formIndex,
-      pokemon.shiny,
-      pokemon.variant,
-      back,
-    );
+    .getSpriteId(pokemon.getGender(ignoreOverride), pokemon.formIndex, pokemon.shiny, pokemon.variant, back);
 }
 
 /** Compute the path to the sprite atlas by converting double underscores to path components (/)

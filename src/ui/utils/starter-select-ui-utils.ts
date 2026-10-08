@@ -225,6 +225,6 @@ export function sortTeamMembers(teamMemberIds: CharacterId[], sort: SortCriteria
  * @param formIndex - The form index of the starter to get moves for
  * @returns An array of move IDs
  */
-export function getTeamMemberMoves(teamMemberId: CharacterId): MoveId[] {
+export function getCharMoves(teamMemberId: CharacterId): MoveId[] {
   return characterRegistry.getCharacter(teamMemberId).movePool;
 }

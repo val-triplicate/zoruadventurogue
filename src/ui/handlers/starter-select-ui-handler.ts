@@ -36,10 +36,10 @@ import { ScrollBar } from "#ui/scroll-bar";
 import { CharacterContainer } from "#ui/starter-container";
 import { StarterSelectInstructionsContainer } from "#ui/starter-select-instructions";
 import {
+  getCharMoves,
   getIconPropsFromPreferences,
   getStarterDetailsFromPreferences,
   getTeamDataEntry,
-  getTeamMemberMoves,
   sortTeamMembers,
 } from "#ui/starter-select-ui-utils";
 import { StarterSummary } from "#ui/starter-summary";
@@ -48,6 +48,8 @@ import { addWindow } from "#ui/ui-theme";
 import { getLocalizedSpriteKey } from "#utils/common";
 import i18next from "i18next";
 import type { GameObjects } from "phaser";
+
+import Sprite = Phaser.GameObjects.Sprite;
 
 const COLUMNS = 9;
 const ROWS = 9;
@@ -499,11 +501,8 @@ export class StarterSelectUiHandler extends MessageUiHandler {
   /**
    * Sets a bounce animation if enabled and the Pokemon has an upgrade
    * @param icon - {@linkcode Phaser.GameObjects.GameObject} to animate
-   * @param species - {@linkcode PokemonSpecies} of the icon used to check for upgrades
-   * @param startPaused Should this animation be paused after it is added?
    */
-  protected setUpgradeAnimation(starter: CharacterContainer): void {
-    const icon = starter.icon;
+  protected setUpgradeAnimation(icon: Sprite): void {
     this.iconAnimHandler.addOrUpdate(icon, PokemonIconAnimMode.NONE);
   }
 
@@ -1036,8 +1035,8 @@ export class StarterSelectUiHandler extends MessageUiHandler {
       });
     }
 
-    const starterMoves = getTeamMemberMoves(charId);
-    if (starterMoves.length > 1) {
+    const charMoves = getCharMoves(charId);
+    if (charMoves.length > 1) {
       const showSwapOptions = (moveset: MoveSet) => {
         this.blockInput = true;
 
@@ -1057,7 +1056,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
                           `${i18next.t("starterSelectUiHandler:selectMoveSwapWith")} ${allMoves[m].name}.`,
                           null,
                           () => {
-                            const possibleMoves = starterMoves.filter((sm: MoveId) => sm !== m);
+                            const possibleMoves = charMoves.filter((sm: MoveId) => sm !== m);
                             this.moveInfoOverlay.show(allMoves[possibleMoves[0]]);
 
                             ui.setModeWithoutClear(UiMode.OPTION_SELECT, {
@@ -1369,7 +1368,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
     this.updateScroll();
 
     this.starterContainers.forEach(container => {
-      this.setUpgradeAnimation(container);
+      this.setUpgradeAnimation(container.icon);
     });
   }
 
@@ -1479,12 +1478,12 @@ export class StarterSelectUiHandler extends MessageUiHandler {
       container.hiddenAbilityIcon.setVisible(saveData?.isAbilityUnlocked || false);
       container.classicWinIcon.setVisible((saveData?.winCount || 0) > 0).setTexture("champion_ribbon");
       container.favoriteIcon.setVisible(characterRegistry.getPreferences(charId).favorite);
-      this.setUpgradeAnimation(container);
+      this.setUpgradeAnimation(container.icon);
     });
   }
 
   public override setCursor(cursor: number): boolean {
-    let changed = false;
+    let changed: boolean;
     this.oldCursor = this.cursor;
 
     if (this.filterMode) {
@@ -1622,7 +1621,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
     let { gender, formIndex, shiny, variant } = this.getStarterDexAttrPropsFromPreferences(teamMemberId);
     gender = gender || Gender.NONBINARY;
     this.checkIconId(lastStarterIcon, container.species, gender, formIndex, shiny, variant);
-    this.setUpgradeAnimation(container);
+    this.setUpgradeAnimation(container.icon);
   }
 
   // TODO: check whether this is still necessary
@@ -1631,18 +1630,16 @@ export class StarterSelectUiHandler extends MessageUiHandler {
   }
 
   /**
-   * Updates all information for the current starter.
+   * Updates all information for the current character.
    * This should be called every time that preferences are updated.
    *
    * Among other things, it updates the moveset and party information to match the current preferences.
    *
-   * @param starterId - the id of the new starter
-   * @param save - whether the new details should be saved to local storage.
+   * @param charId - the id of the new character
    */
   private setCharDetails(charId: CharacterId): void {
     const starterDetails = getStarterDetailsFromPreferences(charId);
     const { shiny, variant, gender, formIndex } = starterDetails;
-
     this.starterSummary.setStarterDetails(charId, starterDetails);
 
     const [isInParty, partyIndex]: [boolean, number] = this.isInParty(charId);

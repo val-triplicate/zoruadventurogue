@@ -116,9 +116,6 @@ export class TurnStartPhase extends FieldPhase {
       case Command.FIGHT:
         this.handleFightCommand(turnCommand, pokemon);
         break;
-      case Command.BALL:
-        globalScene.phaseManager.unshiftNew("AttemptCapturePhase", turnCommand.targets![0] % 2, turnCommand.cursor!); //TODO: is the bang correct here?
-        break;
       case Command.POKEMON:
         globalScene.phaseManager.unshiftNew(
           "SwitchSummonPhase",

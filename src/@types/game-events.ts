@@ -67,9 +67,7 @@ export interface TimedEvent extends EventBanner {
   readonly eventType: EventType;
   readonly shinyEncounterMultiplier?: number;
   readonly shinyCatchMultiplier?: number;
-  readonly classicFriendshipMultiplier?: number;
   readonly luckBoost?: number;
-  readonly upgradeUnlockedVouchers?: boolean;
   readonly startDate: Date;
   readonly endDate: Date;
   readonly eventEncounters?: readonly EventEncounter[];
@@ -78,11 +76,9 @@ export interface TimedEvent extends EventBanner {
   readonly terrain?: EventTerrainPools;
   readonly mysteryEncounterTierChanges?: readonly EventMysteryEncounterTier[];
   readonly luckBoostedSpecies?: readonly SpeciesId[];
-  readonly boostFusions?: boolean; //MODIFIER REWORK PLEASE
   readonly classicWaveRewards?: readonly EventWaveReward[]; // Rival battle rewards
   readonly trainerShinyChance?: number; // Odds over 65536 of trainer mon generating as shiny
   readonly music?: readonly EventMusicReplacement[];
   readonly sprites?: EventSpriteOptions;
   readonly textReplacements?: readonly EventTextReplacement[];
-  readonly dailyRunStartingItems?: readonly ModifierTypeKeys[];
 }

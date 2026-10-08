@@ -10,12 +10,12 @@ import i18next from "i18next";
  */
 // TODO: this shouldn't accept `undefined`
 // TODO: Remove this and switch to using i18n context selectors based on pokemon trainer class - this causes incorrect locales
-export function getPokemonNameWithAffix(pokemon: Pokemon | undefined, useIllusion = true): string {
+export function getPokemonNameWithAffix(pokemon: Pokemon | undefined): string {
   if (!pokemon) {
     return "MissingNo.";
   }
 
-  const pokemonName = pokemon.getNameToRender({ useIllusion });
+  const pokemonName = pokemon.getNameToRender();
   if (!pokemon.isEnemy()) {
     return pokemonName;
   }

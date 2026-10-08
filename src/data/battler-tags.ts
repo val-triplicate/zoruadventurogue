@@ -55,7 +55,6 @@ import { getPokemonNameWithAffix } from "#app/messages";
 import { activeOverrides } from "#app/overrides";
 import { CommonBattleAnim, MoveChargeAnim } from "#data/battle-anims";
 import { allAbilities, allMoves } from "#data/data-lists";
-import { SpeciesFormChangeAbilityTrigger } from "#data/form-change-triggers";
 import { getStatusEffectHealText } from "#data/status-effect";
 import { TerrainType } from "#data/terrain";
 import { AbilityId } from "#enums/ability-id";
@@ -2974,12 +2973,10 @@ export class GulpMissileTag extends SerializableBattlerTag {
 
   onAdd(pokemon: Pokemon): void {
     super.onAdd(pokemon);
-    globalScene.triggerPokemonFormChange(pokemon, SpeciesFormChangeAbilityTrigger);
   }
 
   onRemove(pokemon: Pokemon): void {
     super.onRemove(pokemon);
-    globalScene.triggerPokemonFormChange(pokemon, SpeciesFormChangeAbilityTrigger);
   }
 }
 

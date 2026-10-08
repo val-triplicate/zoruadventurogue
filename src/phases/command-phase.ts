@@ -14,7 +14,6 @@ import { FieldPosition } from "#enums/field-position";
 import { MoveId } from "#enums/move-id";
 import { isIgnorePP, isVirtual, MoveUseMode } from "#enums/move-use-mode";
 import { MysteryEncounterMode } from "#enums/mystery-encounter-mode";
-import { PokeballType } from "#enums/pokeball";
 import { UiMode } from "#enums/ui-mode";
 import type { PlayerPokemon } from "#field/pokemon";
 import { getMoveTargets } from "#moves/move-utils";
@@ -80,7 +79,7 @@ export class CommandPhase extends FieldPhase {
     }
 
     const allyCommand = globalScene.currentBattle.turnCommands[this.fieldIndex - 1];
-    if (allyCommand?.command === Command.BALL || allyCommand?.command === Command.RUN) {
+    if (allyCommand?.command === Command.RUN) {
       globalScene.currentBattle.turnCommands[this.fieldIndex] = {
         command: allyCommand?.command,
         skip: true,
@@ -336,60 +335,6 @@ export class CommandPhase extends FieldPhase {
   }
 
   /**
-   * Helper method for {@linkcode handleCommand} that handles the logic when the selected command is to use a pokeball.
-   *
-   * @param cursor - The index of the pokeball to use
-   * @returns Whether the command was successfully initiated
-   */
-  private handleBallCommand(cursor: number): boolean {
-    const targets = globalScene
-      .getEnemyField()
-      .filter(p => p.isActive(true))
-      .map(p => p.getBattlerIndex());
-
-    if (targets.length > 1) {
-      this.queueShowText("battle:noPokeballMulti");
-      return false;
-    }
-
-    const isFinalBoss = globalScene.gameMode.isBattleClassicFinalBoss(globalScene.currentBattle.waveIndex);
-
-    const numBallTypes = 5;
-    if (cursor < numBallTypes) {
-      const targetPokemon = globalScene.getEnemyPokemon(false);
-      if (
-        targetPokemon?.isBoss()
-        && targetPokemon?.bossSegmentIndex >= 1 // TODO: Decouple this hardcoded exception for wonder guard and just check the target...
-        && !targetPokemon?.hasAbility(AbilityId.WONDER_GUARD, false, true)
-      ) {
-        // When facing the final boss, it must be weakened unless a Master Ball is used AND no challenges are active.
-        // The message is customized for the final boss.
-        if (isFinalBoss && (cursor < PokeballType.MASTER_BALL || cursor === PokeballType.MASTER_BALL)) {
-          this.queueShowText("battle:noPokeballForceFinalBossCatchable");
-          return false;
-        }
-        // When facing any other boss, Master Ball can always be used, and we use the standard message.
-        if (cursor < PokeballType.MASTER_BALL) {
-          this.queueShowText("battle:noPokeballStrong");
-          return false;
-        }
-      }
-
-      globalScene.currentBattle.turnCommands[this.fieldIndex] = {
-        command: Command.BALL,
-        cursor,
-      };
-      globalScene.currentBattle.turnCommands[this.fieldIndex]!.targets = targets;
-      if (this.fieldIndex) {
-        globalScene.currentBattle.turnCommands[this.fieldIndex - 1]!.skip = true;
-      }
-      return true;
-    }
-
-    return false;
-  }
-
-  /**
    * Submethod of {@linkcode tryLeaveField} to handle the logic for effects that prevent the pokemon from leaving the field
    * due to trapping abilities or effects.
    *
@@ -576,9 +521,6 @@ export class CommandPhase extends FieldPhase {
       case Command.TERA:
       case Command.FIGHT:
         success = this.handleFightCommand(command, cursor, typeof useMode === "boolean" ? undefined : useMode, move);
-        break;
-      case Command.BALL:
-        success = this.handleBallCommand(cursor);
         break;
       case Command.POKEMON:
         this.isSwitch = true;

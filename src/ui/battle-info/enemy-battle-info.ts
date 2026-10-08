@@ -112,32 +112,6 @@ export class EnemyBattleInfo extends BattleInfo {
         .on("pointerout", () => globalScene.ui.hideTooltip());
     }
 
-    const dexEntry = globalScene.gameData.dexData[pokemon.species.speciesId];
-    this.ownedIcon.setVisible(!!dexEntry.caughtAttr);
-    const opponentPokemonDexAttr = pokemon.getDexAttr();
-    if (
-      globalScene.gameMode.isClassic
-      && globalScene.gameData.starterData[pokemon.species.getRootSpeciesId()].classicWinCount > 0
-      && globalScene.gameData.starterData[pokemon.species.getRootSpeciesId(true)].classicWinCount > 0
-    ) {
-      // move the ribbon to the left if there is no owned icon
-      const championRibbonX = this.ownedIcon.visible ? 8 : 0;
-      this.championRibbon.setPositionRelative(this.nameText, championRibbonX, 11.75);
-      this.championRibbon.setVisible(true);
-    }
-
-    // Check if Player owns all genders and forms of the Pokemon
-    const missingDexAttrs = (dexEntry.caughtAttr & opponentPokemonDexAttr) < opponentPokemonDexAttr;
-
-    const ownedAbilityAttrs = globalScene.gameData.starterData[pokemon.species.getRootSpeciesId()].abilityAttr;
-
-    // Check if the player owns ability for the root form
-    const playerOwnsThisAbility = pokemon.checkIfPlayerHasAbilityOfStarter(ownedAbilityAttrs);
-
-    if (missingDexAttrs || !playerOwnsThisAbility) {
-      this.ownedIcon.setTint(0x808080);
-    }
-
     if (this.boss) {
       this.updateBossSegmentDividers(pokemon as EnemyPokemon);
     }

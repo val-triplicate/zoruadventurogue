@@ -19,7 +19,6 @@ import { MoveChargeAnim } from "#data/battle-anims";
 import {
   CommandedTag,
   EncoreTag,
-  GulpMissileTag,
   HelpingHandTag,
   SemiInvulnerableTag,
   ShellTrapTag,
@@ -31,7 +30,6 @@ import {
 } from "#data/battler-tags";
 import { getBerryEffectFunc } from "#data/berry";
 import { allAbilities, allMoves } from "#data/data-lists";
-import { SpeciesFormChangeRevertWeatherFormTrigger } from "#data/form-change-triggers";
 import { getNonVolatileStatusEffects, getStatusEffectHealText, isNonVolatileStatusEffect } from "#data/status-effect";
 import { TerrainType } from "#data/terrain";
 import { getTypeDamageMultiplier } from "#data/type";
@@ -1367,11 +1365,7 @@ export abstract class Move implements Localizable {
       MoveId.ICE_BALL,
       MoveId.ENDEAVOR,
     ];
-    if (exceptMoves.includes(this.id)) {
-      return false;
-    }
-
-    return true;
+    return !exceptMoves.includes(this.id);
   }
 }
 
@@ -6632,45 +6626,6 @@ export class FallDownAttr extends AddBattlerTagAttr {
 }
 
 /**
- * Adds the appropriate battler tag for Gulp Missile when Surf or Dive is used.
- */
-export class GulpMissileTagAttr extends MoveEffectAttr {
-  constructor() {
-    super(true);
-  }
-
-  /**
-   * Adds BattlerTagType from GulpMissileTag based on the Pokemon's HP ratio.
-   * @param user The Pokemon using the move.
-   * @param _target N/A
-   * @param move The move being used.
-   * @param _args N/A
-   * @returns Whether the BattlerTag is applied.
-   */
-  apply(user: Pokemon, _target: Pokemon, move: Move, _args: any[]): boolean {
-    if (!super.apply(user, _target, move, _args)) {
-      return false;
-    }
-
-    if (user.hasAbility(AbilityId.GULP_MISSILE) && user.species.speciesId === SpeciesId.CRAMORANT) {
-      if (user.getHpRatio() >= 0.5) {
-        user.addTag(BattlerTagType.GULP_MISSILE_ARROKUDA, 0, move.id);
-      } else {
-        user.addTag(BattlerTagType.GULP_MISSILE_PIKACHU, 0, move.id);
-      }
-      return true;
-    }
-
-    return false;
-  }
-
-  getUserBenefitScore(user: Pokemon, _target: Pokemon, _move: Move): number {
-    const isCramorant = user.hasAbility(AbilityId.GULP_MISSILE) && user.species.speciesId === SpeciesId.CRAMORANT;
-    return isCramorant && !user.getTag(GulpMissileTag) ? 10 : 0;
-  }
-}
-
-/**
  * Attribute to implement Jaw Lock's linked trapping effect between the user and target
  */
 export class JawLockAttr extends AddBattlerTagAttr {
@@ -8458,7 +8413,6 @@ export class AbilityChangeAttr extends MoveEffectAttr {
 
     const moveTarget = this.selfTarget ? user : target;
 
-    globalScene.triggerPokemonFormChange(moveTarget, SpeciesFormChangeRevertWeatherFormTrigger);
     globalScene.phaseManager.queueMessage(
       i18next.t("moveTriggers:acquiredAbility", {
         pokemonName: getPokemonNameWithAffix(moveTarget),
@@ -8466,7 +8420,6 @@ export class AbilityChangeAttr extends MoveEffectAttr {
       }),
     );
     moveTarget.setTempAbility(allAbilities[this.ability]);
-    globalScene.triggerPokemonFormChange(moveTarget, SpeciesFormChangeRevertWeatherFormTrigger);
     return true;
   }
 
@@ -8575,8 +8528,6 @@ export class SwitchAbilitiesAttr extends MoveEffectAttr {
 
     user.setTempAbility(target.getAbility());
     target.setTempAbility(tempAbility);
-    // Swaps Forecast/Flower Gift from Castform/Cherrim
-    globalScene.arena.triggerWeatherBasedFormChangesToNormal();
 
     return true;
   }
@@ -8602,8 +8553,6 @@ export class SuppressAbilitiesAttr extends MoveEffectAttr {
     );
 
     target.suppressAbility();
-
-    globalScene.arena.triggerWeatherBasedFormChangesToNormal();
 
     return true;
   }
@@ -9319,7 +9268,6 @@ const MoveAttrs = Object.freeze({
   SemiInvulnerableAttr,
   LeechSeedAttr,
   FallDownAttr,
-  GulpMissileTagAttr,
   JawLockAttr,
   CurseAttr,
   RemoveBattlerTagAttr,
@@ -9546,8 +9494,7 @@ export function initMoves() {
     new AttackMove(MoveId.HYDRO_PUMP, PokemonType.WATER, MoveCategory.SPECIAL, 110, 80, 5, -1, 0, 1),
     new AttackMove(MoveId.SURF, PokemonType.WATER, MoveCategory.SPECIAL, 90, 100, 15, -1, 0, 1)
       .target(MoveTarget.ALL_NEAR_OTHERS)
-      .attr(HitsTagForDoubleDamageAttr, BattlerTagType.UNDERWATER)
-      .attr(GulpMissileTagAttr),
+      .attr(HitsTagForDoubleDamageAttr, BattlerTagType.UNDERWATER),
     new AttackMove(MoveId.ICE_BEAM, PokemonType.ICE, MoveCategory.SPECIAL, 90, 100, 10, 10, 0, 1) //
       .attr(StatusEffectAttr, StatusEffect.FREEZE),
     new AttackMove(MoveId.BLIZZARD, PokemonType.ICE, MoveCategory.SPECIAL, 110, 70, 5, 10, 0, 1)
@@ -10365,8 +10312,7 @@ export function initMoves() {
       .attr(SecretPowerAttr),
     new ChargingAttackMove(MoveId.DIVE, PokemonType.WATER, MoveCategory.PHYSICAL, 80, 100, 10, -1, 0, 3)
       .chargeText(i18next.t("moveTriggers:hidUnderwater", { pokemonName: "{USER}" }))
-      .chargeAttr(SemiInvulnerableAttr, BattlerTagType.UNDERWATER)
-      .chargeAttr(GulpMissileTagAttr),
+      .chargeAttr(SemiInvulnerableAttr, BattlerTagType.UNDERWATER),
     new AttackMove(MoveId.ARM_THRUST, PokemonType.FIGHTING, MoveCategory.PHYSICAL, 15, 100, 20, -1, 0, 3) //
       .attr(MultiHitAttr),
     new SelfStatusMove(MoveId.CAMOUFLAGE, PokemonType.NORMAL, -1, 20, -1, 0, 3) //
@@ -10625,12 +10571,7 @@ export function initMoves() {
       .attr(StatStageChangeAttr, [Stat.DEF, Stat.SPDEF], -1, true),
     new AttackMove(MoveId.PAYBACK, PokemonType.DARK, MoveCategory.PHYSICAL, 50, 100, 10, -1, 0, 4)
       // Payback boosts power on item use
-      .attr(MovePowerMultiplierAttr, (_user, target) =>
-        target.turnData.acted
-        || globalScene.currentBattle.turnCommands[target.getBattlerIndex()]?.command === Command.BALL
-          ? 2
-          : 1,
-      ),
+      .attr(MovePowerMultiplierAttr, (_user, target) => (target.turnData.acted ? 2 : 1)),
     new AttackMove(MoveId.ASSURANCE, PokemonType.DARK, MoveCategory.PHYSICAL, 60, 100, 10, -1, 0, 4) //
       .attr(MovePowerMultiplierAttr, (_user, target, _move) => (target.turnData.damageTaken > 0 ? 2 : 1)),
     new StatusMove(MoveId.EMBARGO, PokemonType.DARK, 100, 15, -1, 0, 4) //
@@ -12641,6 +12582,6 @@ export function initMoves() {
       .attr(IgnoreOpponentStatStagesAttr)
       .attr(NihilLightAttr)
       .target(MoveTarget.ALL_NEAR_ENEMIES)
-      .edgeCase(), // Needs to replace the user's Core Enforcer if mega evolved (Zygarde-Complete to Mega Zygarde)
+      .edgeCase(),
   );
 }

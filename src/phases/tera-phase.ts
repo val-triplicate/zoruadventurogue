@@ -1,7 +1,6 @@
 import { globalScene } from "#app/global-scene";
 import { getPokemonNameWithAffix } from "#app/messages";
 import { CommonBattleAnim } from "#data/battle-anims";
-import { SpeciesFormChangeTeraTrigger } from "#data/form-change-triggers";
 import { CommonAnim } from "#enums/move-anims-common";
 import { PokemonType } from "#enums/pokemon-type";
 import type { Pokemon } from "#field/pokemon";
@@ -40,8 +39,6 @@ export class TeraPhase extends BattlePhase {
     // Remove added type from Forest's Curse/Trick-or-Treat
     this.pokemon.summonData.addedType = null;
     this.pokemon.updateSpritePipelineData();
-
-    globalScene.triggerPokemonFormChange(this.pokemon, SpeciesFormChangeTeraTrigger);
 
     if (this.pokemon.isPlayer()) {
       globalScene.arena.playerTerasUsed += 1;

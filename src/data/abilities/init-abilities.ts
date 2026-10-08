@@ -40,13 +40,11 @@ import {
   FlinchStatStageChangeAbAttr,
   ForceSwitchOutImmunityAbAttr,
   ForewarnAbAttr,
-  FormBlockDamageAbAttr,
   FriskAbAttr,
   FullHpResistTypeAbAttr,
   GorillaTacticsAbAttr,
   getWeatherCondition,
   HealFromBerryUseAbAttr,
-  IceFaceFormChangeAbAttr,
   IgnoreContactAbAttr,
   IgnoreMoveEffectsAbAttr,
   IgnoreOpponentStatStagesAbAttr,
@@ -78,7 +76,6 @@ import {
   PostAttackApplyStatusEffectAbAttr,
   PostAttackContactApplyStatusEffectAbAttr,
   PostAttackStealHeldItemAbAttr,
-  PostBattleInitFormChangeAbAttr,
   PostBattleLootAbAttr,
   PostBiomeChangeTerrainChangeAbAttr,
   PostBiomeChangeWeatherChangeAbAttr,
@@ -100,9 +97,7 @@ import {
   PostDefendTypeChangeAbAttr,
   PostDefendWeatherChangeAbAttr,
   PostFaintContactDamageAbAttr,
-  PostFaintFormChangeAbAttr,
   PostFaintHPDamageAbAttr,
-  PostFaintUnsuppressedWeatherFormChangeAbAttr,
   PostIntimidateStatStageChangeAbAttr,
   PostItemLostApplyBattlerTagAbAttr,
   PostKnockOutStatStageChangeAbAttr,
@@ -114,8 +109,6 @@ import {
   PostSummonClearAllyStatStagesAbAttr,
   PostSummonCopyAbilityAbAttr,
   PostSummonCopyAllyStatsAbAttr,
-  PostSummonFormChangeAbAttr,
-  PostSummonFormChangeByWeatherAbAttr,
   PostSummonHealStatusAbAttr,
   PostSummonMessageAbAttr,
   PostSummonRemoveArenaTagAbAttr,
@@ -127,24 +120,19 @@ import {
   PostSummonUnnamedMessageAbAttr,
   PostSummonUserFieldRemoveStatusEffectAbAttr,
   PostSummonWeatherChangeAbAttr,
-  PostSummonWeatherSuppressedFormChangeAbAttr,
   PostTerrainChangeAddBattlerTagAttr,
-  PostTurnFormChangeAbAttr,
   PostTurnHurtIfSleepingAbAttr,
   PostTurnResetStatusAbAttr,
   PostTurnRestoreBerryAbAttr,
   PostTurnStatusHealAbAttr,
-  PostVictoryFormChangeAbAttr,
   PostVictoryStatStageChangeAbAttr,
   PostWeatherChangeAddBattlerTagAbAttr,
-  PostWeatherChangeFormChangeAbAttr,
   PostWeatherLapseDamageAbAttr,
   PostWeatherLapseHealAbAttr,
   PreAttackWeatherOverrideAbAttr,
   PreDefendFullHpEndureAbAttr,
   PreLeaveFieldClearWeatherAbAttr,
   PreLeaveFieldRemoveSuppressAbilitiesSourceAbAttr,
-  PreSwitchOutFormChangeAbAttr,
   PreSwitchOutHealAbAttr,
   PreSwitchOutResetStatusAbAttr,
   PreventBerryUseAbAttr,
@@ -281,8 +269,6 @@ export function initAbilities() {
     new AbBuilder(AbilityId.CLOUD_NINE, 3) //
       .attr(SuppressWeatherEffectAbAttr, true)
       .attr(PostSummonUnnamedMessageAbAttr, i18next.t("abilityTriggers:weatherEffectDisappeared"))
-      .attr(PostSummonWeatherSuppressedFormChangeAbAttr)
-      .attr(PostFaintUnsuppressedWeatherFormChangeAbAttr)
       .bypassFaint()
       .build(),
     new AbBuilder(AbilityId.COMPOUND_EYES, 3) //
@@ -503,13 +489,6 @@ export function initAbilities() {
       .uncopiable()
       .unreplaceable()
       .attr(NoFusionAbilityAbAttr)
-      .attr(PostSummonFormChangeByWeatherAbAttr)
-      .attr(PostWeatherChangeFormChangeAbAttr, AbilityId.FORECAST, [
-        WeatherType.NONE,
-        WeatherType.SANDSTORM,
-        WeatherType.STRONG_WINDS,
-        WeatherType.FOG,
-      ])
       .build(),
     new AbBuilder(AbilityId.STICKY_HOLD, 3) //
       .attr(BlockItemTheftAbAttr)
@@ -590,8 +569,6 @@ export function initAbilities() {
     new AbBuilder(AbilityId.AIR_LOCK, 3) //
       .attr(SuppressWeatherEffectAbAttr, true)
       .attr(PostSummonUnnamedMessageAbAttr, i18next.t("abilityTriggers:weatherEffectDisappeared"))
-      .attr(PostSummonWeatherSuppressedFormChangeAbAttr)
-      .attr(PostFaintUnsuppressedWeatherFormChangeAbAttr)
       .bypassFaint()
       .build(),
     new AbBuilder(AbilityId.TANGLED_FEET, 4) //
@@ -861,17 +838,6 @@ export function initAbilities() {
         1.5,
       )
       .attr(NoFusionAbilityAbAttr)
-      .attr(PostSummonFormChangeByWeatherAbAttr)
-      .attr(PostWeatherChangeFormChangeAbAttr, AbilityId.FLOWER_GIFT, [
-        WeatherType.NONE,
-        WeatherType.SANDSTORM,
-        WeatherType.STRONG_WINDS,
-        WeatherType.FOG,
-        WeatherType.HAIL,
-        WeatherType.HEAVY_RAIN,
-        WeatherType.SNOW,
-        WeatherType.RAIN,
-      ])
       .uncopiable()
       .unreplaceable()
       .ignorable()
@@ -1091,9 +1057,6 @@ export function initAbilities() {
       .bypassFaint()
       .build(),
     new AbBuilder(AbilityId.ZEN_MODE, 5) //
-      .attr(PostBattleInitFormChangeAbAttr, () => 0)
-      .attr(PostSummonFormChangeAbAttr, p => (p.getHpRatio() <= 0.5 ? 1 : 0))
-      .attr(PostTurnFormChangeAbAttr, p => (p.getHpRatio() <= 0.5 ? 1 : 0))
       .attr(NoFusionAbilityAbAttr)
       .uncopiable()
       .unreplaceable()
@@ -1358,9 +1321,6 @@ export function initAbilities() {
     new AbBuilder(AbilityId.SHIELDS_DOWN, 7, -1) //
       // Change into Meteor Form on switch-in or turn end if HP >= 50%,
       // or Core Form if HP <= 50%.
-      .attr(PostBattleInitFormChangeAbAttr, p => p.formIndex % 7)
-      .attr(PostSummonFormChangeAbAttr, p => (p.formIndex % 7) + (p.getHpRatio() <= 0.5 ? 7 : 0))
-      .attr(PostTurnFormChangeAbAttr, p => (p.formIndex % 7) + (p.getHpRatio() <= 0.5 ? 7 : 0))
       // All variants of Meteor Form are immune to status effects & Yawn
       .conditionalAttr(p => p.formIndex < 7, StatusEffectImmunityAbAttr)
       .conditionalAttr(p => p.formIndex < 7, BattlerTagImmunityAbAttr, BattlerTagType.DROWSY)
@@ -1416,9 +1376,6 @@ export function initAbilities() {
       .conditionalAttr(getTerrainCondition(TerrainType.ELECTRIC), StatMultiplierAbAttr, Stat.SPD, 2)
       .build(),
     new AbBuilder(AbilityId.SCHOOLING, 7, -1) //
-      .attr(PostBattleInitFormChangeAbAttr, () => 0)
-      .attr(PostSummonFormChangeAbAttr, p => (p.level < 20 || p.getHpRatio() <= 0.25 ? 0 : 1))
-      .attr(PostTurnFormChangeAbAttr, p => (p.level < 20 || p.getHpRatio() <= 0.25 ? 0 : 1))
       .attr(NoFusionAbilityAbAttr)
       .uncopiable()
       .unreplaceable()
@@ -1428,9 +1385,6 @@ export function initAbilities() {
     new AbBuilder(AbilityId.DISGUISE, 7) //
       .attr(NoTransformAbilityAbAttr)
       .attr(NoFusionAbilityAbAttr)
-      .attr(FormBlockDamageAbAttr, 0, "abilityTriggers:disguiseAvoidedDamage", 0.125)
-      .attr(PostBattleInitFormChangeAbAttr, () => 0)
-      .attr(PostFaintFormChangeAbAttr, () => 0)
       .uncopiable()
       .unreplaceable()
       .unsuppressable()
@@ -1438,21 +1392,6 @@ export function initAbilities() {
       .ignorable()
       .build(),
     new AbBuilder(AbilityId.BATTLE_BOND, 7) //
-      .conditionalAttr(
-        p => p.species.speciesId === SpeciesId.BATTLE_BOND_GRENINJA,
-        PostVictoryFormChangeAbAttr,
-        () => 1,
-      )
-      .conditionalAttr(
-        p => p.species.speciesId === SpeciesId.BATTLE_BOND_GRENINJA,
-        PostBattleInitFormChangeAbAttr,
-        () => 0,
-      )
-      .conditionalAttr(
-        p => p.species.speciesId === SpeciesId.BATTLE_BOND_GRENINJA,
-        PostFaintFormChangeAbAttr,
-        () => 0,
-      )
       .conditionalAttr(
         p => !p.hasSpecies(SpeciesId.BATTLE_BOND_GRENINJA) && !p.summonData.abilitiesApplied.has(AbilityId.BATTLE_BOND),
         PostVictoryStatStageChangeAbAttr,
@@ -1466,26 +1405,6 @@ export function initAbilities() {
     new AbBuilder(AbilityId.POWER_CONSTRUCT, 7) //
       // Change to 10% complete or 50% complete on switchout/turn end if at <50% HP;
       // revert to 10% PC or 50% PC before a new battle starts
-      .conditionalAttr(
-        p => p.formIndex === 4 || p.formIndex === 5,
-        PostBattleInitFormChangeAbAttr,
-        p => p.formIndex - 2,
-      )
-      .conditionalAttr(
-        p => p.getHpRatio() <= 0.5 && (p.formIndex === 2 || p.formIndex === 3),
-        PostSummonFormChangeAbAttr,
-        p => p.formIndex + 2,
-      )
-      .conditionalAttr(
-        p => p.getHpRatio() <= 0.5 && (p.formIndex === 2 || p.formIndex === 3),
-        PostTurnFormChangeAbAttr,
-        p => p.formIndex + 2,
-      )
-      .conditionalAttr(
-        p => p.formIndex === 4 || p.formIndex === 5,
-        PostFaintFormChangeAbAttr,
-        p => p.formIndex - 2,
-      )
       .attr(NoFusionAbilityAbAttr)
       .uncopiable()
       .unreplaceable()
@@ -1719,18 +1638,6 @@ export function initAbilities() {
     new AbBuilder(AbilityId.ICE_FACE, 8, -2) //
       .attr(NoTransformAbilityAbAttr)
       .attr(NoFusionAbilityAbAttr)
-      // Turn into Ice form when switched in during hail/snow in Noice form
-      .conditionalAttr(getWeatherCondition(WeatherType.HAIL, WeatherType.SNOW), PostSummonFormChangeAbAttr, () => 0)
-      // Turn into Ice form when hail/snow starts in Noice form while active
-      .attr(IceFaceFormChangeAbAttr, 1)
-      .attr(
-        FormBlockDamageAbAttr,
-        0,
-        "abilityTriggers:iceFaceAvoidedDamage",
-        0,
-        (_target, _user, move) => move.category === MoveCategory.PHYSICAL,
-      )
-      .attr(PostBattleInitFormChangeAbAttr, () => 0)
       .uncopiable()
       .unreplaceable()
       .unsuppressable()
@@ -1781,8 +1688,6 @@ export function initAbilities() {
       .ignorable()
       .build(),
     new AbBuilder(AbilityId.HUNGER_SWITCH, 8) //
-      .attr(PostTurnFormChangeAbAttr, p => (p.getFormKey() ? 0 : 1))
-      .attr(PostTurnFormChangeAbAttr, p => (p.getFormKey() ? 1 : 0))
       .attr(NoTransformAbilityAbAttr)
       .attr(NoFusionAbilityAbAttr)
       .condition(pokemon => !pokemon.isTerastallized)
@@ -1909,8 +1814,6 @@ export function initAbilities() {
       .unsuppressable()
       .attr(NoTransformAbilityAbAttr)
       .attr(NoFusionAbilityAbAttr)
-      .attr(PostBattleInitFormChangeAbAttr, () => 0)
-      .attr(PreSwitchOutFormChangeAbAttr, pokemon => (pokemon.isFainted() ? pokemon.formIndex : 1))
       .conditionalAttr(
         p => p.formIndex !== 0 && p.isOnField() && zeroToHeroFormChangeMessage.get(p) !== p.battleData,
         PostSummonMessageAbAttr,
@@ -2139,7 +2042,6 @@ export function initAbilities() {
       .attr(NoTransformAbilityAbAttr)
       .build(),
     new AbBuilder(AbilityId.TERA_SHIFT, 9, 2) //
-      .attr(PostSummonFormChangeAbAttr, p => (p.getFormKey() ? 0 : 1))
       .uncopiable()
       .unreplaceable()
       .unsuppressable()

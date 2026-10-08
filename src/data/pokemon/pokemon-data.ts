@@ -179,7 +179,7 @@ export class PokemonSummonData {
   }
 
   /**
-   * Serialize this PokemonSummonData to JSON, converting {@linkcode PokemonSpeciesForm} and {@linkcode IllusionData.fusionSpecies}
+   * Serialize this PokemonSummonData to JSON, converting {@linkcode PokemonSpeciesForm}
    * into simpler types instead of serializing all of their fields.
    *
    * @remarks

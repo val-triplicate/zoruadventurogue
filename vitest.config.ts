@@ -10,7 +10,6 @@ import type { UserConfig } from "vite";
 import { defineConfig } from "vitest/config";
 import { BaseSequencer, type TestSpecification } from "vitest/node";
 import { TEST_TIMEOUT } from "./test/constants.ts";
-import { CustomDefaultReporter } from "./test/reporters/custom-default-reporter.ts";
 import { sharedConfig } from "./vite.config.ts";
 
 // biome-ignore lint/style/noDefaultExport: required for vitest
@@ -20,7 +19,7 @@ export default defineConfig(async config => {
     ...viteConfig,
     test: {
       passWithNoTests: false,
-      reporters: [] as (string | CustomDefaultReporter)[],
+      reporters: [] as string[],
       env: { TZ: "UTC" },
       isolate: false,
       testTimeout: TEST_TIMEOUT,
@@ -61,7 +60,7 @@ export default defineConfig(async config => {
   } else {
     opts.test.coverage.reporter = ["text-summary", "html"];
   }
-  opts.test.reporters.push(new CustomDefaultReporter());
+  opts.test.reporters.push();
 
   return opts;
 });

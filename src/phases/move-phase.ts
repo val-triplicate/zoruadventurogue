@@ -4,7 +4,6 @@ import { getPokemonNameWithAffix } from "#app/messages";
 import { activeOverrides } from "#app/overrides";
 import { MOVE_COLOR } from "#constants/colors";
 import { CenterOfAttentionTag, type EncoreTag } from "#data/battler-tags";
-import { SpeciesFormChangePreMoveTrigger } from "#data/form-change-triggers";
 import { getStatusEffectActivationText } from "#data/status-effect";
 import { getTerrainBlockMessage } from "#data/terrain";
 import { getWeatherBlockMessage } from "#data/weather";
@@ -211,9 +210,6 @@ export class MovePhase extends PokemonPhase {
       // Gorilla tactics lock in (and choice items if they are ever added)
       // Stance Change form change
       // Struggle's "There are no more moves it can use" message
-
-      globalScene.triggerPokemonFormChange(user, SpeciesFormChangePreMoveTrigger);
-      // TODO: apply gorilla tactics here instead of in the move effect phase
     }
 
     this.showMoveText();

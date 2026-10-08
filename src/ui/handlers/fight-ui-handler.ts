@@ -327,7 +327,6 @@ export class FightUiHandler extends UiHandler implements InfoToggle {
       !opponent.waveData.abilityRevealed,
       undefined,
       undefined,
-      true,
     );
     if (pokemonMove.getMove().category === MoveCategory.STATUS) {
       if (effectiveness === 0) {
@@ -386,7 +385,6 @@ export class FightUiHandler extends UiHandler implements InfoToggle {
           !opponent.waveData.abilityRevealed,
           undefined,
           undefined,
-          true,
         ),
       )
       .sort((a, b) => b - a)

@@ -271,18 +271,10 @@ function initGreatModifierPool() {
     new WeightedModifierType(modifierTypes.NUGGET, skipInLastClassicWaveOrDefault(5)),
     new WeightedModifierType(modifierTypes.SPECIES_STAT_BOOSTER, 2),
     new WeightedModifierType(
-      modifierTypes.EVOLUTION_ITEM,
-      () => {
-        return Math.min(Math.ceil(globalScene.currentBattle.waveIndex / 15), 8);
-      },
-      8,
-    ),
-    new WeightedModifierType(
       modifierTypes.MAP,
       () => (globalScene.gameMode.isClassic && globalScene.currentBattle.waveIndex < 180 ? 2 : 0),
       2,
     ),
-    new WeightedModifierType(modifierTypes.SOOTHE_BELL, 2),
     new WeightedModifierType(modifierTypes.TM_GREAT, 3),
     new WeightedModifierType(
       modifierTypes.MEMORY_MUSHROOM,
@@ -322,16 +314,6 @@ function initUltraModifierPool() {
     new WeightedModifierType(modifierTypes.BIG_NUGGET, skipInLastClassicWaveOrDefault(12)),
     new WeightedModifierType(modifierTypes.PP_MAX, 3),
     new WeightedModifierType(modifierTypes.MINT, 4),
-    new WeightedModifierType(
-      modifierTypes.RARE_EVOLUTION_ITEM,
-      () => Math.min(Math.ceil(globalScene.currentBattle.waveIndex / 15) * 4, 32),
-      32,
-    ),
-    new WeightedModifierType(
-      modifierTypes.FORM_CHANGE_ITEM,
-      () => Math.min(Math.ceil(globalScene.currentBattle.waveIndex / 50), 4) * 6,
-      24,
-    ),
     new WeightedModifierType(modifierTypes.AMULET_COIN, skipInLastClassicWaveOrDefault(3)),
     new WeightedModifierType(modifierTypes.EVIOLITE, (party: Pokemon[]) => {
       return party.some(p => {
@@ -546,21 +528,6 @@ function initRogueModifierPool() {
     new WeightedModifierType(modifierTypes.KINGS_ROCK, 3),
     new WeightedModifierType(modifierTypes.LOCK_CAPSULE, () => (globalScene.gameMode.isClassic ? 0 : 3)),
     new WeightedModifierType(modifierTypes.SUPER_EXP_CHARM, skipInLastClassicWaveOrDefault(8)),
-    new WeightedModifierType(
-      modifierTypes.RARE_FORM_CHANGE_ITEM,
-      () => Math.min(Math.ceil(globalScene.currentBattle.waveIndex / 50), 4) * 6,
-      24,
-    ),
-    new WeightedModifierType(
-      modifierTypes.MEGA_BRACELET,
-      () => Math.min(Math.ceil(globalScene.currentBattle.waveIndex / 50), 4) * 9,
-      36,
-    ),
-    new WeightedModifierType(
-      modifierTypes.DYNAMAX_BAND,
-      () => Math.min(Math.ceil(globalScene.currentBattle.waveIndex / 50), 4) * 9,
-      36,
-    ),
   ].map(m => {
     m.setTier(ModifierTier.ROGUE);
     return m;
@@ -634,7 +601,6 @@ function initEnemyBuffModifierPool() {
     new WeightedModifierType(modifierTypes.ENEMY_ATTACK_BURN_CHANCE, 3),
     new WeightedModifierType(modifierTypes.ENEMY_STATUS_EFFECT_HEAL_CHANCE, 9),
     new WeightedModifierType(modifierTypes.ENEMY_ENDURE_CHANCE, 4),
-    new WeightedModifierType(modifierTypes.ENEMY_FUSED_CHANCE, 1),
   ].map(m => {
     m.setTier(ModifierTier.COMMON);
     return m;
@@ -644,7 +610,6 @@ function initEnemyBuffModifierPool() {
     new WeightedModifierType(modifierTypes.ENEMY_DAMAGE_REDUCTION, 5),
     new WeightedModifierType(modifierTypes.ENEMY_STATUS_EFFECT_HEAL_CHANCE, 5),
     new WeightedModifierType(modifierTypes.ENEMY_ENDURE_CHANCE, 5),
-    new WeightedModifierType(modifierTypes.ENEMY_FUSED_CHANCE, 1),
   ].map(m => {
     m.setTier(ModifierTier.GREAT);
     return m;
@@ -655,7 +620,6 @@ function initEnemyBuffModifierPool() {
     new WeightedModifierType(modifierTypes.ENEMY_HEAL, 10),
     new WeightedModifierType(modifierTypes.ENEMY_STATUS_EFFECT_HEAL_CHANCE, 10),
     new WeightedModifierType(modifierTypes.ENEMY_ENDURE_CHANCE, 10),
-    new WeightedModifierType(modifierTypes.ENEMY_FUSED_CHANCE, 5),
   ].map(m => {
     m.setTier(ModifierTier.ULTRA);
     return m;
@@ -689,7 +653,6 @@ function initDailyStarterModifierPool() {
   );
   dailyStarterModifierPool[ModifierTier.ULTRA] = [
     new WeightedModifierType(modifierTypes.REVIVER_SEED, 4),
-    new WeightedModifierType(modifierTypes.SOOTHE_BELL, 1),
     new WeightedModifierType(modifierTypes.SOUL_DEW, 1),
     new WeightedModifierType(modifierTypes.GOLDEN_PUNCH, 1),
   ].map(m => {

@@ -12,9 +12,6 @@ import type { LevelMoveContext, LevelMovesWithSource } from "#types/level-moves"
  * @param context - Basic information about the Pokemon to get the level moves for
  * @param includeEvolutionMoves - Whether to include evolution moves
  * @param includeRelearnerMoves - Whether to include moves that would require a relearner. Note the move relearner inherently allows evolution moves
- * @param fromFusion - (Default `false`) Whether to get the moves from the fusion species
- * @remarks
- * `fromFusion` should only be used if a fusion species is being provided.
  * @returns A list of moves and the levels they can be learned at, along with the source of the move.
  * Excludes moves from prevolutions, but includes evolution moves and relearner moves.
  */
@@ -22,12 +19,9 @@ function getRegularLevelMoves(
   context: LevelMoveContext,
   includeEvolutionMoves: boolean,
   includeRelearnerMoves: boolean,
-  fromFusion = false,
 ): LevelMovesWithSource {
   const ret: LevelMovesWithSource = [];
-  const moves = fromFusion
-    ? context.fusionSpeciesForm!.getLevelMoves(context.fusionFormIndex!)
-    : context.pokemonSpeciesForm.getLevelMoves(context.pokemonFormIndex);
+  const moves = context.pokemonSpeciesForm.getLevelMoves(context.pokemonFormIndex);
   for (const [level, move] of moves) {
     if (
       (includeEvolutionMoves && level === EVOLVE_MOVE)
@@ -46,7 +40,7 @@ function getRegularLevelMoves(
           moveSource = LearnableMoveSource.LEVEL;
           break;
       }
-      ret.push([level, move, (moveSource + +fromFusion) as LearnableMoveSource]);
+      ret.push([level, move, moveSource as LearnableMoveSource]);
     }
   }
   return ret;
@@ -59,25 +53,15 @@ function getRegularLevelMoves(
  * @param context - Basic information about the Pokemon to get the level moves for
  * @param includeEvolutionMoves - Whether to include evolution moves
  * @param includeRelearnerMoves - Whether to include moves that would require a relearner. Note the move relearner inherently allows evolution moves
- * @param fromFusion - (Default `false`) Whether to get the prevolution moves from the fusion species
- * @remarks
- * `fromFusion` should only be used if a fusion species is being provided.
  * @returns A list of moves and the levels they can be learned at, along with the source of the move
  */
 function getPrevolutionMoves(
   context: LevelMoveContext,
   includeEvolutionMoves: boolean,
   includeRelearnerMoves: boolean,
-  fromFusion = false,
 ): LevelMovesWithSource {
   const ret: LevelMovesWithSource = [];
-  const speciesBase = fromFusion ? context.fusionSpeciesForm! : context.pokemonSpeciesForm;
-
-  if (!speciesBase && fromFusion) {
-    // TODO: Find a better way to handle `fromFusion=true` without being a fusion
-    console.warn("`getPrevolutionMoves` was called with `fromFusion=true` but the pokemon is not a fusion!");
-    return ret;
-  }
+  const speciesBase = context.pokemonSpeciesForm!;
 
   const evolutionLine = [...speciesDataRegistry.getPrevolutionChain(speciesBase.speciesId), speciesBase.speciesId];
   for (let index = 0; index < evolutionLine.length; index++) {
@@ -91,13 +75,13 @@ function getPrevolutionMoves(
 
       if (includeRelearnerMoves && level === RELEARN_MOVE) {
         const source = isPrevo ? LearnableMoveSource.PREVO : LearnableMoveSource.RELEARN;
-        ret.push([level, move, (source + +fromFusion) as LearnableMoveSource]);
+        ret.push([level, move, source as LearnableMoveSource]);
       } else if (includeEvolutionMoves && level === EVOLVE_MOVE) {
         const source = isPrevo ? LearnableMoveSource.PREVO : LearnableMoveSource.EVOLUTION;
-        ret.push([level, move, (source + +fromFusion) as LearnableMoveSource]);
+        ret.push([level, move, source as LearnableMoveSource]);
       } else if (includeLevelOne && (!isPrevo || level <= context.level)) {
         const source = isPrevo ? LearnableMoveSource.PREVO : LearnableMoveSource.LEVEL;
-        ret.push([level, move, (source + +fromFusion) as LearnableMoveSource]);
+        ret.push([level, move, source as LearnableMoveSource]);
       }
     }
   }
@@ -187,9 +171,7 @@ function filterAndSortLevelMoves(
     const allowedEvolutionMove = level === 0 && includeEvolutionMoves;
     const isLevelMoveSource = getBaseLearnableMoveSource(source) === LearnableMoveSource.LEVEL;
     const isOwnMoveFromNonLevelSource = ownMoves.has(move) && !isLevelMoveSource;
-    const isLockedPrevoMove =
-      levelMovesAboveCurrentLevel.has(move)
-      && (source === LearnableMoveSource.PREVO || source === LearnableMoveSource.FUSION_PREVO);
+    const isLockedPrevoMove = levelMovesAboveCurrentLevel.has(move) && source === LearnableMoveSource.PREVO;
 
     return (
       !(level > context.level)
@@ -228,24 +210,15 @@ export function getLevelMoves(
   learnSituation: LearnMoveSituation = LearnMoveSituation.MISC,
 ): LevelMovesWithSource {
   const levelMoves: LevelMovesWithSource = [];
-  const isFusion = context.fusionSpeciesForm !== undefined;
   if (includeRelearnerMoves) {
     // Relearner moves inherently allow evolution moves
     // Setting this to ture ensures the correct source is used
     includeEvolutionMoves = true;
   }
-  if (learnSituation === LearnMoveSituation.EVOLUTION_FUSED && isFusion) {
-    // For fusion evolutions, get ONLY the moves of the component mon that evolved
-    levelMoves.push(...getRegularLevelMoves(context, includeEvolutionMoves, includeRelearnerMoves, true));
-  } else if (includePrevolutionMoves) {
+  if (includePrevolutionMoves) {
     levelMoves.push(...getPrevolutionMoves(context, includeEvolutionMoves, includeRelearnerMoves));
   } else {
     levelMoves.push(...getRegularLevelMoves(context, includeEvolutionMoves, includeRelearnerMoves));
-  }
-
-  if (isFusion && learnSituation !== LearnMoveSituation.EVOLUTION_FUSED_BASE) {
-    const methodFunc = includePrevolutionMoves ? getPrevolutionMoves : getRegularLevelMoves;
-    levelMoves.push(...methodFunc(context, includeEvolutionMoves, includeRelearnerMoves, true));
   }
 
   return filterAndSortLevelMoves(context, levelMoves, includeEvolutionMoves, includeRelearnerMoves);

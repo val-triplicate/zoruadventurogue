@@ -7,12 +7,10 @@ import { activeOverrides } from "#app/overrides";
 import { getBerryEffectFunc, getBerryPredicate } from "#data/berry";
 import { allMoves, modifierTypes } from "#data/data-lists";
 import { getLevelTotalExp } from "#data/exp";
-import { SpeciesFormChangeItemTrigger } from "#data/form-change-triggers";
 import { getStatusEffectHealText } from "#data/status-effect";
 import { BattlerTagType } from "#enums/battler-tag-type";
 import { BerryType } from "#enums/berry-type";
 import { Color, ShadowColor } from "#enums/color";
-import type { FormChangeItem } from "#enums/form-change-item";
 import { LearnMoveType } from "#enums/learn-move-type";
 import type { MoveId } from "#enums/move-id";
 import type { Nature } from "#enums/nature";
@@ -24,13 +22,10 @@ import { TextStyle } from "#enums/text-style";
 import type { PlayerPokemon, Pokemon } from "#field/pokemon";
 import type {
   DoubleBattleChanceBoosterModifierType,
-  EvolutionItemModifierType,
-  FormChangeItemModifierType,
   ModifierOverride,
   ModifierType,
   PokemonBaseStatTotalModifierType,
   PokemonExpBoosterModifierType,
-  PokemonFriendshipBoosterModifierType,
   PokemonMoveAccuracyBoosterModifierType,
   PokemonMultiHitModifierType,
   TerastallizeModifierType,
@@ -40,7 +35,6 @@ import type { ModifierInstanceMap, ModifierString } from "#types/modifier-types"
 import { addTextObject } from "#ui/text";
 import { hslToHex } from "#utils/color-utils";
 import { BooleanHolder, NumberHolder, randSeedFloat, toDmgValue } from "#utils/common";
-import { getModifierType } from "#utils/modifier-utils";
 import i18next from "i18next";
 
 export type ModifierPredicate = (modifier: Modifier) => boolean;
@@ -278,11 +272,7 @@ export abstract class PersistentModifier extends Modifier {
   }
 }
 
-export abstract class ConsumableModifier extends Modifier {
-  add(_modifiers: Modifier[]): boolean {
-    return true;
-  }
-}
+export abstract class ConsumableModifier extends Modifier {}
 
 /**
  * Modifier used for party-wide or passive items that start an initial
@@ -537,39 +527,6 @@ export class MapModifier extends PersistentModifier {
   }
 
   override apply(..._args: unknown[]): boolean {
-    return true;
-  }
-
-  getMaxStackCount(): number {
-    return 1;
-  }
-}
-
-export class MegaEvolutionAccessModifier extends PersistentModifier {
-  clone(): MegaEvolutionAccessModifier {
-    return new MegaEvolutionAccessModifier(this.type, this.stackCount);
-  }
-
-  override apply(..._args: unknown[]): boolean {
-    return true;
-  }
-
-  getMaxStackCount(): number {
-    return 1;
-  }
-}
-
-export class GigantamaxAccessModifier extends PersistentModifier {
-  clone(): GigantamaxAccessModifier {
-    return new GigantamaxAccessModifier(this.type, this.stackCount);
-  }
-
-  /**
-   * Applies {@linkcode GigantamaxAccessModifier}
-   * @param _args N/A
-   * @returns always `true`
-   */
-  apply(..._args: unknown[]): boolean {
     return true;
   }
 
@@ -2255,29 +2212,6 @@ export class RememberMoveModifier extends ConsumablePokemonModifier {
   }
 }
 
-export class EvolutionItemModifier extends ConsumablePokemonModifier {
-  declare public type: EvolutionItemModifierType;
-  /**
-   * Applies {@linkcode EvolutionItemModifier}
-   * @param playerPokemon The {@linkcode PlayerPokemon} that should evolve via item
-   * @returns `true` if the evolution was successful
-   */
-  override apply(playerPokemon: PlayerPokemon): boolean {
-    const matchingEvolution = speciesDataRegistry.hasEvolutions(playerPokemon.species.speciesId)
-      ? speciesDataRegistry
-          .getEvolutions(playerPokemon.species.speciesId)
-          .find(e => e.item === this.type.evolutionItem && e.validate(playerPokemon, e.item))
-      : null;
-
-    if (matchingEvolution) {
-      globalScene.phaseManager.unshiftNew("EvolutionPhase", playerPokemon, matchingEvolution, playerPokemon.level - 1);
-      return true;
-    }
-
-    return false;
-  }
-}
-
 export class MultipleParticipantExpBonusModifier extends PersistentModifier {
   match(modifier: Modifier): boolean {
     return modifier instanceof MultipleParticipantExpBonusModifier;
@@ -2475,34 +2409,6 @@ export class ExpBalanceModifier extends PersistentModifier {
   }
 }
 
-export class PokemonFriendshipBoosterModifier extends PokemonHeldItemModifier {
-  declare public type: PokemonFriendshipBoosterModifierType;
-
-  matchType(modifier: Modifier): boolean {
-    return modifier instanceof PokemonFriendshipBoosterModifier;
-  }
-
-  clone(): PersistentModifier {
-    return new PokemonFriendshipBoosterModifier(this.type, this.pokemonId, this.stackCount);
-  }
-
-  /**
-   * Applies {@linkcode PokemonFriendshipBoosterModifier}
-   * @param _pokemon The {@linkcode Pokemon} to apply the friendship boost to
-   * @param friendship {@linkcode NumberHolder} holding the friendship boost value
-   * @returns always `true`
-   */
-  override apply(_pokemon: Pokemon, friendship: NumberHolder): boolean {
-    friendship.value = Math.floor(friendship.value * (1 + 0.5 * this.getStackCount()));
-
-    return true;
-  }
-
-  getMaxHeldItemCount(_pokemon: Pokemon): number {
-    return 3;
-  }
-}
-
 export class PokemonNatureWeightModifier extends PokemonHeldItemModifier {
   matchType(modifier: Modifier): boolean {
     return modifier instanceof PokemonNatureWeightModifier;
@@ -2665,71 +2571,8 @@ export class PokemonMultiHitModifier extends PokemonHeldItemModifier {
   }
 }
 
-export class PokemonFormChangeItemModifier extends PokemonHeldItemModifier {
-  declare public type: FormChangeItemModifierType;
-  public formChangeItem: FormChangeItem;
-  public active: boolean;
-  public isTransferable = false;
-
-  constructor(
-    type: FormChangeItemModifierType,
-    pokemonId: number,
-    formChangeItem: FormChangeItem,
-    active: boolean,
-    stackCount?: number,
-  ) {
-    super(type, pokemonId, stackCount);
-    this.formChangeItem = formChangeItem;
-    this.active = active;
-  }
-
-  matchType(modifier: Modifier): boolean {
-    return modifier instanceof PokemonFormChangeItemModifier && modifier.formChangeItem === this.formChangeItem;
-  }
-
-  clone(): PersistentModifier {
-    return new PokemonFormChangeItemModifier(
-      this.type,
-      this.pokemonId,
-      this.formChangeItem,
-      this.active,
-      this.stackCount,
-    );
-  }
-
-  getArgs(): any[] {
-    return super.getArgs().concat(this.formChangeItem, this.active);
-  }
-
-  /**
-   * Applies {@linkcode PokemonFormChangeItemModifier}
-   * @param pokemon The {@linkcode Pokemon} to apply the form change item to
-   * @param active `true` if the form change item is active
-   * @returns `true` if the form change item was applied
-   */
-  override apply(pokemon: Pokemon, active: boolean): boolean {
-    const switchActive = this.active && !active;
-
-    if (switchActive) {
-      this.active = false;
-    }
-
-    const ret = globalScene.triggerPokemonFormChange(pokemon, SpeciesFormChangeItemTrigger);
-
-    if (switchActive) {
-      this.active = true;
-    }
-
-    return ret;
-  }
-
-  getMaxHeldItemCount(_pokemon: Pokemon): number {
-    return 1;
-  }
-}
-
 export class MoneyRewardModifier extends ConsumableModifier {
-  private moneyMultiplier: number;
+  private readonly moneyMultiplier: number;
 
   constructor(type: ModifierType, moneyMultiplier: number) {
     super(type);
@@ -2747,17 +2590,6 @@ export class MoneyRewardModifier extends ConsumableModifier {
     globalScene.applyModifiers(MoneyMultiplierModifier, true, moneyAmount);
 
     globalScene.addMoney(moneyAmount.value);
-
-    globalScene.getPlayerParty().map(p => {
-      if (p.species?.speciesId === SpeciesId.GIMMIGHOUL) {
-        const factor = Math.min(Math.floor(this.moneyMultiplier), 3);
-        const modifier = getModifierType(modifierTypes.EVOLUTION_TRACKER_GIMMIGHOUL).newModifier(
-          p,
-          factor,
-        ) as EvoTrackerModifier;
-        globalScene.addModifier(modifier);
-      }
-    });
 
     return true;
   }
@@ -3702,8 +3534,6 @@ const ModifierClassMap = Object.freeze({
   TempStatStageBoosterModifier,
   TempCritBoosterModifier,
   MapModifier,
-  MegaEvolutionAccessModifier,
-  GigantamaxAccessModifier,
   TerastallizeAccessModifier,
   PokemonHeldItemModifier,
   LapsingPokemonHeldItemModifier,
@@ -3741,18 +3571,15 @@ const ModifierClassMap = Object.freeze({
   PokemonLevelIncrementModifier,
   TmModifier,
   RememberMoveModifier,
-  EvolutionItemModifier,
   MultipleParticipantExpBonusModifier,
   HealingBoosterModifier,
   ExpBoosterModifier,
   PokemonExpBoosterModifier,
   ExpShareModifier,
   ExpBalanceModifier,
-  PokemonFriendshipBoosterModifier,
   PokemonNatureWeightModifier,
   PokemonMoveAccuracyBoosterModifier,
   PokemonMultiHitModifier,
-  PokemonFormChangeItemModifier,
   MoneyRewardModifier,
   DamageMoneyRewardModifier,
   MoneyInterestModifier,

@@ -513,38 +513,6 @@ class SessionSlot extends Phaser.GameObjects.Container {
       case GameModes.CLASSIC:
         fallbackName += ` (${globalScene.gameData.gameStats.classicSessionsPlayed + 1})`;
         break;
-      case GameModes.ENDLESS:
-      case GameModes.SPLICED_ENDLESS:
-        fallbackName += ` (${globalScene.gameData.gameStats.endlessSessionsPlayed + 1})`;
-        break;
-      case GameModes.DAILY: {
-        const runDay = new Date(data.timestamp).toLocaleDateString();
-        fallbackName += ` (${runDay})`;
-        break;
-      }
-      case GameModes.CHALLENGE: {
-        const activeChallenges = data.challenges.filter(c => c.value !== 0);
-        if (activeChallenges.length === 0) {
-          break;
-        }
-
-        fallbackName = "";
-        for (const challenge of activeChallenges.slice(0, 3)) {
-          if (fallbackName !== "") {
-            fallbackName += ", ";
-          }
-          fallbackName += challenge.toChallenge().getName();
-        }
-
-        if (activeChallenges.length > 3) {
-          fallbackName += ", ...";
-        } else if (fallbackName === "") {
-          // Something went wrong when retrieving the names of the active challenges,
-          // so fall back to just naming the run "Challenge"
-          fallbackName = `${GameMode.getModeName(data.gameMode)}`;
-        }
-        break;
-      }
     }
     return fallbackName;
   }

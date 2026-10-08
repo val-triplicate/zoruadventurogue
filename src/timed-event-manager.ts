@@ -156,10 +156,6 @@ export class TimedEventManager {
     return [...(this.activeEvent()?.luckBoostedSpecies ?? [])];
   }
 
-  areFusionsBoosted(): boolean {
-    return this.activeEvent()?.boostFusions ?? false;
-  }
-
   /**
    * Gets all the modifier types associated with a certain wave during an event
    * @see EventWaveReward

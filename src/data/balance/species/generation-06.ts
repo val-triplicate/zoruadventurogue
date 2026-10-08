@@ -1,21 +1,9 @@
 import { EVOLVE_MOVE, RELEARN_MOVE } from "#app/constants";
 import { EvoCondKey, EvolutionItem, SpeciesEvolution, SpeciesFormEvolution } from "#balance/pokemon-evolutions";
-import { allMoves } from "#data/data-lists";
 import { GrowthRate } from "#data/exp";
-import {
-  SpeciesDefaultFormMatchTrigger,
-  SpeciesFormChangeAbilityTrigger,
-  SpeciesFormChangeActiveTrigger,
-  SpeciesFormChangeCompoundTrigger,
-  SpeciesFormChangeItemTrigger,
-  SpeciesFormChangePreMoveTrigger,
-} from "#data/form-change-triggers";
 import { Gender } from "#data/gender";
-import { SpeciesFormChange, SpeciesFormChangeCondition } from "#data/pokemon-forms";
 import { PokemonForm, PokemonSpecies } from "#data/pokemon-species";
 import { AbilityId } from "#enums/ability-id";
-import { FormChangeItem } from "#enums/form-change-item";
-import { MoveCategory } from "#enums/move-category";
 import { MoveId } from "#enums/move-id";
 import { PokemonType } from "#enums/pokemon-type";
 import { SpeciesFormKey } from "#enums/species-form-key";
@@ -284,14 +272,6 @@ export function initGenerationSix(): SpeciesDataMapConfig {
     }),
     starter: SpeciesId.CHESPIN,
     evolutions: [],
-    formChanges: [
-      new SpeciesFormChange({
-        speciesId: SpeciesId.CHESNAUGHT,
-        preFormKey: "",
-        evoFormKey: SpeciesFormKey.MEGA,
-        trigger: new SpeciesFormChangeItemTrigger(FormChangeItem.CHESNAUGHTITE),
-      }),
-    ],
     passives: {
       0: AbilityId.ROUGH_SKIN,
       1: AbilityId.ROUGH_SKIN,
@@ -588,14 +568,6 @@ export function initGenerationSix(): SpeciesDataMapConfig {
     }),
     starter: SpeciesId.FENNEKIN,
     evolutions: [],
-    formChanges: [
-      new SpeciesFormChange({
-        speciesId: SpeciesId.DELPHOX,
-        preFormKey: "",
-        evoFormKey: SpeciesFormKey.MEGA,
-        trigger: new SpeciesFormChangeItemTrigger(FormChangeItem.DELPHOXITE),
-      }),
-    ],
     passives: {
       0: AbilityId.NEUROFORCE,
       1: AbilityId.MAGICIAN,
@@ -887,14 +859,6 @@ export function initGenerationSix(): SpeciesDataMapConfig {
     }),
     starter: SpeciesId.FROAKIE,
     evolutions: [],
-    formChanges: [
-      new SpeciesFormChange({
-        speciesId: SpeciesId.GRENINJA,
-        preFormKey: "",
-        evoFormKey: SpeciesFormKey.MEGA,
-        trigger: new SpeciesFormChangeItemTrigger(FormChangeItem.GRENINJITE),
-      }),
-    ],
     passives: {
       0: AbilityId.STAKEOUT,
       1: AbilityId.LEVITATE,
@@ -3225,14 +3189,6 @@ export function initGenerationSix(): SpeciesDataMapConfig {
     }),
     starter: SpeciesId.LITLEO,
     evolutions: [],
-    formChanges: [
-      new SpeciesFormChange({
-        speciesId: SpeciesId.PYROAR,
-        preFormKey: "",
-        evoFormKey: SpeciesFormKey.MEGA,
-        trigger: new SpeciesFormChangeItemTrigger(FormChangeItem.PYROARITE),
-      }),
-    ],
     passives: {
       0: AbilityId.INTIMIDATE,
       1: AbilityId.INTIMIDATE,
@@ -4835,38 +4791,6 @@ export function initGenerationSix(): SpeciesDataMapConfig {
     }),
     starter: SpeciesId.ESPURR,
     evolutions: [],
-    formChanges: [
-      new SpeciesFormChange({
-        speciesId: SpeciesId.MEOWSTIC,
-        preFormKey: "male",
-        evoFormKey: SpeciesFormKey.MEGA,
-        trigger: new SpeciesFormChangeItemTrigger(FormChangeItem.MEOWSTICITE),
-      }),
-      new SpeciesFormChange({
-        speciesId: SpeciesId.MEOWSTIC,
-        preFormKey: "female",
-        evoFormKey: SpeciesFormKey.MEGA,
-        trigger: new SpeciesFormChangeItemTrigger(FormChangeItem.MEOWSTICITE),
-      }),
-      new SpeciesFormChange({
-        speciesId: SpeciesId.MEOWSTIC,
-        preFormKey: SpeciesFormKey.MEGA,
-        evoFormKey: "male",
-        trigger: new SpeciesFormChangeCompoundTrigger(
-          new SpeciesFormChangeItemTrigger(FormChangeItem.MEOWSTICITE, false),
-          new SpeciesDefaultFormMatchTrigger("male"),
-        ),
-      }),
-      new SpeciesFormChange({
-        speciesId: SpeciesId.MEOWSTIC,
-        preFormKey: SpeciesFormKey.MEGA,
-        evoFormKey: "female",
-        trigger: new SpeciesFormChangeCompoundTrigger(
-          new SpeciesFormChangeItemTrigger(FormChangeItem.MEOWSTICITE, false),
-          new SpeciesDefaultFormMatchTrigger("female"),
-        ),
-      }),
-    ],
     passives: {
       0: AbilityId.FUR_COAT,
       1: AbilityId.NEUROFORCE,
@@ -5178,32 +5102,6 @@ export function initGenerationSix(): SpeciesDataMapConfig {
     }),
     starter: SpeciesId.HONEDGE,
     evolutions: [],
-    formChanges: [
-      new SpeciesFormChange({
-        speciesId: SpeciesId.AEGISLASH,
-        preFormKey: "blade",
-        evoFormKey: "shield",
-        trigger: new SpeciesFormChangePreMoveTrigger(MoveId.KINGS_SHIELD),
-        quiet: true,
-        conditions: [new SpeciesFormChangeCondition(p => p.hasAbility(AbilityId.STANCE_CHANGE))],
-      }),
-      new SpeciesFormChange({
-        speciesId: SpeciesId.AEGISLASH,
-        preFormKey: "shield",
-        evoFormKey: "blade",
-        trigger: new SpeciesFormChangePreMoveTrigger(m => allMoves[m].category !== MoveCategory.STATUS),
-        quiet: true,
-        conditions: [new SpeciesFormChangeCondition(p => p.hasAbility(AbilityId.STANCE_CHANGE))],
-      }),
-      new SpeciesFormChange({
-        speciesId: SpeciesId.AEGISLASH,
-        preFormKey: "blade",
-        evoFormKey: "shield",
-        trigger: new SpeciesFormChangeActiveTrigger(false),
-        quiet: true,
-        conditions: [],
-      }),
-    ],
     passives: {
       0: AbilityId.BATTLE_ARMOR,
       1: AbilityId.SHARPNESS,
@@ -5768,14 +5666,6 @@ export function initGenerationSix(): SpeciesDataMapConfig {
     }),
     starter: SpeciesId.INKAY,
     evolutions: [],
-    formChanges: [
-      new SpeciesFormChange({
-        speciesId: SpeciesId.MALAMAR,
-        preFormKey: "",
-        evoFormKey: SpeciesFormKey.MEGA,
-        trigger: new SpeciesFormChangeItemTrigger(FormChangeItem.MALAMARITE),
-      }),
-    ],
     passives: {
       0: AbilityId.PSYCHIC_SURGE,
       1: AbilityId.PSYCHIC_SURGE,
@@ -6016,14 +5906,6 @@ export function initGenerationSix(): SpeciesDataMapConfig {
     }),
     starter: SpeciesId.BINACLE,
     evolutions: [],
-    formChanges: [
-      new SpeciesFormChange({
-        speciesId: SpeciesId.BARBARACLE,
-        preFormKey: "",
-        evoFormKey: SpeciesFormKey.MEGA,
-        trigger: new SpeciesFormChangeItemTrigger(FormChangeItem.BARBARACITE),
-      }),
-    ],
     passives: {
       0: AbilityId.SAP_SIPPER,
       1: AbilityId.NO_GUARD,
@@ -6254,14 +6136,6 @@ export function initGenerationSix(): SpeciesDataMapConfig {
     }),
     starter: SpeciesId.SKRELP,
     evolutions: [],
-    formChanges: [
-      new SpeciesFormChange({
-        speciesId: SpeciesId.DRAGALGE,
-        preFormKey: "",
-        evoFormKey: SpeciesFormKey.MEGA,
-        trigger: new SpeciesFormChangeItemTrigger(FormChangeItem.DRAGALGITE),
-      }),
-    ],
     passives: {
       0: AbilityId.TOXIC_CHAIN,
       1: AbilityId.ADAPTABILITY,
@@ -7139,14 +7013,6 @@ export function initGenerationSix(): SpeciesDataMapConfig {
     starter: SpeciesId.HAWLUCHA,
     starterCost: 4,
     evolutions: [],
-    formChanges: [
-      new SpeciesFormChange({
-        speciesId: SpeciesId.HAWLUCHA,
-        preFormKey: "",
-        evoFormKey: SpeciesFormKey.MEGA,
-        trigger: new SpeciesFormChangeItemTrigger(FormChangeItem.HAWLUCHANITE),
-      }),
-    ],
     passives: {
       0: AbilityId.STAMINA,
       1: AbilityId.STAMINA,
@@ -8884,24 +8750,6 @@ export function initGenerationSix(): SpeciesDataMapConfig {
     starter: SpeciesId.XERNEAS,
     starterCost: 8,
     evolutions: [],
-    formChanges: [
-      new SpeciesFormChange({
-        speciesId: SpeciesId.XERNEAS,
-        preFormKey: "neutral",
-        evoFormKey: "active",
-        trigger: new SpeciesFormChangeActiveTrigger(true),
-        quiet: true,
-        conditions: [],
-      }),
-      new SpeciesFormChange({
-        speciesId: SpeciesId.XERNEAS,
-        preFormKey: "active",
-        evoFormKey: "neutral",
-        trigger: new SpeciesFormChangeActiveTrigger(false),
-        quiet: true,
-        conditions: [],
-      }),
-    ],
     passives: {
       0: AbilityId.HARVEST,
       1: AbilityId.HARVEST,
@@ -9297,53 +9145,6 @@ export function initGenerationSix(): SpeciesDataMapConfig {
     starter: SpeciesId.ZYGARDE,
     starterCost: 9,
     evolutions: [],
-    formChanges: [
-      // TODO: A form change condition for 50% and 10% Complete Forms will be needed for Mega Zygarde
-      new SpeciesFormChange({
-        speciesId: SpeciesId.ZYGARDE,
-        preFormKey: "50-pc",
-        evoFormKey: "complete",
-        trigger: new SpeciesFormChangeAbilityTrigger(),
-        quiet: true,
-        conditions: [],
-      }),
-      new SpeciesFormChange({
-        speciesId: SpeciesId.ZYGARDE,
-        preFormKey: "complete",
-        evoFormKey: "50-pc",
-        trigger: new SpeciesFormChangeAbilityTrigger(),
-        quiet: true,
-        conditions: [],
-      }),
-      new SpeciesFormChange({
-        speciesId: SpeciesId.ZYGARDE,
-        preFormKey: "10-pc",
-        evoFormKey: "10-complete",
-        trigger: new SpeciesFormChangeAbilityTrigger(),
-        quiet: true,
-        conditions: [],
-      }),
-      new SpeciesFormChange({
-        speciesId: SpeciesId.ZYGARDE,
-        preFormKey: "10-complete",
-        evoFormKey: "10-pc",
-        trigger: new SpeciesFormChangeAbilityTrigger(),
-        quiet: true,
-        conditions: [],
-      }),
-      new SpeciesFormChange({
-        speciesId: SpeciesId.ZYGARDE,
-        preFormKey: "complete",
-        evoFormKey: SpeciesFormKey.MEGA,
-        trigger: new SpeciesFormChangeItemTrigger(FormChangeItem.ZYGARDITE),
-      }),
-      new SpeciesFormChange({
-        speciesId: SpeciesId.ZYGARDE,
-        preFormKey: "10-complete",
-        evoFormKey: SpeciesFormKey.MEGA,
-        trigger: new SpeciesFormChangeItemTrigger(FormChangeItem.ZYGARDITE),
-      }),
-    ],
     passives: {
       0: AbilityId.TERAFORM_ZERO,
       1: AbilityId.TERAFORM_ZERO,
@@ -9521,15 +9322,6 @@ export function initGenerationSix(): SpeciesDataMapConfig {
     starter: SpeciesId.DIANCIE,
     starterCost: 7,
     evolutions: [],
-    formChanges: [
-      new SpeciesFormChange({
-        speciesId: SpeciesId.DIANCIE,
-        preFormKey: "",
-        evoFormKey: SpeciesFormKey.MEGA,
-        trigger: new SpeciesFormChangeItemTrigger(FormChangeItem.DIANCITE),
-        conditions: [],
-      }),
-    ],
     passives: {
       0: AbilityId.SOLID_ROCK,
       1: AbilityId.PRISM_ARMOR,
@@ -9715,15 +9507,6 @@ export function initGenerationSix(): SpeciesDataMapConfig {
     starter: SpeciesId.HOOPA,
     starterCost: 7,
     evolutions: [],
-    formChanges: [
-      new SpeciesFormChange({
-        speciesId: SpeciesId.HOOPA,
-        preFormKey: "",
-        evoFormKey: "unbound",
-        trigger: new SpeciesFormChangeItemTrigger(FormChangeItem.PRISON_BOTTLE),
-        conditions: [],
-      }),
-    ],
     passives: {
       0: AbilityId.OPPORTUNIST,
       1: AbilityId.OPPORTUNIST,
@@ -10051,14 +9834,6 @@ export function initGenerationSix(): SpeciesDataMapConfig {
     starter: SpeciesId.ETERNAL_FLOETTE,
     starterCost: 6,
     evolutions: [],
-    formChanges: [
-      new SpeciesFormChange({
-        speciesId: SpeciesId.ETERNAL_FLOETTE,
-        preFormKey: "",
-        evoFormKey: SpeciesFormKey.MEGA,
-        trigger: new SpeciesFormChangeItemTrigger(FormChangeItem.FLOETTITE),
-      }),
-    ],
     passives: {
       0: AbilityId.MAGIC_GUARD,
       1: AbilityId.MAGIC_GUARD,

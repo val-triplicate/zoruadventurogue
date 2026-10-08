@@ -1,6 +1,5 @@
 import { globalScene } from "#app/global-scene";
 import type { BattlerIndex } from "#enums/battler-index";
-import type { Challenges } from "#enums/challenges";
 import type { EncounterAnim } from "#enums/encounter-anims";
 import type { GameModes } from "#enums/game-modes";
 import type { MoveUseMode } from "#enums/move-use-mode";
@@ -53,7 +52,6 @@ export interface IMysteryEncounter {
   encounterTier: MysteryEncounterTier;
   encounterAnimations?: EncounterAnim[];
   disallowedGameModes?: GameModes[];
-  disallowedChallenges?: Challenges[];
   hideBattleIntroMessage: boolean;
   autoHideIntroVisuals: boolean;
   enterIntroVisualsFromRight: boolean;
@@ -110,10 +108,6 @@ export class MysteryEncounter implements IMysteryEncounter {
    * If specified, defines any game modes where the {@linkcode MysteryEncounter} should *NOT* spawn
    */
   disallowedGameModes?: GameModes[];
-  /**
-   * If specified, defines any challenges (from Challenge game mode) where the {@linkcode MysteryEncounter} should *NOT* spawn
-   */
-  disallowedChallenges?: Challenges[];
   /**
    * If true, hides "A Wild X Appeared" etc. messages
    * Default true
@@ -731,30 +725,6 @@ export class MysteryEncounterBuilder implements Partial<IMysteryEncounter> {
   ): this & Required<Pick<IMysteryEncounter, "encounterAnimations">> {
     const animations = coerceArray(encounterAnimations);
     return Object.assign(this, { encounterAnimations: animations });
-  }
-
-  /**
-   * Defines any game modes where the Mystery Encounter should *NOT* spawn
-   * @returns
-   * @param disallowedGameModes
-   */
-  withDisallowedGameModes(
-    ...disallowedGameModes: GameModes[]
-  ): this & Required<Pick<IMysteryEncounter, "disallowedGameModes">> {
-    const gameModes = coerceArray(disallowedGameModes);
-    return Object.assign(this, { disallowedGameModes: gameModes });
-  }
-
-  /**
-   * Defines any challenges (from Challenge game mode) where the Mystery Encounter should *NOT* spawn
-   * @returns
-   * @param disallowedChallenges
-   */
-  withDisallowedChallenges(
-    ...disallowedChallenges: Challenges[]
-  ): this & Required<Pick<IMysteryEncounter, "disallowedChallenges">> {
-    const challenges = coerceArray(disallowedChallenges);
-    return Object.assign(this, { disallowedChallenges: challenges });
   }
 
   /**

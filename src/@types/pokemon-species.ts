@@ -1,6 +1,5 @@
 import type { SpeciesFormEvolution } from "#balance/pokemon-evolutions";
 import type { Gender } from "#data/gender";
-import type { SpeciesFormChange } from "#data/pokemon-forms";
 import type { PokemonSpecies } from "#data/pokemon-species";
 import type { AbilityId } from "#enums/ability-id";
 import type { CharacterId } from "#enums/character-id";
@@ -35,7 +34,6 @@ export interface PokemonSpeciesData {
   starterCost?: number;
   evolutions: SpeciesFormEvolution[];
   prevolution: SpeciesId | null;
-  formChanges?: SpeciesFormChange[];
   /** The passive ability of the species or a mapping of its formIndex to a passive ability */
   passives: AbilityId | PokemonSpeciesPassives;
   /** An array of level moves shared across **all** forms */

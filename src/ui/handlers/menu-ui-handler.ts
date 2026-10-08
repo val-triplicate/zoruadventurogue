@@ -4,7 +4,6 @@ import { audioManager } from "#app/global-audio-manager";
 import { globalScene } from "#app/global-scene";
 import { handleTutorial, Tutorial } from "#app/tutorial";
 import { bypassLogin, isApp, isBeta, isDev } from "#constants/app-constants";
-import { AdminMode, getAdminModeName } from "#enums/admin-mode";
 import { Button } from "#enums/buttons";
 import { GameDataType } from "#enums/game-data-type";
 import { TextStyle } from "#enums/text-style";
@@ -307,40 +306,6 @@ export class MenuUiHandler extends OptionSelectUiHandler {
       },
       keepOpen: true,
     });
-    if (!bypassLogin) {
-      manageDataOptions.push({
-        label: i18next.t("menuUiHandler:clearLocalData"),
-        handler: () => {
-          ui.revertMode();
-          ui.showText(i18next.t("menuUiHandler:clearLocalDataWarning"), null, () => {
-            const config: ConfirmModeConfig = {
-              yesHandler: () => {
-                globalScene.gameData.clearLocalData();
-                window.location.reload();
-              },
-              noHandler: () => {
-                globalScene.ui.revertMode();
-                globalScene.ui.showText("", 0);
-              },
-            };
-            ui.setOverlayMode(UiMode.CONFIRM, config);
-          });
-          return true;
-        },
-        keepOpen: true,
-      });
-      manageDataOptions.push({
-        // Note: i18n key is under `menu`, not `menuUiHandler` to avoid duplication
-        label: i18next.t("menu:changePassword"),
-        handler: () => {
-          ui.setOverlayMode(UiMode.CHANGE_PASSWORD_FORM, {
-            buttonActions: [() => ui.revertMode(), () => ui.revertMode()],
-          });
-          return true;
-        },
-        keepOpen: true,
-      });
-    }
     if (isBeta || isDev) {
       manageDataOptions.push({
         label: "Test Dialogue",
@@ -457,58 +422,6 @@ export class MenuUiHandler extends OptionSelectUiHandler {
         keepOpen: true,
       },
     ];
-    if (bypassLogin || loggedInUser?.hasAdminRole) {
-      communityOptions.push({
-        label: "Admin",
-        handler: () => {
-          // this is here so that we can skip the menu populating enums that aren't meant for the menu
-          const skippedAdminModes: AdminMode[] = [AdminMode.ADMIN];
-          const options: OptionSelectItem[] = [];
-          Object.values(AdminMode)
-            .filter(v => !skippedAdminModes.includes(v))
-            .forEach(mode => {
-              // this gets all the enums in a way we can use
-              options.push({
-                label: getAdminModeName(mode),
-                handler: () => {
-                  ui.playSelect();
-                  ui.setOverlayMode(
-                    UiMode.ADMIN,
-                    {
-                      buttonActions: [
-                        // we double revert here and below to go back 2 layers of menus
-                        () => {
-                          ui.revertMode();
-                          ui.revertMode();
-                        },
-                        () => {
-                          ui.revertMode();
-                          ui.revertMode();
-                        },
-                      ],
-                    },
-                    // mode is our AdminMode enum
-                    mode,
-                  );
-                  return true;
-                },
-              });
-            });
-          options.push({
-            label: "Cancel",
-            handler: () => {
-              ui.revertMode();
-              return true;
-            },
-          });
-          const yOffset = this.menuMessageBox.displayHeight + 1;
-          const optionSelectConfig: OptionSelectModeConfig = { options, yOffset };
-          globalScene.ui.setOverlayMode(UiMode.OPTION_SELECT, optionSelectConfig);
-          return true;
-        },
-        keepOpen: true,
-      });
-    }
     communityOptions.push({
       label: i18next.t("menuUiHandler:cancel"),
       handler: () => {

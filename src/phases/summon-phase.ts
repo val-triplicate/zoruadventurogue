@@ -3,7 +3,6 @@ import { audioManager } from "#app/global-audio-manager";
 import { globalScene } from "#app/global-scene";
 import { settings } from "#app/global-settings-manager";
 import { getPokemonNameWithAffix } from "#app/messages";
-import { SpeciesFormChangeActiveTrigger } from "#data/form-change-triggers";
 import { getPokeballAtlasKey, getPokeballTintColor } from "#data/pokeball";
 import { BattleType } from "#enums/battle-type";
 import { FieldPosition } from "#enums/field-position";
@@ -125,7 +124,7 @@ export class SummonPhase extends PartyMemberPokemonPhase {
       this.player ? 36 : 248,
       this.player ? 80 : 44,
       "pb",
-      getPokeballAtlasKey(pokemon.getPokeball(true)),
+      getPokeballAtlasKey(pokemon.getPokeball()),
     );
     pokeball.setVisible(false);
     pokeball.setOrigin(0.5, 0.625);
@@ -174,7 +173,7 @@ export class SummonPhase extends PartyMemberPokemonPhase {
               }
               globalScene.currentBattle.seenEnemyPartyMemberIds.add(pokemon.id);
             }
-            globalScene.animations.addPokeballOpenParticles(pokemon.x, pokemon.y - 16, pokemon.getPokeball(true));
+            globalScene.animations.addPokeballOpenParticles(pokemon.x, pokemon.y - 16, pokemon.getPokeball());
             globalScene.updateModifiers(this.player);
             globalScene.updateFieldScale();
             pokemon.showInfo();
@@ -182,7 +181,7 @@ export class SummonPhase extends PartyMemberPokemonPhase {
             pokemon.setVisible(true);
             pokemon.getSprite().setVisible(true);
             pokemon.setScale(0.5);
-            pokemon.tint(getPokeballTintColor(pokemon.getPokeball(true)));
+            pokemon.tint(getPokeballTintColor(pokemon.getPokeball()));
             pokemon.untint(250, "Sine.easeIn");
             globalScene.updateFieldScale();
             globalScene.tweens.add({
@@ -269,7 +268,7 @@ export class SummonPhase extends PartyMemberPokemonPhase {
   onEnd(): void {
     const pokemon = this.getPokemon();
 
-    if (pokemon.isShiny(true)) {
+    if (pokemon.isShiny()) {
       globalScene.phaseManager.unshiftNew("ShinySparklePhase", pokemon.getBattlerIndex());
     }
 
@@ -280,7 +279,6 @@ export class SummonPhase extends PartyMemberPokemonPhase {
       || [BattleType.TRAINER, BattleType.MYSTERY_ENCOUNTER].includes(globalScene.currentBattle.battleType)
       || globalScene.currentBattle.waveIndex % 10 === 1
     ) {
-      globalScene.triggerPokemonFormChange(pokemon, SpeciesFormChangeActiveTrigger, true);
       this.queuePostSummon();
     }
   }

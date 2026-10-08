@@ -13,10 +13,6 @@ export const timedEvents: readonly TimedEvent[] = [
     eventType: EventType.NO_TIMER_DISPLAY,
     startDate: new Date(Date.UTC(2026, 6, 17)),
     endDate: new Date(Date.UTC(2026, 11, 31)),
-    classicWaveRewards: [
-      { wave: 115, type: "MEGA_BRACELET" },
-      { wave: 115, type: "DYNAMAX_BAND" },
-    ],
   },
   {
     name: "Mega Pride 2026",
@@ -86,10 +82,7 @@ export const timedEvents: readonly TimedEvent[] = [
       { wave: 8, type: "ABILITY_CHARM" },
       { wave: 8, type: "CATCHING_CHARM" },
       { wave: 25, type: "SHINY_CHARM" },
-      { wave: 95, type: "MEGA_BRACELET" },
-      { wave: 95, type: "DYNAMAX_BAND" },
     ],
-    dailyRunStartingItems: ["ABILITY_CHARM", "SHINY_CHARM", "MEGA_BRACELET", "DYNAMAX_BAND"],
   },
   {
     name: "April Fools 2026",
@@ -116,7 +109,6 @@ export const timedEvents: readonly TimedEvent[] = [
       "sv",
     ],
     trainerShinyChance: 6554, // 6554/65536 = 1/10
-    upgradeUnlockedVouchers: true,
     sprites: {
       fillRandom: true,
       pokemonReplacements: [
@@ -329,7 +321,6 @@ export const timedEvents: readonly TimedEvent[] = [
       { wave: 8, type: "CATCHING_CHARM" },
       { wave: 25, type: "SHINY_CHARM" },
     ],
-    dailyRunStartingItems: ["ABILITY_CHARM", "SHINY_CHARM"],
   },
   {
     name: "Hearts and Horses",
@@ -373,7 +364,6 @@ export const timedEvents: readonly TimedEvent[] = [
       { wave: 8, type: "CATCHING_CHARM" },
       { wave: 25, type: "SHINY_CHARM" },
     ],
-    dailyRunStartingItems: ["ABILITY_CHARM", "SHINY_CHARM"],
   },
   {
     name: "Winter 25",
@@ -385,7 +375,6 @@ export const timedEvents: readonly TimedEvent[] = [
     availableLangs: ["en", "de", "it", "fr", "ja", "ko", "es-ES", "es-419", "pt-BR", "zh-Hans", "zh-Hant", "da", "ru"],
     shinyEncounterMultiplier: 2,
     shinyCatchMultiplier: 3,
-    upgradeUnlockedVouchers: true,
     eventEncounters: [
       { species: SpeciesId.CYNDAQUIL },
       { species: SpeciesId.SENTRET },
@@ -426,13 +415,11 @@ export const timedEvents: readonly TimedEvent[] = [
         disable: true,
       },
     ],
-    dailyRunStartingItems: ["ABILITY_CHARM", "SHINY_CHARM"],
   },
   {
     name: "Winter Holiday Update",
     eventType: EventType.SHINY,
     shinyEncounterMultiplier: 2,
-    upgradeUnlockedVouchers: true,
     startDate: new Date(Date.UTC(2024, 11, 21, 0)),
     endDate: new Date(Date.UTC(2025, 0, 4, 0)),
     bannerKey: "winter_holidays2024-event",
@@ -561,7 +548,6 @@ export const timedEvents: readonly TimedEvent[] = [
     eventType: EventType.SHINY,
     startDate: new Date(Date.UTC(2025, 1, 10)),
     endDate: new Date(Date.UTC(2025, 1, 21)),
-    boostFusions: true,
     shinyEncounterMultiplier: 2,
     bannerKey: "valentines2025event",
     scale: 0.21,
@@ -601,7 +587,6 @@ export const timedEvents: readonly TimedEvent[] = [
     eventType: EventType.LUCK,
     startDate: new Date(Date.UTC(2025, 1, 27)),
     endDate: new Date(Date.UTC(2025, 2, 4)),
-    classicFriendshipMultiplier: 4,
     bannerKey: "pkmnday2025event",
     scale: 0.21,
     availableLangs: ["en", "de", "it", "fr", "ja", "ko", "es-ES", "pt-BR", "zh-Hans"],
@@ -677,7 +662,6 @@ export const timedEvents: readonly TimedEvent[] = [
     scale: 0.21,
     availableLangs: ["en", "de", "it", "fr", "ja", "ko", "es-ES", "es-419", "pt-BR", "zh-Hans"],
     shinyEncounterMultiplier: 2,
-    upgradeUnlockedVouchers: true,
     eventEncounters: [
       { species: SpeciesId.HOPPIP },
       { species: SpeciesId.CELEBI },
@@ -738,7 +722,6 @@ export const timedEvents: readonly TimedEvent[] = [
       { wave: 8, type: "CATCHING_CHARM" },
       { wave: 25, type: "SHINY_CHARM" },
     ],
-    dailyRunStartingItems: ["SHINY_CHARM", "ABILITY_CHARM"],
   },
   {
     name: "Halloween 25",
@@ -781,6 +764,5 @@ export const timedEvents: readonly TimedEvent[] = [
       { wave: 25, type: "SHINY_CHARM" },
       { wave: 25, type: "CANDY_JAR" },
     ],
-    dailyRunStartingItems: ["ABILITY_CHARM", "SHINY_CHARM", "CANDY_JAR"],
   },
 ];

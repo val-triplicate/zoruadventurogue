@@ -4,6 +4,7 @@ import type { Gender } from "#data/gender";
 import { CustomPokemonData, PokemonBattleData, PokemonSummonData } from "#data/pokemon-data";
 import { Status } from "#data/status-effect";
 import { BattleType } from "#enums/battle-type";
+import type { CharacterId } from "#enums/character-id";
 import type { MoveId } from "#enums/move-id";
 import { Nature } from "#enums/nature";
 import { PokeballType } from "#enums/pokeball";
@@ -16,9 +17,10 @@ import type { Variant } from "#sprites/variant";
 import type { CurrentMoves } from "#types/save-data";
 
 export class PokemonData {
+  public characterId: CharacterId;
   public id: number;
   public player: boolean;
-  public species: SpeciesId;
+  public speciesId: SpeciesId;
   public nickname: string;
   public formIndex: number;
   public abilityIndex: number;
@@ -36,10 +38,8 @@ export class PokemonData {
   public nature: Nature;
   public moves: CurrentMoves;
   public status: Status | null;
-  public metLevel: number;
   public luck: number;
   public pauseEvolutions: boolean;
-  public pokerus: boolean;
   public usedTMs: MoveId[];
   public teraType: PokemonType;
   public isTerastallized: boolean;
@@ -64,13 +64,13 @@ export class PokemonData {
   // TODO: change the source to `unknown` or create a method explicitly for converting from raw JSON data
   constructor(source: Pokemon | any) {
     const sourcePokemon = source instanceof Pokemon ? source : undefined;
-
+    this.characterId = source.characterId;
     this.id = source.id;
     this.player = sourcePokemon?.isPlayer() ?? source.player;
-    this.species = sourcePokemon?.species.speciesId ?? source.species;
+    this.speciesId = sourcePokemon?.species.speciesId ?? source.species.speciesId;
     this.nickname = source.nickname;
     this.formIndex = Math.max(
-      Math.min(source.formIndex, speciesDataRegistry.getSpecies(this.species).forms.length - 1),
+      Math.min(source.formIndex, speciesDataRegistry.getSpecies(this.speciesId).forms.length - 1),
       0,
     );
     this.abilityIndex = source.abilityIndex;
@@ -99,7 +99,6 @@ export class PokemonData {
       : null;
     this.luck = source.luck ?? (source.shiny ? source.variant + 1 : 0);
     this.pauseEvolutions = !!source.pauseEvolutions;
-    this.pokerus = !!source.pokerus;
     this.usedTMs = source.usedTMs ?? [];
     this.teraType = source.teraType as PokemonType;
     this.isTerastallized = !!source.isTerastallized;
@@ -118,10 +117,10 @@ export class PokemonData {
   }
 
   toPokemon(battleType?: BattleType, partyMemberIndex = 0, double = false): Pokemon {
-    const species = speciesDataRegistry.getSpecies(this.species);
     const ret: Pokemon = this.player
       ? globalScene.addPlayerPokemon(
-          species,
+          this.characterId,
+          this.speciesId,
           this.level,
           this.abilityIndex,
           this.formIndex,
@@ -132,7 +131,7 @@ export class PokemonData {
           this,
         )
       : globalScene.addEnemyPokemon(
-          species,
+          this.speciesId,
           this.level,
           battleType === BattleType.TRAINER
             ? !double || !(partyMemberIndex % 2)

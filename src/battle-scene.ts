@@ -30,17 +30,13 @@ import { STARTING_WAVE } from "#balance/misc";
 import { initCommonAnims, initMoveAnim, loadCommonAnimAssets, loadMoveAnimAssets } from "#data/battle-anims";
 import { allMoves, biomeDepths, modifierTypes } from "#data/data-lists";
 import { classicFinalBossDialogue } from "#data/dialogue";
-import type { SpeciesFormChangeTrigger } from "#data/form-change-triggers";
-import { SpeciesFormChangeManualTrigger, SpeciesFormChangeTimeOfDayTrigger } from "#data/form-change-triggers";
 import { Gender } from "#data/gender";
-import type { SpeciesFormChange } from "#data/pokemon-forms";
 import type { PokemonSpecies, PokemonSpeciesFilter } from "#data/pokemon-species";
 import { getTypeRgb } from "#data/type";
 import { BattleType } from "#enums/battle-type";
 import { BattlerTagType } from "#enums/battler-tag-type";
 import { BiomeId } from "#enums/biome-id";
 import type { CharacterId } from "#enums/character-id";
-import { FormChangeItem } from "#enums/form-change-item";
 import { ModifierPoolType } from "#enums/modifier-pool-type";
 import { MoveId } from "#enums/move-id";
 import { MysteryEncounterMode } from "#enums/mystery-encounter-mode";
@@ -81,7 +77,6 @@ import {
   MultipleParticipantExpBonusModifier,
   PersistentModifier,
   PokemonExpBoosterModifier,
-  PokemonFormChangeItemModifier,
   PokemonHeldItemModifier,
   PokemonHpRestoreModifier,
   PokemonIncrementingStatModifier,
@@ -813,7 +808,7 @@ export class BattleScene extends SceneBase {
   // biome-ignore lint/complexity/useMaxParams: will be fixed later
   addPlayerPokemon(
     charId: CharacterId,
-    species: PokemonSpecies,
+    speciesId: SpeciesId,
     level: number,
     abilityIndex?: number,
     formIndex?: number,
@@ -826,7 +821,7 @@ export class BattleScene extends SceneBase {
   ): PlayerPokemon {
     const pokemon = new PlayerPokemon(
       charId,
-      species,
+      speciesId,
       level,
       abilityIndex,
       formIndex,
@@ -868,7 +863,7 @@ export class BattleScene extends SceneBase {
 
   // biome-ignore lint/complexity/useMaxParams: will be fixed later
   addEnemyPokemon(
-    species: PokemonSpecies,
+    speciesId: SpeciesId,
     level: number,
     trainerSlot: TrainerSlot,
     boss = false,
@@ -881,12 +876,14 @@ export class BattleScene extends SceneBase {
       level = activeOverrides.ENEMY_LEVEL_OVERRIDE;
     }
     if (activeOverrides.ENEMY_SPECIES_OVERRIDE) {
-      species = speciesDataRegistry.getSpecies(activeOverrides.ENEMY_SPECIES_OVERRIDE);
+      speciesId = activeOverrides.ENEMY_SPECIES_OVERRIDE;
       // The fact that a Pokemon is a boss or not can change based on its Species and level
-      boss = this.getEncounterBossSegments(this.currentBattle.waveIndex, level, species) > 1;
+      boss =
+        this.getEncounterBossSegments(this.currentBattle.waveIndex, level, speciesDataRegistry.getSpecies(speciesId))
+        > 1;
     }
 
-    const pokemon = new EnemyPokemon(species, level, trainerSlot, boss, shinyLock, dataSource, forRival);
+    const pokemon = new EnemyPokemon(speciesId, level, trainerSlot, boss, shinyLock, dataSource, forRival);
     if (boss && !dataSource) {
       const secondaryIvs = getIvsFromId(randSeedInt(4294967296));
 
@@ -1467,10 +1464,6 @@ export class BattleScene extends SceneBase {
       if (!this.trainer.visible) {
         this.phaseManager.pushNew("ShowTrainerPhase");
       }
-    }
-
-    for (const pokemon of this.getPlayerParty()) {
-      this.triggerPokemonFormChange(pokemon, SpeciesFormChangeTimeOfDayTrigger);
     }
 
     if (!this.gameMode.hasRandomBiomes && !isNewBiome) {
@@ -2244,12 +2237,6 @@ export class BattleScene extends SceneBase {
     const modifiersToRemove: PersistentModifier[] = [];
     if (modifier instanceof PersistentModifier) {
       if ((modifier as PersistentModifier).add(this.modifiers, !!virtual)) {
-        if (modifier instanceof PokemonFormChangeItemModifier) {
-          const pokemon = this.getPokemonById(modifier.pokemonId);
-          if (pokemon) {
-            success = modifier.apply(pokemon, true);
-          }
-        }
         if (playSound && !this.sound.get(soundName)) {
           audioManager.playSound(soundName);
         }
@@ -2320,12 +2307,6 @@ export class BattleScene extends SceneBase {
     return new Promise(resolve => {
       const modifiersToRemove: PersistentModifier[] = [];
       if ((modifier as PersistentModifier).add(this.enemyModifiers, false)) {
-        if (modifier instanceof PokemonFormChangeItemModifier) {
-          const pokemon = this.getPokemonById(modifier.pokemonId);
-          if (pokemon) {
-            modifier.apply(pokemon, true);
-          }
-        }
         for (const rm of modifiersToRemove) {
           this.removeModifier(rm, true);
         }
@@ -2662,12 +2643,6 @@ export class BattleScene extends SceneBase {
     const modifierIndex = modifiers.indexOf(modifier);
     if (modifierIndex > -1) {
       modifiers.splice(modifierIndex, 1);
-      if (modifier instanceof PokemonFormChangeItemModifier) {
-        const pokemon = this.getPokemonById(modifier.pokemonId);
-        if (pokemon) {
-          modifier.apply(pokemon, false);
-        }
-      }
       return true;
     }
 
@@ -2794,57 +2769,6 @@ export class BattleScene extends SceneBase {
     }
 
     return null;
-  }
-
-  triggerPokemonFormChange(
-    pokemon: Pokemon,
-    formChangeTriggerType: Constructor<SpeciesFormChangeTrigger>,
-    delayed = false,
-    modal = false,
-  ): boolean {
-    if (speciesDataRegistry.hasFormChanges(pokemon.species.speciesId)) {
-      // in case this is NECROZMA, determine which forms this
-      const matchingFormChangeOpts = speciesDataRegistry
-        .getFormChanges(pokemon.species.speciesId)
-        .filter(fc => fc.findTrigger(formChangeTriggerType) && fc.canChange(pokemon));
-      let matchingFormChange: SpeciesFormChange | null;
-      if (pokemon.species.speciesId === SpeciesId.NECROZMA && matchingFormChangeOpts.length > 1) {
-        // Ultra Necrozma is changing its form back, so we need to figure out into which form it devolves.
-        const formChangeItemModifiers = (
-          this.findModifiers(
-            m => m instanceof PokemonFormChangeItemModifier && m.pokemonId === pokemon.id,
-          ) as PokemonFormChangeItemModifier[]
-        )
-          .filter(m => m.active)
-          .map(m => m.formChangeItem);
-
-        matchingFormChange = formChangeItemModifiers.includes(FormChangeItem.N_LUNARIZER)
-          ? matchingFormChangeOpts[0]
-          : formChangeItemModifiers.includes(FormChangeItem.N_SOLARIZER)
-            ? matchingFormChangeOpts[1]
-            : null;
-      } else {
-        matchingFormChange = matchingFormChangeOpts[0];
-      }
-      if (matchingFormChange) {
-        let phase: Phase;
-        if (pokemon.isPlayer() && !matchingFormChange.quiet) {
-          phase = this.phaseManager.create("FormChangePhase", pokemon, matchingFormChange, modal);
-        } else {
-          phase = this.phaseManager.create("QuietFormChangePhase", pokemon, matchingFormChange);
-        }
-        if (pokemon.isPlayer() && !matchingFormChange.quiet && modal) {
-          this.phaseManager.overridePhase(phase);
-        } else if (delayed) {
-          this.phaseManager.pushPhase(phase);
-        } else {
-          this.phaseManager.unshiftPhase(phase);
-        }
-        return true;
-      }
-    }
-
-    return false;
   }
 
   triggerPokemonBattleAnim(
@@ -2977,8 +2901,6 @@ export class BattleScene extends SceneBase {
       shiny: boolean;
       /** @since 2.0.0 */
       variant: string;
-      /** @since 2.0.0 */
-      isFusion: boolean;
     };
     const variantMap = {
       [0]: "Normal",
@@ -3105,7 +3027,6 @@ export class BattleScene extends SceneBase {
       this.addEnemyModifier(finalBossMBH, false, true);
       pokemon.generateAndPopulateMoveset(false, 1);
       this.setFieldScale(0.75);
-      this.triggerPokemonFormChange(pokemon, SpeciesFormChangeManualTrigger, false);
       this.currentBattle.double = true;
       const availablePartyMembers = this.getPlayerParty().filter(p => p.isAllowedInBattle());
       if (availablePartyMembers.length > 1) {

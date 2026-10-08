@@ -432,7 +432,7 @@ export class Trainer extends Phaser.GameObjects.Container {
       }
 
       ret = globalScene.addEnemyPokemon(
-        species,
+        species.speciesId,
         level,
         !this.isDouble() || !(index % 2) ? TrainerSlot.TRAINER : TrainerSlot.TRAINER_PARTNER,
       );

@@ -72,7 +72,6 @@ export class TurnEndPhase extends FieldPhase {
 
     if (globalScene.arena.weather && !globalScene.arena.weather.lapse()) {
       globalScene.arena.trySetWeather(WeatherType.NONE);
-      globalScene.arena.triggerWeatherBasedFormChangesToNormal();
     }
 
     if (globalScene.arena.terrain && !globalScene.arena.terrain.lapse()) {
