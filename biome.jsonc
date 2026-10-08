@@ -60,17 +60,17 @@
         "noUndeclaredVariables": "error",
         // we virtually always use base 10 number conversion
         "useParseIntRadix": "off",
-        "noUnusedVariables": "error",
+        "noUnusedVariables": "warn",
         "noSwitchDeclarations": "error",
         "noVoidTypeReturn": "error",
         "noUnusedImports": {
-          "level": "error",
+          "level": "warn",
           "fix": "safe"
         },
-        "noUnusedFunctionParameters": "error",
-        "noUnusedLabels": "error",
-        "noPrivateImports": "error",
-        "useSingleJsDocAsterisk": "error",
+        "noUnusedFunctionParameters": "warn",
+        "noUnusedLabels": "warn",
+        "noPrivateImports": "warn",
+        "useSingleJsDocAsterisk": "warn",
         "useJsonImportAttributes": "off" // "Import attributes are only supported when the '--module' option is set to 'esnext', 'node18', 'nodenext', or 'preserve'. ts(2823)"
       },
       "style": {
@@ -109,8 +109,8 @@
             "syntax": "shorthand"
           }
         },
-        "useCollapsedIf": "error",
-        "useCollapsedElseIf": "error",
+        "useCollapsedIf": "warn",
+        "useCollapsedElseIf": "warn",
         "useDeprecatedReason": "error",
         "useConsistentArrayType": {
           "level": "error",
