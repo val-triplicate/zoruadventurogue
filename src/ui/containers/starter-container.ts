@@ -72,8 +72,9 @@ export class CharacterContainer extends Phaser.GameObjects.Container {
     this.classicWinIcon = classicWinIcon;
   }
 
-  public setCharacter(teamMemberId: CharacterId, props: IconProps) {
-    this.species = characterRegistry.getSpecies(teamMemberId);
+  public setCharacter(charId: CharacterId, props: IconProps) {
+    this.charId = charId;
+    this.species = characterRegistry.getSpecies(charId);
 
     let { shiny, formIndex, gender, variant } = props;
 

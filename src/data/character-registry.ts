@@ -3,9 +3,11 @@ import { globalScene } from "#app/global-scene";
 import { speciesDataRegistry } from "#app/global-species-data-registry";
 import { teamRegistry } from "#app/global-team-data-registry";
 import { initCharacters } from "#balance/custom-characters";
+import type { MoveSet } from "#data/moveset";
 import type { CharacterId } from "#enums/character-id";
+import { type CharacterPreference, initPreferences } from "#types/character-preference";
 import type { Character, CharacterDataMap, PreferenceDataMap } from "#types/pokemon-species";
-import type { CharacterPreference, TeamSaveDataEntry } from "#types/save-data";
+import type { TeamSaveDataEntry } from "#types/save-data";
 import type { PokemonSpecies, PokemonSpeciesForm } from "./pokemon-species";
 
 export class CharacterRegistry {
@@ -17,8 +19,10 @@ export class CharacterRegistry {
   }
 
   constructor() {
-    this._data = Object.assign({} as CharacterDataMap, initCharacters());
-    this._preference_data = Object.assign({} as PreferenceDataMap, initCharacters());
+    const characterDataMap = initCharacters();
+    const preferenceDataMap = initPreferences(Object.values(characterDataMap));
+    this._data = Object.assign({} as CharacterDataMap, characterDataMap);
+    this._preference_data = Object.assign({} as PreferenceDataMap, preferenceDataMap);
   }
 
   public getAllCharacterIds(): CharacterId[] {
@@ -53,6 +57,14 @@ export class CharacterRegistry {
 
   public getPreferences(id: CharacterId): CharacterPreference {
     return this._preference_data[id];
+  }
+
+  public getSelectedMoves(id: CharacterId): MoveSet {
+    return this.getPreferences(id).selectedMoves;
+  }
+
+  public getUnselectedMoves(id: CharacterId): MoveSet {
+    return this.getPreferences(id).unselectedMoves;
   }
 }
 

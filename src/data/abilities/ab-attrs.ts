@@ -840,11 +840,7 @@ export class PostDefendTypeChangeAbAttr extends PostDefendAbAttr {
     }
 
     this.type = attacker.getMoveType(move);
-    if (pokemon.isOfType(this.type, { returnOriginalTypesIfStellar: true })) {
-      return false;
-    }
-
-    return true;
+    return !pokemon.isOfType(this.type, { returnOriginalTypesIfStellar: true });
   }
 
   override apply({ pokemon, simulated }: PostMoveInteractionAbAttrParams): void {
@@ -4290,7 +4286,6 @@ export interface PostMoveUsedAbAttrParams extends AbAttrBaseParams {
  */
 abstract class PostMoveUsedAbAttr extends AbAttr {
   // biome-ignore lint/correctness/noUnusedFunctionParameters: psuedo-abstract method
-  // @ts-expect-error
   public override canApply(params: Closed<PostMoveUsedAbAttrParams>): boolean {
     return true;
   }

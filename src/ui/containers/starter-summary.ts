@@ -1,10 +1,10 @@
 import { characterRegistry } from "#app/global-character-data-registry";
 import { globalScene } from "#app/global-scene";
 import { speciesDataRegistry } from "#app/global-species-data-registry";
-import { characterMovePools } from "#balance/egg-moves";
 import { allAbilities, allMoves } from "#data/data-lists";
 import { GrowthRate, getGrowthRateColor } from "#data/exp";
 import { Gender, getGenderColor, getGenderSymbol } from "#data/gender";
+import type { MoveSet } from "#data/moveset";
 import { getNatureName } from "#data/nature";
 import type { PokemonSpecies } from "#data/pokemon-species";
 import type { CharacterId } from "#enums/character-id";
@@ -13,7 +13,7 @@ import { PokemonType } from "#enums/pokemon-type";
 import { SpeciesId } from "#enums/species-id";
 import { TextStyle } from "#enums/text-style";
 import { getVariantIcon, getVariantTint, type Variant } from "#sprites/variant";
-import type { CharacterPreferenceSelections, MoveSet } from "#types/save-data";
+import type { CharacterPreferenceSelections } from "#types/save-data";
 import type { DefinedSpeciesDetails } from "#types/starter-select-types";
 import { getStarterSelectTextSettings } from "#ui/starter-select-ui-utils";
 import { addBBCodeTextObject, addTextObject, getTextColor } from "#ui/text";
@@ -35,7 +35,7 @@ export class StarterSummary extends Phaser.GameObjects.Container {
   private pokemonLuckLabelText: Phaser.GameObjects.Text;
   private pokemonLuckText: Phaser.GameObjects.Text;
   private pokemonGenderText: Phaser.GameObjects.Text;
-  private readonly pokemonUncaughtText: Phaser.GameObjects.Text;
+  private readonly characterLockedText: Phaser.GameObjects.Text;
   private pokemonAbilityLabelText: Phaser.GameObjects.Text;
   private pokemonAbilityText: Phaser.GameObjects.Text;
   private pokemonPassiveLabelText: Phaser.GameObjects.Text;
@@ -43,15 +43,14 @@ export class StarterSummary extends Phaser.GameObjects.Container {
   private pokemonNatureLabelText: Phaser.GameObjects.Text;
   private pokemonNatureText: BBCodeText;
   private pokemonMovesContainer: Phaser.GameObjects.Container;
-  private readonly pokemonMoveContainers: Phaser.GameObjects.Container[];
-  private readonly pokemonMoveBgs: Phaser.GameObjects.NineSlice[];
-  private readonly pokemonMoveLabels: Phaser.GameObjects.Text[];
-  private readonly pokemonAdditionalMoveCountLabel: Phaser.GameObjects.Text;
+  private readonly moveContainers: Phaser.GameObjects.Container[];
+  private readonly moveBgs: Phaser.GameObjects.NineSlice[];
+  private readonly moveLabels: Phaser.GameObjects.Text[];
   private readonly eggMovesLabel: Phaser.GameObjects.Text;
-  private readonly pokemonEggMovesContainer: Phaser.GameObjects.Container;
-  private readonly pokemonEggMoveContainers: Phaser.GameObjects.Container[];
-  private readonly pokemonEggMoveBgs: Phaser.GameObjects.NineSlice[];
-  private readonly pokemonEggMoveLabels: Phaser.GameObjects.Text[];
+  private readonly reserveMovesContainer: Phaser.GameObjects.Container;
+  private readonly reserveMoveContainers: Phaser.GameObjects.Container[];
+  private readonly reserveMoveBgs: Phaser.GameObjects.NineSlice[];
+  private readonly reserveMoveLabels: Phaser.GameObjects.Text[];
   private pokemonFormText: Phaser.GameObjects.Text;
   private pokemonShinyIcon: Phaser.GameObjects.Sprite;
   private pokemonPassiveDisabledIcon: Phaser.GameObjects.Sprite;
@@ -88,22 +87,22 @@ export class StarterSummary extends Phaser.GameObjects.Container {
     this.pokemonNameText = addTextObject(6, 112, "", TextStyle.SUMMARY) //
       .setOrigin(0);
 
-    this.pokemonUncaughtText = addTextObject(
+    this.characterLockedText = addTextObject(
       6,
       127,
-      i18next.t("starterSelectUiHandler:uncaught"),
+      i18next.t("starterSelectUiHandler:locked"),
       TextStyle.SUMMARY_ALT,
       { fontSize: "56px" },
     ) //
       .setOrigin(0);
 
-    this.pokemonMoveContainers = [];
-    this.pokemonMoveBgs = [];
-    this.pokemonMoveLabels = [];
+    this.moveContainers = [];
+    this.moveBgs = [];
+    this.moveLabels = [];
 
-    this.pokemonEggMoveContainers = [];
-    this.pokemonEggMoveBgs = [];
-    this.pokemonEggMoveLabels = [];
+    this.reserveMoveContainers = [];
+    this.reserveMoveBgs = [];
+    this.reserveMoveLabels = [];
 
     this.pokemonPreferencesContainer = this.setupPokemonPreferencesContainer();
     this.pokemonPermanentInfoContainer = this.setupPokemonPermanentInfoContainer();
@@ -119,38 +118,28 @@ export class StarterSummary extends Phaser.GameObjects.Container {
       const moveLabel = addTextObject(-moveBg.width / 2, 0, "-", TextStyle.MOVE_LABEL) //
         .setOrigin(0.5, 0);
 
-      this.pokemonMoveBgs.push(moveBg);
-      this.pokemonMoveLabels.push(moveLabel);
+      this.moveBgs.push(moveBg);
+      this.moveLabels.push(moveLabel);
 
       moveContainer.add([moveBg, moveLabel]);
 
-      this.pokemonMoveContainers.push(moveContainer);
+      this.moveContainers.push(moveContainer);
       this.pokemonMovesContainer.add(moveContainer);
     }
 
-    this.pokemonAdditionalMoveCountLabel = addTextObject(
-      -this.pokemonMoveBgs[0].width / 2,
-      56,
-      "(+0)",
-      TextStyle.MOVE_LABEL,
-    )
-      .setOrigin(0.5, 0)
-      .setColor(getTextColor(TextStyle.WINDOW_ALT))
-      .setShadowColor(getTextColor(TextStyle.WINDOW_ALT, true));
+    this.reserveMovesContainer = globalScene.add.container(102, 85).setScale(0.375);
 
-    this.pokemonMovesContainer.add(this.pokemonAdditionalMoveCountLabel);
+    this.eggMovesLabel = addTextObject(
+      -46,
+      0,
+      i18next.t("starterSelectUiHandler:eggMoves"),
+      TextStyle.WINDOW_ALT,
+    ).setOrigin(0.5, 0);
 
-    this.pokemonEggMovesContainer = globalScene.add //
-      .container(102, 85)
-      .setScale(0.375);
-
-    this.eggMovesLabel = addTextObject(-46, 0, i18next.t("starterSelectUiHandler:eggMoves"), TextStyle.WINDOW_ALT) //
-      .setOrigin(0.5, 0);
-
-    this.pokemonEggMovesContainer.add(this.eggMovesLabel);
+    this.reserveMovesContainer.add(this.eggMovesLabel);
 
     for (let m = 0; m < 4; m++) {
-      const eggMoveContainer = globalScene.add.container(0, 16 + 14 * m);
+      const reserveMoveContainer = globalScene.add.container(0, 16 + 14 * m);
 
       const eggMoveBg = globalScene.add //
         .nineslice(0, 0, "type_bgs", "unknown", 92, 14, 2, 2, 2, 2)
@@ -159,14 +148,13 @@ export class StarterSummary extends Phaser.GameObjects.Container {
       const eggMoveLabel = addTextObject(-eggMoveBg.width / 2, 0, "???", TextStyle.MOVE_LABEL) //
         .setOrigin(0.5, 0);
 
-      this.pokemonEggMoveBgs.push(eggMoveBg);
-      this.pokemonEggMoveLabels.push(eggMoveLabel);
+      this.reserveMoveBgs.push(eggMoveBg);
+      this.reserveMoveLabels.push(eggMoveLabel);
 
-      eggMoveContainer.add([eggMoveBg, eggMoveLabel]);
+      reserveMoveContainer.add([eggMoveBg, eggMoveLabel]);
 
-      this.pokemonEggMoveContainers.push(eggMoveContainer);
-
-      this.pokemonEggMovesContainer.add(eggMoveContainer);
+      this.reserveMoveContainers.push(reserveMoveContainer);
+      this.reserveMovesContainer.add(reserveMoveContainer);
     }
 
     this.add([
@@ -174,12 +162,12 @@ export class StarterSummary extends Phaser.GameObjects.Container {
       this.shinyOverlay,
       this.pokemonNumberText,
       this.pokemonNameText,
-      this.pokemonUncaughtText,
+      this.characterLockedText,
       this.pokemonPreferencesContainer,
       this.pokemonPermanentInfoContainer,
       this.pokemonStatisticsContainer,
       this.pokemonMovesContainer,
-      this.pokemonEggMovesContainer,
+      this.reserveMovesContainer,
     ]);
   }
 
@@ -348,7 +336,7 @@ export class StarterSummary extends Phaser.GameObjects.Container {
 
   public applyChallengeVisibility(): void {
     // TODO: this should not be handled this way
-    for (const container of this.pokemonEggMoveContainers) {
+    for (const container of this.reserveMoveContainers) {
       container.setVisible(true);
     }
     this.eggMovesLabel.setVisible(true);
@@ -408,7 +396,7 @@ export class StarterSummary extends Phaser.GameObjects.Container {
   }
 
   public setCharacter(id: CharacterId): void {
-    const saveData = globalScene.gameData.teamSaveData[id];
+    const saveData = characterRegistry.getSaveData(id);
     const character = characterRegistry.getCharacter(id);
     const preferences = characterRegistry.getPreferences(id);
     this.speciesId = character.speciesId;
@@ -417,9 +405,9 @@ export class StarterSummary extends Phaser.GameObjects.Container {
     this.pokemonAbilityText.off("pointerover");
     this.pokemonPassiveText.off("pointerover");
 
-    if (saveData.isTeamUnlocked) {
+    if (saveData && saveData.isTeamUnlocked) {
       this.setNameAndNumber(species, preferences);
-      this.pokemonUncaughtText.setVisible(false);
+      this.characterLockedText.setVisible(false);
       this.pokemonPermanentInfoContainer.setVisible(true);
       this.pokemonStatisticsContainer.setVisible(true);
 
@@ -442,14 +430,14 @@ export class StarterSummary extends Phaser.GameObjects.Container {
       return;
     }
 
-    this.cleanStarterSprite(species, saveData.isTeamUnlocked);
+    this.cleanStarterSprite(species, saveData && saveData.isTeamUnlocked);
 
     const { gender, formIndex, shiny, variant } = globalScene.gameData.getDefaultIconProps(id);
 
     this.updateSprite(species, gender ?? Gender.NONBINARY, formIndex, shiny, variant);
     this.pokemonSprite //
       .setVisible(true)
-      .setTint(saveData.isTeamUnlocked ? 0x808080 : 0x000000);
+      .setTint(saveData && saveData.isTeamUnlocked ? 0x808080 : 0x000000);
   }
 
   private cleanStarterSprite(species?: PokemonSpecies, isSeen = false): void {
@@ -461,7 +449,7 @@ export class StarterSummary extends Phaser.GameObjects.Container {
     }
 
     this.pokemonSprite.setVisible(!!species);
-    this.pokemonUncaughtText.setVisible(!!species);
+    this.characterLockedText.setVisible(!!species);
 
     this.pokemonPermanentInfoContainer.setVisible(false);
     this.pokemonStatisticsContainer.setVisible(false);
@@ -479,10 +467,9 @@ export class StarterSummary extends Phaser.GameObjects.Container {
       .setShadowColor(getTextColor(TextStyle.SUMMARY, true));
 
     for (let m = 0; m < 4; m++) {
-      this.pokemonMoveContainers[m].setVisible(false);
+      this.moveContainers[m].setVisible(false);
     }
-    this.pokemonEggMovesContainer.setVisible(false);
-    this.pokemonAdditionalMoveCountLabel.setVisible(false);
+    this.reserveMovesContainer.setVisible(false);
   }
 
   public setStarterDetails(id: CharacterId, options: DefinedSpeciesDetails): void {
@@ -542,13 +529,9 @@ export class StarterSummary extends Phaser.GameObjects.Container {
     }
 
     const preference = characterRegistry.getPreferences(id);
-    let moves = preference.selectedMoves;
-    if (!moves) {
-      moves = characterRegistry.getCharacter(id).movePool.slice(0, 4) as MoveSet;
-      preference.selectedMoves = moves;
-    }
 
-    this.updateMoveset(moves, 4);
+    this.updateMoveset(preference.selectedMoves);
+    this.updateReserveMoves(preference.unselectedMoves);
     this.updatePassiveDisplay(id, formIndex);
 
     this.pokemonNatureText.setText(getNatureName(natureIndex, true, true, false));
@@ -643,32 +626,26 @@ export class StarterSummary extends Phaser.GameObjects.Container {
     });
   }
 
-  public updateMoveset(starterMoveset: MoveSet, totalMoves: number): void {
-    for (let m = 0; m < 4; m++) {
-      const move = m < starterMoveset.length ? allMoves[starterMoveset[m]] : null;
-      this.pokemonMoveBgs[m].setFrame(PokemonType[move ? move.type : PokemonType.UNKNOWN].toString().toLowerCase());
-      this.pokemonMoveLabels[m].setText(move ? move.name : "-");
-      this.pokemonMoveContainers[m].setVisible(!!move);
+  public updateMoveset(moves: MoveSet): void {
+    for (let i = 0; i < 4; i++) {
+      const move = allMoves[moves[i]];
+      this.moveBgs[i].setFrame(PokemonType[move.type].toString().toLowerCase());
+      this.moveLabels[i].setText(move.name);
+      this.moveContainers[i].setVisible(true);
     }
-
-    this.pokemonAdditionalMoveCountLabel.setText(`(+${Math.max(totalMoves - 4, 0)})`).setVisible(totalMoves > 4);
   }
 
-  public updateEggMoves(eggMoves: number): void {
-    for (let em = 0; em < 4; em++) {
-      const eggMove = allMoves[characterMovePools[this.speciesId][em]];
-      const eggMoveUnlocked = eggMove && eggMoves & (1 << em);
-      this.pokemonEggMoveBgs[em].setFrame(
-        PokemonType[eggMove ? eggMove.type : PokemonType.UNKNOWN].toString().toLowerCase(),
-      );
-      this.pokemonEggMoveLabels[em].setText(eggMove && eggMoveUnlocked ? eggMove.name : "???");
+  public updateReserveMoves(moves: MoveSet): void {
+    for (let i = 0; i < 4; i++) {
+      const move = allMoves[moves[i]];
+      this.reserveMoveBgs[i].setFrame(PokemonType[move.type].toString().toLowerCase());
+      this.reserveMoveLabels[i].setText(move.name);
     }
-
-    this.pokemonEggMovesContainer.setVisible(true);
+    this.reserveMovesContainer.setVisible(true);
   }
 
   public hideEggMoves(): void {
-    this.pokemonEggMovesContainer.setVisible(false);
+    this.reserveMovesContainer.setVisible(false);
   }
 
   /** Truncate the Pokémon name so it won't overlap into the starters. */

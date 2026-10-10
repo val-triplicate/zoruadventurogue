@@ -1,5 +1,6 @@
 import type { SpeciesFormEvolution } from "#balance/pokemon-evolutions";
 import type { Gender } from "#data/gender";
+import type { MovePool } from "#data/moveset";
 import type { PokemonSpecies } from "#data/pokemon-species";
 import type { AbilityId } from "#enums/ability-id";
 import type { CharacterId } from "#enums/character-id";
@@ -8,8 +9,8 @@ import type { Nature } from "#enums/nature";
 import type { Origin } from "#enums/origin";
 import type { SpeciesId } from "#enums/species-id";
 import type { TeamId } from "#enums/team-id";
+import type { CharacterPreference } from "#types/character-preference";
 import type { LevelMoves } from "./level-moves";
-import type { CharacterPreference, MovePool } from "./save-data";
 import type { StarterSpeciesId } from "./starter-species-id";
 
 /**

@@ -1,6 +1,7 @@
 import { globalScene } from "#app/global-scene";
 import { speciesDataRegistry } from "#app/global-species-data-registry";
 import type { Gender } from "#data/gender";
+import type { CurrentMoves } from "#data/moveset";
 import { CustomPokemonData, PokemonBattleData, PokemonSummonData } from "#data/pokemon-data";
 import { Status } from "#data/status-effect";
 import { BattleType } from "#enums/battle-type";
@@ -14,7 +15,6 @@ import { TrainerSlot } from "#enums/trainer-slot";
 import { EnemyPokemon, Pokemon } from "#field/pokemon";
 import { PokemonMove } from "#moves/pokemon-move";
 import type { Variant } from "#sprites/variant";
-import type { CurrentMoves } from "#types/save-data";
 
 export class PokemonData {
   public characterId: CharacterId;

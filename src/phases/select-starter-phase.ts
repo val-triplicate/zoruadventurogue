@@ -2,10 +2,10 @@ import { audioManager } from "#app/global-audio-manager";
 import { characterRegistry } from "#app/global-character-data-registry";
 import { globalScene } from "#app/global-scene";
 import { Phase } from "#app/phase";
+import { blankSelectedMoves } from "#data/moveset";
 import { UiMode } from "#enums/ui-mode";
 import type { PlayerPokemon } from "#field/pokemon";
 import { overrideHeldItems, overrideModifiers } from "#modifiers/modifier";
-import { blankSelectedMoves } from "#types/save-data";
 import { SaveSlotUiMode } from "#ui/save-slot-select-ui-handler";
 
 export class SelectStarterPhase extends Phase {

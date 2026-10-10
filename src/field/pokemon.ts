@@ -38,6 +38,7 @@ import { allAbilities, allMoves } from "#data/data-lists";
 import { getLevelTotalExp } from "#data/exp";
 import { Gender } from "#data/gender";
 import type { VariableMoveTypeAttr } from "#data/moves/move";
+import { blankCurrentMoves, type CurrentMoves, type MoveSet } from "#data/moveset";
 import { getNatureStatMultiplier } from "#data/nature";
 import {
   CustomPokemonData,
@@ -132,7 +133,6 @@ import type {
 import type { DamageCalculationResult, DamageResult } from "#types/damage-result";
 import type { LevelMovesWithSource } from "#types/level-moves";
 import type { GetEffectiveStatParams } from "#types/pokemon-common";
-import { blankCurrentMoves, type CurrentMoves, type MoveSet } from "#types/save-data";
 import type { StatChange } from "#types/stat-change";
 import type { TurnMove } from "#types/turn-move";
 import type { AbstractConstructor } from "#types/type-helpers";

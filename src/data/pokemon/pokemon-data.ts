@@ -2,6 +2,7 @@ import { speciesDataRegistry } from "#app/global-species-data-registry";
 import type { BattlerTag } from "#data/battler-tags";
 import { loadBattlerTag, SerializableBattlerTag } from "#data/battler-tags";
 import type { Gender } from "#data/gender";
+import type { CurrentMoves } from "#data/moveset";
 import type { PokemonSpeciesForm } from "#data/pokemon-species";
 import type { TypeDamageMultiplier } from "#data/type";
 import type { AbilityId } from "#enums/ability-id";
@@ -15,7 +16,6 @@ import { PokemonMove } from "#moves/pokemon-move";
 import type { ObtainStatusEffectPhase } from "#phases/obtain-status-effect-phase";
 import type { AttackMoveResult } from "#types/attack-move-result";
 import type { SerializedSpeciesForm } from "#types/pokemon-common";
-import type { CurrentMoves } from "#types/save-data";
 import type { TurnMove } from "#types/turn-move";
 import type { CoerceNullPropertiesToUndefined } from "#types/type-helpers";
 

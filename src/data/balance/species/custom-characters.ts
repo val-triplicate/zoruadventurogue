@@ -1,10 +1,10 @@
 import { Gender } from "#data/gender";
+import { blankMovePool, type MovePool, type MoveSet, toMoveSet } from "#data/moveset";
 import { CharacterId } from "#enums/character-id";
 import { MoveId } from "#enums/move-id";
 import { Nature } from "#enums/nature";
 import { SpeciesId } from "#enums/species-id";
-import type { CharacterDataMap, PreferenceDataMap } from "#types/pokemon-species";
-import { blankMovePool, CharacterPreference, type MovePool } from "#types/save-data";
+import type { Character, CharacterDataMap } from "#types/pokemon-species";
 
 function addCharacter(
   map: CharacterDataMap,
@@ -18,7 +18,7 @@ function addCharacter(
     id,
     identity: { name, gender, nature },
     speciesId,
-    movePool: MOVE_POOLS[id] || blankMovePool,
+    movePool: MOVE_POOLS.get(id) || blankMovePool,
     abilities: {},
   };
 }
@@ -71,6 +71,14 @@ function initMovePools() {
   SIGNATURE_XMS.set(CharacterId.VM_VAPOREON, MoveId.FREEZE_DRY);
 }
 
+export function getDefaultSelectedMoves(char: Character): MoveSet {
+  return toMoveSet(char.movePool.slice(0, 4));
+}
+
+export function getDefaultUnselectedMoves(char: Character): MoveSet {
+  return toMoveSet(char.movePool.slice(4, 8));
+}
+
 export function initCharacters(): CharacterDataMap {
   initMovePools();
   const map: CharacterDataMap = {} as CharacterDataMap;
@@ -80,13 +88,5 @@ export function initCharacters(): CharacterDataMap {
   addCharacter(map, CharacterId.ES_SPIDOPS, SpeciesId.SPIDOPS, Gender.FEMALE, Nature.SERIOUS);
   addCharacter(map, CharacterId.DS_DIA, SpeciesId.ESPEON, Gender.FEMALE, Nature.SERIOUS, "Dia");
   addCharacter(map, CharacterId.DS_SILVER, SpeciesId.UMBREON, Gender.NONBINARY, Nature.SERIOUS, "Silver");
-  return map;
-}
-
-export function initPreferences(charIds: CharacterId[]): PreferenceDataMap {
-  const map: PreferenceDataMap = {} as PreferenceDataMap;
-  for (const id of charIds) {
-    map[id] = new CharacterPreference(id);
-  }
   return map;
 }

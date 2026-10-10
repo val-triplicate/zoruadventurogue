@@ -19,7 +19,7 @@ import { UiMode } from "#enums/ui-mode";
 import type { Variant } from "#sprites/variant";
 import { getVariantTint } from "#sprites/variant";
 import type { Character } from "#types/pokemon-species";
-import type { IconProps, MoveSet } from "#types/save-data";
+import type { IconProps } from "#types/save-data";
 import type { CanCycle } from "#types/starter-select-types";
 import type {
   ConfirmModeConfig,
@@ -50,6 +50,8 @@ import i18next from "i18next";
 import type { GameObjects } from "phaser";
 
 import Sprite = Phaser.GameObjects.Sprite;
+
+import { blankSelectedMoves, type MoveSet } from "#data/moveset";
 
 const COLUMNS = 9;
 const ROWS = 9;
@@ -152,6 +154,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
   private moveInfoOverlay: MoveInfoOverlay;
 
   private selectedMoves: MoveSet;
+  private unselectedMoves: MoveSet;
   private readonly canCycle: CanCycle = {
     ability: false,
     form: false,
@@ -455,17 +458,17 @@ export class StarterSelectUiHandler extends MessageUiHandler {
     this.resetCaughtDropdown();
   }
 
-  /** Set default value for the caught dropdown, which only shows caught mons */
+  /** Set default value for the caught dropdown, which only shows unlocked mons */
   public resetCaughtDropdown(): void {
-    const caughtDropDown: DropDown = this.filterBar.getFilter(DropDownColumn.UNLOCKED);
+    const unlockedDropDown: DropDown = this.filterBar.getFilter(DropDownColumn.UNLOCKED);
 
-    caughtDropDown.resetToDefault();
+    unlockedDropDown.resetToDefault();
 
-    // initial setting, in caught filter, select the options excluding the uncaught option
-    for (let i = 0; i < caughtDropDown.options.length; i++) {
-      // if the option is not "ALL" or "UNCAUGHT", toggle it
-      if (caughtDropDown.options[i].val !== "ALL" && caughtDropDown.options[i].val !== "UNCAUGHT") {
-        caughtDropDown.toggleOptionState(i);
+    // initial setting, in caught filter, select the options excluding the unlocked option
+    for (let i = 0; i < unlockedDropDown.options.length; i++) {
+      // if the option is not "ALL" or "UNLOCKED", toggle it
+      if (unlockedDropDown.options[i].val !== "ALL" && unlockedDropDown.options[i].val !== "LOCKED") {
+        unlockedDropDown.toggleOptionState(i);
       }
     }
   }
@@ -1580,8 +1583,10 @@ export class StarterSelectUiHandler extends MessageUiHandler {
     if (saveData?.isTeamUnlocked) {
       this.setCharDetails(id);
       this.startIconAnimation(this.cursor);
+      this.selectedMoves = characterRegistry.getSelectedMoves(id);
     } else {
       this.resetStarterDetails();
+      this.selectedMoves = blankSelectedMoves;
     }
   }
 

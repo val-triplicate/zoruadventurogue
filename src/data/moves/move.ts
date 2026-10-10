@@ -30,6 +30,7 @@ import {
 } from "#data/battler-tags";
 import { getBerryEffectFunc } from "#data/berry";
 import { allAbilities, allMoves } from "#data/data-lists";
+import { toCurrentMoves } from "#data/moveset";
 import { getNonVolatileStatusEffects, getStatusEffectHealText, isNonVolatileStatusEffect } from "#data/status-effect";
 import { TerrainType } from "#data/terrain";
 import { getTypeDamageMultiplier } from "#data/type";
@@ -118,7 +119,6 @@ import type {
   MoveMessageFunc,
 } from "#types/move-types";
 import type { GetEffectiveStatParams } from "#types/pokemon-common";
-import { toCurrentMoves } from "#types/save-data";
 import type { StatStageChangePhaseOptions } from "#types/stat-change";
 import type { TurnMove } from "#types/turn-move";
 import type { AbstractConstructor } from "#types/type-helpers";

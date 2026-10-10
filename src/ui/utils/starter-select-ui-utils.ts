@@ -4,6 +4,7 @@ import { Gender } from "#data/gender";
 import type { CharacterId } from "#enums/character-id";
 import type { MoveId } from "#enums/move-id";
 import { Nature } from "#enums/nature";
+import type { Character } from "#types/pokemon-species";
 import type { CharacterPreferenceSelections, IconProps, TeamSaveDataEntry } from "#types/save-data";
 import type { DefinedSpeciesDetails } from "#types/starter-select-types";
 import type { StarterSpeciesId } from "#types/starter-species-id";
@@ -150,12 +151,10 @@ export function getTeamDataEntry(teamMemberId: CharacterId): TeamSaveDataEntry {
   return deepCopy(globalScene.gameData.teamSaveData[teamMemberId]);
 }
 
-export function getDefaultIconProps(id: CharacterId): IconProps {
-  const teamMember = characterRegistry.getCharacter(id);
-  // Default is female only for species where malePercent is not null but 0
-  const gender = teamMember?.identity?.gender || Gender.GENDERLESS;
-  const formIndex = teamMember?.identity?.formIndex || 0;
-  const identity = teamMember?.identity;
+export function getDefaultIconProps(char: Character): IconProps {
+  const gender = char?.identity?.gender || Gender.GENDERLESS;
+  const formIndex = char?.identity?.formIndex || 0;
+  const identity = char?.identity;
 
   if (identity?.variants?.unshiny) {
     return { shiny: false, gender, variant: 0, formIndex };
@@ -176,7 +175,7 @@ export function getIconPropsFromPreferences(
   id: CharacterId,
   preferences: CharacterPreferenceSelections = {},
 ): IconProps {
-  const defaults = getDefaultIconProps(id);
+  const defaults = getDefaultIconProps(characterRegistry.getCharacter(id));
   return {
     shiny: preferences.shiny ?? defaults.shiny,
     variant: preferences.variant ?? defaults.variant,
