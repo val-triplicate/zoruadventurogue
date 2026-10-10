@@ -199,11 +199,9 @@ export class StarterSelectUiHandler extends MessageUiHandler {
       .image(speciesContainerX + 1, filterBarHeight + 2, "starter_container_bg")
       .setOrigin(0);
 
-    // Create and initialise filter bar
+    // Create and initialize filter bar
     this.filterBar = this.setupFilterBar();
-
     this.iconAnimHandler = new PokemonIconAnimHelper();
-
     this.partyColumn = this.setupPartyColumn();
 
     const starterBoxContainer = globalScene.add.container(speciesContainerX + 6, 9); //115
@@ -1037,41 +1035,41 @@ export class StarterSelectUiHandler extends MessageUiHandler {
     }
 
     const movePool = getMovePool(charId);
-    const showSwapOptions = (moveset: MoveSet) => {
+    const showSwapOptions = (activeMoves: MoveSet) => {
       this.blockInput = true;
 
       ui.setMode(UiMode.STARTER_SELECT).then(() => {
         ui.showText(i18next.t("starterSelectUiHandler:selectMoveSwapOut"), null, () => {
-          this.moveInfoOverlay.show(allMoves[moveset[0]]);
+          this.moveInfoOverlay.show(allMoves[activeMoves[0]]);
 
           ui.setModeWithoutClear(UiMode.OPTION_SELECT, {
-            options: moveset
-              .map((m: MoveId, i: number) => {
+            options: activeMoves
+              .map((activeId: MoveId, activeIndex: number) => {
                 const option: OptionSelectItem = {
-                  label: allMoves[m].name,
+                  label: allMoves[activeId].name,
                   handler: () => {
                     this.blockInput = true;
                     ui.setMode(UiMode.STARTER_SELECT).then(() => {
                       ui.showText(
-                        `${i18next.t("starterSelectUiHandler:selectMoveSwapWith")} ${allMoves[m].name}.`,
+                        `${i18next.t("starterSelectUiHandler:selectMoveSwapWith")} ${allMoves[activeId].name}.`,
                         null,
                         () => {
-                          const possibleMoves = movePool.filter((sm: MoveId) => sm !== m);
+                          const possibleMoves = movePool.filter((poolMoveId: MoveId) => poolMoveId !== activeId);
                           this.moveInfoOverlay.show(allMoves[possibleMoves[0]]);
 
                           ui.setModeWithoutClear(UiMode.OPTION_SELECT, {
                             options: possibleMoves
-                              .map(sm => {
+                              .map(newMoveId => {
                                 // make an option for each available starter move
                                 return {
-                                  label: allMoves[sm].name,
+                                  label: allMoves[newMoveId].name,
                                   handler: () => {
-                                    this.switchMoveHandler(i, sm, m);
+                                    this.switchMoveHandler(activeIndex, newMoveId, activeId);
                                     showSwapOptions(this.activeMoves!); // TODO: is this bang correct?
                                     return true;
                                   },
                                   onHover: () => {
-                                    this.moveInfoOverlay.show(allMoves[sm]);
+                                    this.moveInfoOverlay.show(allMoves[newMoveId]);
                                   },
                                 } satisfies OptionSelectItem as OptionSelectItem;
                               })
@@ -1095,7 +1093,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
                     return true;
                   },
                   onHover: () => {
-                    this.moveInfoOverlay.show(allMoves[m]);
+                    this.moveInfoOverlay.show(allMoves[activeId]);
                   },
                 };
                 return option;
@@ -1329,26 +1327,18 @@ export class StarterSelectUiHandler extends MessageUiHandler {
    * @param previousMove - The move that was previously in the spot
    */
   private switchMoveHandler(targetIndex: number, newMove: MoveId, previousMove: MoveId): void {
-    const activeMoves = this.activeMoves;
-    const reserveMoves = this.reserveMoves;
-    if (activeMoves == null) {
-      console.warn("Trying to update a non-existing moveset");
-      return;
-    }
-
-    const activeMovesIndex = activeMoves.indexOf(newMove);
-    const reserveMovesIndex = reserveMoves.indexOf(previousMove);
-    activeMoves[targetIndex] = newMove;
-    if (activeMovesIndex !== -1) {
-      activeMoves[activeMovesIndex] = previousMove;
-    }
-    if (reserveMovesIndex !== -1) {
-      reserveMoves[reserveMovesIndex] = newMove;
-    }
-
+    // The current location (active/reserve, index in that moveset) of the move being activated.
+    const currentMoveset = this.activeMoves.indexOf(newMove) === -1 ? this.reserveMoves : this.activeMoves;
+    const currentIndex = currentMoveset.indexOf(newMove);
+    // Put the previous move where the new move was.
+    currentMoveset[currentIndex] = previousMove;
+    // Put the new move where it's supposed to go.
+    this.activeMoves[targetIndex] = newMove;
+    // Update the saved preferences.
     const preference = characterRegistry.getPreferences(this.lastCharId);
-    preference.activeMoves[activeMovesIndex] = newMove;
-    preference.reserveMoves[reserveMovesIndex] = previousMove;
+    preference.activeMoves = this.activeMoves;
+    preference.reserveMoves = this.reserveMoves;
+
     this.hasSwappedMoves = true;
     this.setCharDetails(this.lastCharId);
   }
@@ -1405,10 +1395,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
         if (misc.val === "FAVORITE" && misc.state === DropDownState.EXCLUDE) {
           return !isFavorite;
         }
-        if (misc.val === "FAVORITE" && misc.state === DropDownState.OFF) {
-          return true;
-        }
-        return false;
+        return misc.val === "FAVORITE" && misc.state === DropDownState.OFF;
       });
 
       return fitsType && fitsUnlocked && fitsFavorite;

@@ -43,10 +43,10 @@ export class StarterSummary extends Phaser.GameObjects.Container {
   private pokemonNatureLabelText: Phaser.GameObjects.Text;
   private pokemonNatureText: BBCodeText;
   private pokemonMovesContainer: Phaser.GameObjects.Container;
-  private readonly moveContainers: Phaser.GameObjects.Container[];
-  private readonly moveBgs: Phaser.GameObjects.NineSlice[];
-  private readonly moveLabels: Phaser.GameObjects.Text[];
-  private readonly eggMovesLabel: Phaser.GameObjects.Text;
+  private readonly activeMoveContainers: Phaser.GameObjects.Container[];
+  private readonly activeMoveBgs: Phaser.GameObjects.NineSlice[];
+  private readonly activeMoveLabels: Phaser.GameObjects.Text[];
+  private readonly reserveMovesLabel: Phaser.GameObjects.Text;
   private readonly reserveMovesContainer: Phaser.GameObjects.Container;
   private readonly reserveMoveContainers: Phaser.GameObjects.Container[];
   private readonly reserveMoveBgs: Phaser.GameObjects.NineSlice[];
@@ -96,9 +96,9 @@ export class StarterSummary extends Phaser.GameObjects.Container {
     ) //
       .setOrigin(0);
 
-    this.moveContainers = [];
-    this.moveBgs = [];
-    this.moveLabels = [];
+    this.activeMoveContainers = [];
+    this.activeMoveBgs = [];
+    this.activeMoveLabels = [];
 
     this.reserveMoveContainers = [];
     this.reserveMoveBgs = [];
@@ -118,40 +118,33 @@ export class StarterSummary extends Phaser.GameObjects.Container {
       const moveLabel = addTextObject(-moveBg.width / 2, 0, "-", TextStyle.MOVE_LABEL) //
         .setOrigin(0.5, 0);
 
-      this.moveBgs.push(moveBg);
-      this.moveLabels.push(moveLabel);
+      this.activeMoveBgs.push(moveBg);
+      this.activeMoveLabels.push(moveLabel);
 
       moveContainer.add([moveBg, moveLabel]);
 
-      this.moveContainers.push(moveContainer);
+      this.activeMoveContainers.push(moveContainer);
       this.pokemonMovesContainer.add(moveContainer);
     }
 
     this.reserveMovesContainer = globalScene.add.container(102, 85).setScale(0.375);
-
-    this.eggMovesLabel = addTextObject(
-      -46,
-      0,
-      i18next.t("starterSelectUiHandler:eggMoves"),
-      TextStyle.WINDOW_ALT,
-    ).setOrigin(0.5, 0);
-
-    this.reserveMovesContainer.add(this.eggMovesLabel);
+    this.reserveMovesLabel = addTextObject(-46, 0, "Reserve Moves", TextStyle.WINDOW_ALT).setOrigin(0.5, 0);
+    this.reserveMovesContainer.add(this.reserveMovesLabel);
 
     for (let m = 0; m < 4; m++) {
       const reserveMoveContainer = globalScene.add.container(0, 16 + 14 * m);
 
-      const eggMoveBg = globalScene.add //
+      const reserveMoveBg = globalScene.add //
         .nineslice(0, 0, "type_bgs", "unknown", 92, 14, 2, 2, 2, 2)
         .setOrigin(1, 0);
 
-      const eggMoveLabel = addTextObject(-eggMoveBg.width / 2, 0, "???", TextStyle.MOVE_LABEL) //
+      const reserveMoveLabel = addTextObject(-reserveMoveBg.width / 2, 0, "???", TextStyle.MOVE_LABEL) //
         .setOrigin(0.5, 0);
 
-      this.reserveMoveBgs.push(eggMoveBg);
-      this.reserveMoveLabels.push(eggMoveLabel);
+      this.reserveMoveBgs.push(reserveMoveBg);
+      this.reserveMoveLabels.push(reserveMoveLabel);
 
-      reserveMoveContainer.add([eggMoveBg, eggMoveLabel]);
+      reserveMoveContainer.add([reserveMoveBg, reserveMoveLabel]);
 
       this.reserveMoveContainers.push(reserveMoveContainer);
       this.reserveMovesContainer.add(reserveMoveContainer);
@@ -339,7 +332,7 @@ export class StarterSummary extends Phaser.GameObjects.Container {
     for (const container of this.reserveMoveContainers) {
       container.setVisible(true);
     }
-    this.eggMovesLabel.setVisible(true);
+    this.reserveMovesLabel.setVisible(true);
     // This is not enough, we need individual checks in setStarterSpecies too! :)
     this.pokemonPassiveDisabledIcon.setVisible(true);
     this.pokemonPassiveLabelText.setVisible(true);
@@ -462,7 +455,7 @@ export class StarterSummary extends Phaser.GameObjects.Container {
       .setShadowColor(getTextColor(TextStyle.SUMMARY, true));
 
     for (let m = 0; m < 4; m++) {
-      this.moveContainers[m].setVisible(false);
+      this.activeMoveContainers[m].setVisible(false);
     }
     this.reserveMovesContainer.setVisible(false);
   }
@@ -624,9 +617,9 @@ export class StarterSummary extends Phaser.GameObjects.Container {
   public updateMoveset(moves: MoveSet): void {
     for (let i = 0; i < 4; i++) {
       const move = allMoves[moves[i]];
-      this.moveBgs[i].setFrame(PokemonType[move.type].toString().toLowerCase());
-      this.moveLabels[i].setText(move.name);
-      this.moveContainers[i].setVisible(true);
+      this.activeMoveBgs[i].setFrame(PokemonType[move.type].toString().toLowerCase());
+      this.activeMoveLabels[i].setText(move.name);
+      this.activeMoveContainers[i].setVisible(true);
     }
   }
 
