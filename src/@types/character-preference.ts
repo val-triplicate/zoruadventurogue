@@ -19,8 +19,8 @@ export class CharacterPreference {
   shiny: boolean;
   tera: PokemonType;
   variant: Variant;
-  selectedMoves: MoveSet;
-  unselectedMoves: MoveSet;
+  activeMoves: MoveSet;
+  reserveMoves: MoveSet;
 
   constructor(char: Character, selections?: CharacterPreferenceSelections) {
     const defaults = getDefaultIconProps(char);
@@ -32,8 +32,8 @@ export class CharacterPreference {
     this.shiny = selections?.shiny ?? defaults.shiny;
     this.variant = selections?.variant ?? defaults.variant;
     this.formIndex = selections?.formIndex ?? defaults.formIndex;
-    this.selectedMoves = getDefaultSelectedMoves(char);
-    this.unselectedMoves = getDefaultUnselectedMoves(char);
+    this.activeMoves = getDefaultSelectedMoves(char);
+    this.reserveMoves = getDefaultUnselectedMoves(char);
   }
 }
 

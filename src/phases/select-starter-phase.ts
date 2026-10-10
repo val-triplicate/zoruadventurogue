@@ -2,7 +2,7 @@ import { audioManager } from "#app/global-audio-manager";
 import { characterRegistry } from "#app/global-character-data-registry";
 import { globalScene } from "#app/global-scene";
 import { Phase } from "#app/phase";
-import { blankSelectedMoves } from "#data/moveset";
+import { blankMoveSet } from "#data/moveset";
 import { UiMode } from "#enums/ui-mode";
 import type { PlayerPokemon } from "#field/pokemon";
 import { overrideHeldItems, overrideModifiers } from "#modifiers/modifier";
@@ -49,7 +49,7 @@ export class SelectStarterPhase extends Phase {
         pokemon.nature,
       );
 
-      starterPokemon.tryPopulateMoveset(preferences.selectedMoves || blankSelectedMoves);
+      starterPokemon.tryPopulateMoveset(preferences.activeMoves || blankMoveSet);
       starterPokemon.passive = pokemon.passive;
       starterPokemon.luck = 0;
       starterPokemon.nickname = char.identity?.name;

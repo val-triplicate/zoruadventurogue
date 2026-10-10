@@ -51,7 +51,7 @@ import type { GameObjects } from "phaser";
 
 import Sprite = Phaser.GameObjects.Sprite;
 
-import { blankSelectedMoves, type MoveSet } from "#data/moveset";
+import { blankMoveSet, type MoveSet } from "#data/moveset";
 
 const COLUMNS = 9;
 const ROWS = 9;
@@ -153,8 +153,8 @@ export class StarterSelectUiHandler extends MessageUiHandler {
   private starterSelectMessageBoxContainer: Phaser.GameObjects.Container;
   private moveInfoOverlay: MoveInfoOverlay;
 
-  private selectedMoves: MoveSet;
-  private unselectedMoves: MoveSet;
+  private activeMoves: MoveSet;
+  private reserveMoves: MoveSet;
   private readonly canCycle: CanCycle = {
     ability: false,
     form: false,
@@ -1070,7 +1070,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
                                     label: allMoves[sm].name,
                                     handler: () => {
                                       this.switchMoveHandler(i, sm, m);
-                                      showSwapOptions(this.selectedMoves!); // TODO: is this bang correct?
+                                      showSwapOptions(this.activeMoves!); // TODO: is this bang correct?
                                       return true;
                                     },
                                     onHover: () => {
@@ -1081,7 +1081,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
                                 .concat({
                                   label: i18next.t("menu:cancel"),
                                   handler: () => {
-                                    showSwapOptions(this.selectedMoves!); // TODO: is this bang correct?
+                                    showSwapOptions(this.activeMoves!); // TODO: is this bang correct?
                                     return true;
                                   },
                                   onHover: () => {
@@ -1134,7 +1134,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
         label: i18next.t("starterSelectUiHandler:manageMoves"),
         handler: () => {
           this.hasSwappedMoves = false;
-          showSwapOptions(this.selectedMoves!); // TODO: is this bang correct?
+          showSwapOptions(this.activeMoves!); // TODO: is this bang correct?
           return true;
         },
       });
@@ -1325,27 +1325,31 @@ export class StarterSelectUiHandler extends MessageUiHandler {
   /**
    * Puts a move at the requested index in the current highlighted Pokemon's moveset. \
    * If the move was already present in the moveset, swap its position with the one at the requested index.
-   * @remarks
-   * ⚠️ {@linkcode selectedMoves | this.starterMoveset} **must not be null when this method is called**
    * @param targetIndex - The index to place the move
    * @param newMove - The move to place in the moveset
    * @param previousMove - The move that was previously in the spot
    */
   private switchMoveHandler(targetIndex: number, newMove: MoveId, previousMove: MoveId): void {
-    const selectedMoves = this.selectedMoves;
-    if (selectedMoves == null) {
+    const activeMoves = this.activeMoves;
+    const reserveMoves = this.reserveMoves;
+    if (activeMoves == null) {
       console.warn("Trying to update a non-existing moveset");
       return;
     }
 
-    const existingMoveIndex = selectedMoves.indexOf(newMove);
-    selectedMoves[targetIndex] = newMove;
-    if (existingMoveIndex !== -1) {
-      selectedMoves[existingMoveIndex] = previousMove;
+    const activeMovesIndex = activeMoves.indexOf(newMove);
+    const reserveMovesIndex = reserveMoves.indexOf(previousMove);
+    activeMoves[targetIndex] = newMove;
+    if (activeMovesIndex !== -1) {
+      activeMoves[activeMovesIndex] = previousMove;
+    }
+    if (reserveMovesIndex !== -1) {
+      reserveMoves[reserveMovesIndex] = newMove;
     }
 
     const preference = characterRegistry.getPreferences(this.lastCharId);
-    preference.selectedMoves[existingMoveIndex] = newMove;
+    preference.activeMoves[activeMovesIndex] = newMove;
+    preference.reserveMoves[reserveMovesIndex] = previousMove;
     this.hasSwappedMoves = true;
     this.setCharDetails(this.lastCharId);
   }
@@ -1583,10 +1587,12 @@ export class StarterSelectUiHandler extends MessageUiHandler {
     if (saveData?.isTeamUnlocked) {
       this.setCharDetails(id);
       this.startIconAnimation(this.cursor);
-      this.selectedMoves = characterRegistry.getSelectedMoves(id);
+      this.activeMoves = characterRegistry.getActiveMoves(id);
+      this.reserveMoves = characterRegistry.getReserveMoves(id);
     } else {
       this.resetStarterDetails();
-      this.selectedMoves = blankSelectedMoves;
+      this.activeMoves = blankMoveSet;
+      this.reserveMoves = blankMoveSet;
     }
   }
 

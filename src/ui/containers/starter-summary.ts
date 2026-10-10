@@ -530,8 +530,8 @@ export class StarterSummary extends Phaser.GameObjects.Container {
 
     const preference = characterRegistry.getPreferences(id);
 
-    this.updateMoveset(preference.selectedMoves);
-    this.updateReserveMoves(preference.unselectedMoves);
+    this.updateMoveset(preference.activeMoves);
+    this.updateReserveMoves(preference.reserveMoves);
     this.updatePassiveDisplay(id, formIndex);
 
     this.pokemonNatureText.setText(getNatureName(natureIndex, true, true, false));

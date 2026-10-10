@@ -59,12 +59,12 @@ export class CharacterRegistry {
     return this._preference_data[id];
   }
 
-  public getSelectedMoves(id: CharacterId): MoveSet {
-    return this.getPreferences(id).selectedMoves;
+  public getActiveMoves(id: CharacterId): MoveSet {
+    return this.getPreferences(id).activeMoves;
   }
 
-  public getUnselectedMoves(id: CharacterId): MoveSet {
-    return this.getPreferences(id).unselectedMoves;
+  public getReserveMoves(id: CharacterId): MoveSet {
+    return this.getPreferences(id).reserveMoves;
   }
 }
 

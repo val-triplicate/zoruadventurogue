@@ -41,7 +41,7 @@ export const blankMovePool: MovePool = [
   MoveId.NONE,
   MoveId.NONE,
 ];
-export const blankSelectedMoves: MoveSet = [MoveId.NONE, MoveId.NONE, MoveId.NONE, MoveId.NONE];
+export const blankMoveSet: MoveSet = [MoveId.NONE, MoveId.NONE, MoveId.NONE, MoveId.NONE];
 export const blankCurrentMoves: CurrentMoves = [
   PokemonMove.blankMove,
   PokemonMove.blankMove,
