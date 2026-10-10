@@ -4,8 +4,8 @@ import { Gender } from "#data/gender";
 import type { CharacterId } from "#enums/character-id";
 import type { MoveId } from "#enums/move-id";
 import { Nature } from "#enums/nature";
-import type { Character } from "#types/pokemon-species";
-import type { CharacterPreferenceSelections, IconProps, TeamSaveDataEntry } from "#types/save-data";
+import { getIconProps } from "#types/character-preference";
+import type { TeamSaveDataEntry } from "#types/save-data";
 import type { DefinedSpeciesDetails } from "#types/starter-select-types";
 import type { StarterSpeciesId } from "#types/starter-species-id";
 import { SortCriteria, type SortDirection } from "#ui/dropdown";
@@ -151,44 +151,11 @@ export function getTeamDataEntry(teamMemberId: CharacterId): TeamSaveDataEntry {
   return deepCopy(globalScene.gameData.teamSaveData[teamMemberId]);
 }
 
-export function getDefaultIconProps(char: Character): IconProps {
-  const gender = char?.identity?.gender || Gender.GENDERLESS;
-  const formIndex = char?.identity?.formIndex || 0;
-  const identity = char?.identity;
-
-  if (identity?.variants?.unshiny) {
-    return { shiny: false, gender, variant: 0, formIndex };
-  }
-  if (identity?.variants?.standard) {
-    return { shiny: true, gender, variant: 0, formIndex };
-  }
-  if (identity?.variants?.rare) {
-    return { shiny: false, gender, variant: 1, formIndex };
-  }
-  if (identity?.variants?.epic) {
-    return { shiny: false, gender, variant: 2, formIndex };
-  }
-  return { shiny: false, gender, variant: 0, formIndex };
-}
-
-export function getIconPropsFromPreferences(
-  id: CharacterId,
-  preferences: CharacterPreferenceSelections = {},
-): IconProps {
-  const defaults = getDefaultIconProps(characterRegistry.getCharacter(id));
-  return {
-    shiny: preferences.shiny ?? defaults.shiny,
-    variant: preferences.variant ?? defaults.variant,
-    gender: preferences.gender ?? Gender.GENDERLESS,
-    formIndex: preferences.formIndex ?? defaults.formIndex,
-  };
-}
-
 export function getStarterDetailsFromPreferences(id: CharacterId) {
-  const preference = characterRegistry.getPreferences(id);
-  let { gender, formIndex, shiny, variant } = getIconPropsFromPreferences(id, preference);
-
   const char = characterRegistry.getCharacter(id);
+  const preference = characterRegistry.getPreferences(id);
+  let { gender, formIndex, shiny, variant } = getIconProps(char, preference);
+
   gender = gender || Gender.GENDERLESS;
   const species = characterRegistry.getSpecies(id);
   const abilityIndex = preference.abilityIndex ?? 0;

@@ -1,13 +1,11 @@
 import type { PokeballCounts } from "#app/battle-scene";
 import type { Tutorial } from "#app/tutorial";
 import type { Gender } from "#data/gender";
-import type { MoveSet } from "#data/moveset";
 import type { BattleType } from "#enums/battle-type";
 import type { CharacterId } from "#enums/character-id";
 import type { GameModes } from "#enums/game-modes";
 import type { MysteryEncounterType } from "#enums/mystery-encounter-type";
 import type { PlayerGender } from "#enums/player-gender";
-import type { PokemonType } from "#enums/pokemon-type";
 import type { MysteryEncounterSaveData } from "#mystery-encounters/mystery-encounter-save-data";
 import type { Variant } from "#sprites/variant";
 import type { ArenaData } from "#system/arena-data";
@@ -71,20 +69,6 @@ export interface Unlocks {
 
 export interface AchvUnlocks {
   [key: string]: number;
-}
-
-export interface CharacterPreferenceSelections {
-  abilityIndex?: number | undefined;
-  passive?: boolean | undefined;
-  favorite?: boolean | undefined;
-  gender?: Gender | undefined;
-  formIndex?: number | undefined;
-  nature?: number | undefined;
-  nickname?: string | undefined;
-  shiny?: boolean | undefined;
-  tera?: PokemonType | undefined;
-  variant?: Variant | undefined;
-  selectedMoves?: MoveSet | undefined;
 }
 
 export type AllPreferences = Record<CharacterId, CharacterPreference>;

@@ -13,11 +13,11 @@ import { PokemonType } from "#enums/pokemon-type";
 import { SpeciesId } from "#enums/species-id";
 import { TextStyle } from "#enums/text-style";
 import { getVariantIcon, getVariantTint, type Variant } from "#sprites/variant";
-import type { CharacterPreferenceSelections } from "#types/save-data";
+import type { CharacterPreference } from "#types/character-preference";
 import type { DefinedSpeciesDetails } from "#types/starter-select-types";
 import { getStarterSelectTextSettings } from "#ui/starter-select-ui-utils";
 import { addBBCodeTextObject, addTextObject, getTextColor } from "#ui/text";
-import { getLocalizedSpriteKey, padInt, truncateString } from "#utils/common";
+import { getLocalizedSpriteKey, padInt } from "#utils/common";
 import { toCamelCase, toTitleCase } from "#utils/strings";
 import i18next from "i18next";
 import type { GameObjects } from "phaser";
@@ -347,16 +347,11 @@ export class StarterSummary extends Phaser.GameObjects.Container {
     this.pokemonPassiveText.setVisible(true);
   }
 
-  public updateName(name: string): void {
-    this.pokemonNameText.setText(name);
-    this.truncateName();
-  }
-
-  private setNameAndNumber(species: PokemonSpecies, teamMemberPreferences: CharacterPreferenceSelections): void {
+  private setNameAndNumber(species: PokemonSpecies, preferences?: CharacterPreference): void {
     this.pokemonNumberText.setText(padInt(species.speciesId, 4));
 
-    if (teamMemberPreferences?.nickname) {
-      const name = decodeURIComponent(escape(atob(teamMemberPreferences.nickname)));
+    if (preferences?.nickname) {
+      const name = decodeURIComponent(escape(atob(preferences.nickname)));
       this.pokemonNameText.setText(name);
     } else {
       this.pokemonNameText.setText(species.name);
@@ -442,7 +437,7 @@ export class StarterSummary extends Phaser.GameObjects.Container {
 
   private cleanStarterSprite(species?: PokemonSpecies, isSeen = false): void {
     if (isSeen && species) {
-      this.setNameAndNumber(species, {});
+      this.setNameAndNumber(species);
     } else {
       this.pokemonNumberText.setText(padInt(0, 4));
       this.pokemonNameText.setText(species ? "???" : "");
@@ -642,16 +637,6 @@ export class StarterSummary extends Phaser.GameObjects.Container {
       this.reserveMoveLabels[i].setText(move.name);
     }
     this.reserveMovesContainer.setVisible(true);
-  }
-
-  public hideEggMoves(): void {
-    this.reserveMovesContainer.setVisible(false);
-  }
-
-  /** Truncate the Pokémon name so it won't overlap into the starters. */
-  private truncateName(): void {
-    const name = this.pokemonNameText.text;
-    this.pokemonNameText.setText(truncateString(name, 15));
   }
 
   public clear(): void {
