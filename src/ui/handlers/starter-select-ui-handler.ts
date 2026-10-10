@@ -19,7 +19,6 @@ import { UiMode } from "#enums/ui-mode";
 import type { Variant } from "#sprites/variant";
 import { getVariantTint } from "#sprites/variant";
 import type { Character } from "#types/pokemon-species";
-import type { IconProps } from "#types/save-data";
 import type { CanCycle } from "#types/starter-select-types";
 import type {
   ConfirmModeConfig,
@@ -36,11 +35,10 @@ import { ScrollBar } from "#ui/scroll-bar";
 import { CharacterContainer } from "#ui/starter-container";
 import { StarterSelectInstructionsContainer } from "#ui/starter-select-instructions";
 import {
-  getCharMoves,
-  getIconPropsFromPreferences,
+  getMovePool,
   getStarterDetailsFromPreferences,
   getTeamDataEntry,
-  sortTeamMembers,
+  sortCharacters,
 } from "#ui/starter-select-ui-utils";
 import { StarterSummary } from "#ui/starter-summary";
 import { addTextObject } from "#ui/text";
@@ -52,6 +50,7 @@ import type { GameObjects } from "phaser";
 import Sprite = Phaser.GameObjects.Sprite;
 
 import { blankMoveSet, type MoveSet } from "#data/moveset";
+import { getIconProps } from "#types/character-preference";
 
 const COLUMNS = 9;
 const ROWS = 9;
@@ -709,19 +708,18 @@ export class StarterSelectUiHandler extends MessageUiHandler {
           break;
         }
 
-        const randomCharId = validTeamMembers[Math.floor(Math.random() * validTeamMembers.length)];
-        const randomCharPreferences = characterRegistry.getPreferences(randomCharId);
-        this.setCharacter(randomCharId);
+        const id = validTeamMembers[Math.floor(Math.random() * validTeamMembers.length)];
+        const char = characterRegistry.getCharacter(id);
+        const preferences = characterRegistry.getPreferences(id);
+        this.setCharacter(id);
 
-        const props = getIconPropsFromPreferences(randomCharId, randomCharPreferences);
-        const speciesForm = characterRegistry.getPokemonSpeciesForm(randomCharId, props.formIndex);
-        speciesForm
-          .loadAssets(randomCharPreferences.gender, props.formIndex, props.shiny, props.variant, true)
-          .then(() => {
-            this.addToParty(randomCharId);
-            this.getUi().playSelect();
-            this.blockInput = false;
-          });
+        const props = getIconProps(char, preferences);
+        const speciesForm = characterRegistry.getPokemonSpeciesForm(id, props.formIndex);
+        speciesForm.loadAssets(preferences.gender, props.formIndex, props.shiny, props.variant, true).then(() => {
+          this.addToParty(id);
+          this.getUi().playSelect();
+          this.blockInput = false;
+        });
         break;
       }
       case Button.UP:
@@ -1038,107 +1036,105 @@ export class StarterSelectUiHandler extends MessageUiHandler {
       });
     }
 
-    const charMoves = getCharMoves(charId);
-    if (charMoves.length > 1) {
-      const showSwapOptions = (moveset: MoveSet) => {
-        this.blockInput = true;
+    const movePool = getMovePool(charId);
+    const showSwapOptions = (moveset: MoveSet) => {
+      this.blockInput = true;
 
-        ui.setMode(UiMode.STARTER_SELECT).then(() => {
-          ui.showText(i18next.t("starterSelectUiHandler:selectMoveSwapOut"), null, () => {
-            this.moveInfoOverlay.show(allMoves[moveset[0]]);
+      ui.setMode(UiMode.STARTER_SELECT).then(() => {
+        ui.showText(i18next.t("starterSelectUiHandler:selectMoveSwapOut"), null, () => {
+          this.moveInfoOverlay.show(allMoves[moveset[0]]);
 
-            ui.setModeWithoutClear(UiMode.OPTION_SELECT, {
-              options: moveset
-                .map((m: MoveId, i: number) => {
-                  const option: OptionSelectItem = {
-                    label: allMoves[m].name,
-                    handler: () => {
-                      this.blockInput = true;
-                      ui.setMode(UiMode.STARTER_SELECT).then(() => {
-                        ui.showText(
-                          `${i18next.t("starterSelectUiHandler:selectMoveSwapWith")} ${allMoves[m].name}.`,
-                          null,
-                          () => {
-                            const possibleMoves = charMoves.filter((sm: MoveId) => sm !== m);
-                            this.moveInfoOverlay.show(allMoves[possibleMoves[0]]);
+          ui.setModeWithoutClear(UiMode.OPTION_SELECT, {
+            options: moveset
+              .map((m: MoveId, i: number) => {
+                const option: OptionSelectItem = {
+                  label: allMoves[m].name,
+                  handler: () => {
+                    this.blockInput = true;
+                    ui.setMode(UiMode.STARTER_SELECT).then(() => {
+                      ui.showText(
+                        `${i18next.t("starterSelectUiHandler:selectMoveSwapWith")} ${allMoves[m].name}.`,
+                        null,
+                        () => {
+                          const possibleMoves = movePool.filter((sm: MoveId) => sm !== m);
+                          this.moveInfoOverlay.show(allMoves[possibleMoves[0]]);
 
-                            ui.setModeWithoutClear(UiMode.OPTION_SELECT, {
-                              options: possibleMoves
-                                .map(sm => {
-                                  // make an option for each available starter move
-                                  return {
-                                    label: allMoves[sm].name,
-                                    handler: () => {
-                                      this.switchMoveHandler(i, sm, m);
-                                      showSwapOptions(this.activeMoves!); // TODO: is this bang correct?
-                                      return true;
-                                    },
-                                    onHover: () => {
-                                      this.moveInfoOverlay.show(allMoves[sm]);
-                                    },
-                                  } satisfies OptionSelectItem as OptionSelectItem;
-                                })
-                                .concat({
-                                  label: i18next.t("menu:cancel"),
+                          ui.setModeWithoutClear(UiMode.OPTION_SELECT, {
+                            options: possibleMoves
+                              .map(sm => {
+                                // make an option for each available starter move
+                                return {
+                                  label: allMoves[sm].name,
                                   handler: () => {
+                                    this.switchMoveHandler(i, sm, m);
                                     showSwapOptions(this.activeMoves!); // TODO: is this bang correct?
                                     return true;
                                   },
                                   onHover: () => {
-                                    this.moveInfoOverlay.clear();
+                                    this.moveInfoOverlay.show(allMoves[sm]);
                                   },
-                                }),
-                              maxOptions: 8,
-                              yOffset: 29,
-                            } satisfies OptionSelectModeConfig as OptionSelectModeConfig);
-                            this.blockInput = false;
-                          },
-                        );
-                      });
-                      return true;
-                    },
-                    onHover: () => {
-                      this.moveInfoOverlay.show(allMoves[m]);
-                    },
-                  };
-                  return option;
-                })
-                .concat({
-                  label: i18next.t("menu:cancel"),
-                  handler: () => {
-                    this.moveInfoOverlay.clear();
-                    this.clearText();
-                    // Only saved if moves were actually swapped
-                    if (this.hasSwappedMoves) {
-                      globalScene.gameData.saveSystem().then(success => {
-                        if (!success) {
-                          return globalScene.reset(true);
-                        }
-                      });
-                    }
-                    ui.setMode(UiMode.STARTER_SELECT);
+                                } satisfies OptionSelectItem as OptionSelectItem;
+                              })
+                              .concat({
+                                label: i18next.t("menu:cancel"),
+                                handler: () => {
+                                  showSwapOptions(this.activeMoves!); // TODO: is this bang correct?
+                                  return true;
+                                },
+                                onHover: () => {
+                                  this.moveInfoOverlay.clear();
+                                },
+                              }),
+                            maxOptions: 8,
+                            yOffset: 29,
+                          } satisfies OptionSelectModeConfig as OptionSelectModeConfig);
+                          this.blockInput = false;
+                        },
+                      );
+                    });
                     return true;
                   },
                   onHover: () => {
-                    this.moveInfoOverlay.clear();
+                    this.moveInfoOverlay.show(allMoves[m]);
                   },
-                }),
-              maxOptions: 8,
-              yOffset: 29,
-            } satisfies OptionSelectModeConfig as OptionSelectModeConfig);
-            this.blockInput = false;
-          });
+                };
+                return option;
+              })
+              .concat({
+                label: i18next.t("menu:cancel"),
+                handler: () => {
+                  this.moveInfoOverlay.clear();
+                  this.clearText();
+                  // Only saved if moves were actually swapped
+                  if (this.hasSwappedMoves) {
+                    globalScene.gameData.saveSystem().then(success => {
+                      if (!success) {
+                        return globalScene.reset(true);
+                      }
+                    });
+                  }
+                  ui.setMode(UiMode.STARTER_SELECT);
+                  return true;
+                },
+                onHover: () => {
+                  this.moveInfoOverlay.clear();
+                },
+              }),
+            maxOptions: 8,
+            yOffset: 29,
+          } satisfies OptionSelectModeConfig as OptionSelectModeConfig);
+          this.blockInput = false;
         });
-      };
-      options.push({
-        label: i18next.t("starterSelectUiHandler:manageMoves"),
-        handler: () => {
-          this.hasSwappedMoves = false;
-          showSwapOptions(this.activeMoves!); // TODO: is this bang correct?
-          return true;
-        },
       });
-    }
+    };
+    options.push({
+      label: i18next.t("starterSelectUiHandler:manageMoves"),
+      handler: () => {
+        this.hasSwappedMoves = false;
+        showSwapOptions(this.activeMoves!); // TODO: is this bang correct?
+        return true;
+      },
+    });
 
     if (saveData?.isPassiveUnlocked) {
       // this is for enabling and disabling the passive
@@ -1290,8 +1286,9 @@ export class StarterSelectUiHandler extends MessageUiHandler {
 
   private addToParty(id: CharacterId): void {
     const gender = Gender.FEMALE;
+    const char = characterRegistry.getCharacter(id);
     const species = characterRegistry.getSpecies(id);
-    const props = getIconPropsFromPreferences(id);
+    const props = getIconProps(char);
     this.partyIcons[this.partyTeamMemberIds.length].setTexture(
       species.getIconAtlasKey(props.formIndex, props.shiny, props.variant),
     );
@@ -1312,9 +1309,11 @@ export class StarterSelectUiHandler extends MessageUiHandler {
     this.updateInstructions();
   }
 
-  private updatePartyIcon(teamMemberId: CharacterId, index: number): void {
-    const species = characterRegistry.getSpecies(teamMemberId);
-    let { gender, formIndex, shiny, variant } = this.getStarterDexAttrPropsFromPreferences(teamMemberId);
+  private updatePartyIcon(id: CharacterId, index: number): void {
+    const char = characterRegistry.getCharacter(id);
+    const species = characterRegistry.getSpecies(id);
+
+    let { gender, formIndex, shiny, variant } = getIconProps(char);
     gender = gender || Gender.NONBINARY;
     this.partyIcons[index]
       .setTexture(species.getIconAtlasKey(formIndex, shiny, variant))
@@ -1370,7 +1369,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
     this.starterSelectScrollBar.setScrollCursor(0);
 
     const sort = this.filterBar.getVals(DropDownColumn.SORT)[0];
-    sortTeamMembers(this.filteredCharIds, sort.val, sort.dir);
+    sortCharacters(this.filteredCharIds, sort.val, sort.dir);
 
     this.updateScroll();
 
@@ -1436,7 +1435,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
       const char = characterRegistry.getCharacter(charId);
       const saveData = characterRegistry.getSaveData(charId);
       const species = speciesDataRegistry.getSpeciesFromTeamMemberId(charId);
-      const { gender, formIndex, shiny, variant } = this.getStarterDexAttrPropsFromPreferences(charId);
+      const { gender, formIndex, shiny, variant } = getIconProps(char);
 
       container.setCharacter(charId, { gender, formIndex, shiny, variant });
 
@@ -1628,8 +1627,8 @@ export class StarterSelectUiHandler extends MessageUiHandler {
     }
 
     const lastStarterIcon = container.icon;
-    const teamMemberId = container.charId;
-    let { gender, formIndex, shiny, variant } = this.getStarterDexAttrPropsFromPreferences(teamMemberId);
+    const char = characterRegistry.getCharacter(container.charId);
+    let { gender, formIndex, shiny, variant } = getIconProps(char);
     gender = gender || Gender.NONBINARY;
     this.checkIconId(lastStarterIcon, container.species, gender, formIndex, shiny, variant);
     this.setUpgradeAnimation(container.icon);
@@ -1682,9 +1681,10 @@ export class StarterSelectUiHandler extends MessageUiHandler {
     this.characters.splice(index, 1);
 
     for (let s = 0; s < this.partyTeamMemberIds.length; s++) {
-      const teamMemberId = this.partyTeamMemberIds[s];
-      const species = speciesDataRegistry.getSpeciesFromTeamMemberId(teamMemberId);
-      let { gender, formIndex, shiny, variant } = this.getStarterDexAttrPropsFromPreferences(teamMemberId);
+      const charId = this.partyTeamMemberIds[s];
+      const char = characterRegistry.getCharacter(charId);
+      const species = speciesDataRegistry.getSpeciesFromTeamMemberId(charId);
+      let { gender, formIndex, shiny, variant } = getIconProps(char);
       gender = gender || Gender.NONBINARY;
       this.partyIcons[s]
         .setTexture(species.getIconAtlasKey(formIndex, shiny, variant))
@@ -1764,10 +1764,6 @@ export class StarterSelectUiHandler extends MessageUiHandler {
       ui.setModeWithoutClear(UiMode.CONFIRM, confirmStartOptions);
     });
     return true;
-  }
-
-  private getStarterDexAttrPropsFromPreferences(id: CharacterId): IconProps {
-    return getIconPropsFromPreferences(id);
   }
 
   public override clearText(): void {

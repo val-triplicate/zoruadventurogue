@@ -1,16 +1,14 @@
 import { characterRegistry } from "#app/global-character-data-registry";
 import { globalScene } from "#app/global-scene";
 import { Gender } from "#data/gender";
+import type { MovePool } from "#data/moveset";
 import type { CharacterId } from "#enums/character-id";
-import type { MoveId } from "#enums/move-id";
 import { Nature } from "#enums/nature";
 import { getIconProps } from "#types/character-preference";
 import type { TeamSaveDataEntry } from "#types/save-data";
 import type { DefinedSpeciesDetails } from "#types/starter-select-types";
-import type { StarterSpeciesId } from "#types/starter-species-id";
 import { SortCriteria, type SortDirection } from "#ui/dropdown";
 import { deepCopy } from "#utils/data";
-import i18next from "i18next";
 
 interface StarterSelectLanguageSetting {
   starterInfoTextSize: string;
@@ -19,132 +17,10 @@ interface StarterSelectLanguageSetting {
   starterInfoYOffset?: number;
 }
 
-const languageSettings: { [key: string]: StarterSelectLanguageSetting } = {
-  en: {
-    starterInfoTextSize: "56px",
-    instructionTextSize: "28px",
-  },
-  de: {
-    starterInfoTextSize: "54px",
-    instructionTextSize: "25px",
-    starterInfoXPos: 35,
-  },
-  "es-ES": {
-    starterInfoTextSize: "52px",
-    instructionTextSize: "28px",
-    starterInfoYOffset: 0.5,
-    starterInfoXPos: 39,
-  },
-  "es-419": {
-    starterInfoTextSize: "50px",
-    instructionTextSize: "28px",
-    starterInfoYOffset: 0.5,
-    starterInfoXPos: 37,
-  },
-  fr: {
-    starterInfoTextSize: "54px",
-    instructionTextSize: "28px",
-  },
-  it: {
-    starterInfoTextSize: "56px",
-    instructionTextSize: "28px",
-  },
-  "pt-BR": {
-    starterInfoTextSize: "54px",
-    instructionTextSize: "28px",
-    starterInfoXPos: 37,
-  },
-  zh: {
-    starterInfoTextSize: "56px",
-    instructionTextSize: "26px",
-    starterInfoXPos: 26,
-  },
-  ko: {
-    starterInfoTextSize: "60px",
-    instructionTextSize: "28px",
-    starterInfoYOffset: -0.5,
-    starterInfoXPos: 30,
-  },
-  ja: {
-    starterInfoTextSize: "48px",
-    instructionTextSize: "32px",
-    starterInfoYOffset: 1,
-    starterInfoXPos: 32,
-  },
-  ca: {
-    starterInfoTextSize: "48px",
-    instructionTextSize: "28px",
-    starterInfoYOffset: 0.5,
-    starterInfoXPos: 29,
-  },
-  eu: {
-    starterInfoTextSize: "48px",
-    instructionTextSize: "28px",
-    starterInfoYOffset: 0.5,
-    starterInfoXPos: 29,
-  },
-  da: {
-    starterInfoTextSize: "56px",
-    instructionTextSize: "28px",
-  },
-  th: {
-    starterInfoTextSize: "50px",
-    instructionTextSize: "30px",
-    starterInfoYOffset: 0.5,
-    starterInfoXPos: 40,
-  },
-  tr: {
-    starterInfoTextSize: "56px",
-    instructionTextSize: "28px",
-    starterInfoXPos: 34,
-  },
-  pl: {
-    starterInfoTextSize: "48px",
-    instructionTextSize: "28px",
-    starterInfoYOffset: 0.5,
-  },
-  ru: {
-    starterInfoTextSize: "46px",
-    instructionTextSize: "28px",
-    starterInfoYOffset: 0.5,
-    starterInfoXPos: 26,
-  },
-  uk: {
-    starterInfoTextSize: "46px",
-    instructionTextSize: "28px",
-    starterInfoYOffset: 0.5,
-    starterInfoXPos: 26,
-  },
-  id: {
-    starterInfoTextSize: "48px",
-    instructionTextSize: "28px",
-    starterInfoYOffset: 0.5,
-    starterInfoXPos: 37,
-  },
-  hi: {
-    starterInfoTextSize: "56px",
-    instructionTextSize: "28px",
-  },
-  vi: {
-    starterInfoTextSize: "50px",
-    instructionTextSize: "28px",
-    starterInfoYOffset: 0.5,
-    starterInfoXPos: 34,
-  },
-  tl: {
-    starterInfoTextSize: "56px",
-    instructionTextSize: "28px",
-  },
-  sv: {
-    starterInfoTextSize: "56px",
-    instructionTextSize: "28px",
-  },
-};
+const languageSettings: StarterSelectLanguageSetting = { starterInfoTextSize: "56px", instructionTextSize: "28px" };
 
 export function getStarterSelectTextSettings(): StarterSelectLanguageSetting {
-  const currentLanguage = i18next.resolvedLanguage ?? "en";
-  const textSettings = languageSettings[currentLanguage] ?? languageSettings["en"];
-  return textSettings;
+  return languageSettings;
 }
 
 export function getTeamDataEntry(teamMemberId: CharacterId): TeamSaveDataEntry {
@@ -165,14 +41,8 @@ export function getStarterDetailsFromPreferences(id: CharacterId) {
   return { shiny, formIndex, gender, variant, abilityIndex, natureIndex, teraType } satisfies DefinedSpeciesDetails;
 }
 
-/**
- * Sort an array of {@linkcode StarterSpeciesId} based on a given criteria and direction.
- * @param speciesIds - An array of species IDs to be sorted
- * @param sort - The criteria by which the species hould be sorted
- * @param dir - The direction in which the species should be sorted
- */
-export function sortTeamMembers(teamMemberIds: CharacterId[], sort: SortCriteria, dir: SortDirection): void {
-  teamMemberIds.sort((a, b) => {
+export function sortCharacters(ids: CharacterId[], sort: SortCriteria, dir: SortDirection): void {
+  ids.sort((a, b) => {
     switch (sort) {
       case SortCriteria.NUMBER:
         return (a - b) * -dir;
@@ -185,12 +55,6 @@ export function sortTeamMembers(teamMemberIds: CharacterId[], sort: SortCriteria
   });
 }
 
-/**
- * Get the moves that a starter can have.
- * @param starterId - The id of the starter species to get moves for
- * @param formIndex - The form index of the starter to get moves for
- * @returns An array of move IDs
- */
-export function getCharMoves(teamMemberId: CharacterId): MoveId[] {
-  return characterRegistry.getCharacter(teamMemberId).movePool;
+export function getMovePool(id: CharacterId): MovePool {
+  return characterRegistry.getCharacter(id).movePool;
 }
