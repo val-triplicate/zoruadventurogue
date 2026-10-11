@@ -1,5 +1,5 @@
 import { globalScene } from "#app/global-scene";
-import { speciesDataRegistry } from "#app/global-species-data-registry";
+import { speciesRegistry } from "#app/global-species-data-registry";
 import { SHINY_CATCH_RATE_MULTIPLIER } from "#balance/rates";
 import { timedEvents } from "#balance/timed-events";
 import type { PokemonSpeciesFilter } from "#data/pokemon-species";
@@ -88,7 +88,7 @@ export class TimedEventManager {
     speciesFilter: PokemonSpeciesFilter,
   ): EventEncounter[] {
     return this.getEventEncounters().filter(enc => {
-      const species = speciesDataRegistry.getSpecies(enc.species);
+      const species = speciesRegistry.getSpecies(enc.species);
       return (
         (allowSubLegendary || !species.subLegendary)
         && (allowLegendary || !species.legendary)
@@ -239,7 +239,7 @@ export class TimedEventManager {
     }
     this.cachedReplacementMap = new Map();
     const allPairs: { speciesId: SpeciesId; formIndex: number }[] = [];
-    for (const species of speciesDataRegistry.getAllSpecies()) {
+    for (const species of speciesRegistry.getAllSpecies()) {
       const formCount = species.forms.length || 1;
       for (let f = 0; f < formCount; f++) {
         allPairs.push({ speciesId: species.speciesId, formIndex: f });

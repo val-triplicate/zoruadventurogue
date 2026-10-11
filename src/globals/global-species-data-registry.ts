@@ -1,7 +1,7 @@
-import type { SpeciesDataRegistry } from "#data/species-data-registry";
+import type { SpeciesRegistry } from "#data/registries/species-registry";
 
-export let speciesDataRegistry: SpeciesDataRegistry;
+export let speciesRegistry: SpeciesRegistry;
 
-export function setSpeciesDataRegistry(registry: SpeciesDataRegistry): void {
-  speciesDataRegistry = registry;
+export function setSpeciesDataRegistry(registry: SpeciesRegistry): void {
+  speciesRegistry = registry;
 }

@@ -8,7 +8,7 @@
 
 import { EVOLVE_MOVE, RELEARN_MOVE } from "#app/constants";
 import { globalScene } from "#app/global-scene";
-import { speciesDataRegistry } from "#app/global-species-data-registry";
+import { speciesRegistry } from "#app/global-species-data-registry";
 import { characterMovePools } from "#balance/egg-moves";
 import { FORBIDDEN_SINGLES_MOVES, FORBIDDEN_TM_MOVES, LEVEL_BASED_DENYLIST } from "#balance/forbidden-moves";
 import {
@@ -169,7 +169,7 @@ function getTmPoolForSpecies(
   allowedTiers = getAllowedTmTiers(level),
 ): void {
   const [allowCommon, allowGreat, allowUltra] = allowedTiers;
-  const species = speciesDataRegistry.getSpecies(speciesId);
+  const species = speciesRegistry.getSpecies(speciesId);
   const tms = species.getTms(formKey);
 
   for (const tm of tms) {

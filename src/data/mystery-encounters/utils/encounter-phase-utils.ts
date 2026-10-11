@@ -2,7 +2,7 @@ import type { Battle } from "#app/battle";
 import { audioManager } from "#app/global-audio-manager";
 import { timedEventManager } from "#app/global-event-manager";
 import { globalScene } from "#app/global-scene";
-import { speciesDataRegistry } from "#app/global-species-data-registry";
+import { speciesRegistry } from "#app/global-species-data-registry";
 import { getPokemonNameWithAffix } from "#app/messages";
 import { BASE_HIDDEN_ABILITY_RATE, BASE_SHINY_CHANCE } from "#balance/rates";
 import { initMoveAnim, loadMoveAnimAssets } from "#data/battle-anims";
@@ -975,13 +975,13 @@ export function getRandomEncounterPokemon(params: RandomEncounterParams): EnemyP
 
   if (eventChance && eventEncounters.length > 0 && (eventChance === 100 || randSeedInt(100) < eventChance)) {
     const eventEncounter = randSeedItem(eventEncounters);
-    const levelSpecies = speciesDataRegistry
+    const levelSpecies = speciesRegistry
       .getSpecies(eventEncounter.species)
       .getWildSpeciesForLevel(level, !eventEncounter.blockEvolution, isBoss);
     if (params.isEventEncounter) {
       params.isEventEncounter.value = true;
     }
-    bossSpecies = speciesDataRegistry.getSpecies(levelSpecies);
+    bossSpecies = speciesRegistry.getSpecies(levelSpecies);
     formIndex = eventEncounter.formIndex;
   } else if (speciesFunction) {
     bossSpecies = speciesFunction();

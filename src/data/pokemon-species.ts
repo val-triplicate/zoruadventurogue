@@ -3,7 +3,7 @@ import { audioManager } from "#app/global-audio-manager";
 import { timedEventManager } from "#app/global-event-manager";
 import { globalScene } from "#app/global-scene";
 import { settings } from "#app/global-settings-manager";
-import { speciesDataRegistry } from "#app/global-species-data-registry";
+import { speciesRegistry } from "#app/global-species-data-registry";
 import type { AnySound } from "#audio/audio-manager";
 import type { GrowthRate } from "#data/exp";
 import { Gender } from "#data/gender";
@@ -147,8 +147,8 @@ export abstract class PokemonSpeciesForm {
   // TODO: once we don't have later stage starters anymore (pikachu) we can simplify this or even remove and replace with a direct call to speciesDataRegistry.getStarter
   getRootSpeciesId(forStarter = false): SpeciesId {
     let ret = this.speciesId;
-    while (speciesDataRegistry.hasPrevolution(ret) && (!forStarter || !speciesDataRegistry.isStarter(ret))) {
-      ret = speciesDataRegistry.getPrevolution(ret)!;
+    while (speciesRegistry.hasPrevolution(ret) && (!forStarter || !speciesRegistry.isStarter(ret))) {
+      ret = speciesRegistry.getPrevolution(ret)!;
     }
     return ret;
   }
@@ -205,7 +205,7 @@ export abstract class PokemonSpeciesForm {
    * @returns The id of the ability
    */
   getPassiveAbility(formIndex = this.formIndex): AbilityId {
-    return speciesDataRegistry.getPassive(this.speciesId, formIndex);
+    return speciesRegistry.getPassive(this.speciesId, formIndex);
   }
 
   /**
@@ -214,7 +214,7 @@ export abstract class PokemonSpeciesForm {
    * @returns A list of all level moves that can be learned by this species
    */
   public getLevelMoves(form?: string | number): LevelMoves {
-    const levelMoves = speciesDataRegistry.getLevelMoves(this.speciesId, form);
+    const levelMoves = speciesRegistry.getLevelMoves(this.speciesId, form);
     return levelMoves.sort((a, b) => a[0] - b[0]);
   }
 
@@ -224,7 +224,7 @@ export abstract class PokemonSpeciesForm {
    * @returns A list of all TM {@linkcode MoveId}s that can be learned by this species
    */
   getTms(form?: string | number): MoveId[] {
-    return speciesDataRegistry.getTms(this.speciesId, form);
+    return speciesRegistry.getTms(this.speciesId, form);
   }
 
   /**
@@ -369,12 +369,12 @@ export abstract class PokemonSpeciesForm {
 
     const replacement = timedEventManager.getEventPokemonSpriteReplacement(this.speciesId, formIndex);
     if (replacement) {
-      const replacementFormSpriteKey = speciesDataRegistry
+      const replacementFormSpriteKey = speciesRegistry
         .getSpecies(replacement.speciesId)
         .forms[replacement.formIndex]?.getFormSpriteKey(replacement.formIndex);
 
       const replacementShowGenderDiffs =
-        speciesDataRegistry.getSpecies(replacement.speciesId).genderDiffs
+        speciesRegistry.getSpecies(replacement.speciesId).genderDiffs
         && gender === Gender.FEMALE
         && ![
           SpeciesFormKey.MEGA,
@@ -420,7 +420,7 @@ export abstract class PokemonSpeciesForm {
   getVariantDataIndex(formIndex?: number): string | number {
     let formkey: string | null = null;
     let variantDataIndex: number | string = this.speciesId;
-    const species = speciesDataRegistry.getSpecies(this.speciesId);
+    const species = speciesRegistry.getSpecies(this.speciesId);
     if (species.forms.length > 0 && formIndex !== undefined) {
       formkey = species.forms[formIndex]?.getFormSpriteKey(formIndex);
       if (formkey) {
@@ -441,24 +441,15 @@ export abstract class PokemonSpeciesForm {
     return variantDataIndex;
   }
 
-  getIconAtlasKey(formIndex?: number, shiny?: boolean, variant?: number): string {
-    const variantDataIndex = this.getVariantDataIndex(formIndex);
-    const isVariant =
-      shiny && variantData[variantDataIndex] && variant !== undefined && variantData[variantDataIndex][variant];
-
-    const replacementSpecies = timedEventManager.getEventPokemonSpriteReplacement(this.speciesId, formIndex);
-    const generation = replacementSpecies
-      ? speciesDataRegistry.getPokemonSpeciesForm(replacementSpecies.speciesId, replacementSpecies.formIndex).generation
-      : this.generation;
-    return `pokemon_icons_${generation}${isVariant ? "v" : ""}`;
+  getIconAtlasKey(): string {
+    return `pokemon_icons_${this.generation}`;
   }
 
-  getIconId(gender: Gender, formIndex?: number, shiny?: boolean, variant?: number): string {
+  getIconId(gender: Gender, formIndex?: number, shiny?: boolean): string {
     if (formIndex === undefined) {
       formIndex = this.formIndex;
     }
 
-    const variantDataIndex = this.getVariantDataIndex(formIndex);
     const replacement = timedEventManager.getEventPokemonSpriteReplacement(this.speciesId, formIndex);
 
     let ret: string = this.speciesId.toString();
@@ -467,10 +458,7 @@ export abstract class PokemonSpeciesForm {
       ret = replacement.speciesId.toString();
     }
 
-    const isVariant =
-      shiny && variantData[variantDataIndex] && variant !== undefined && variantData[variantDataIndex][variant];
-
-    if (shiny && !isVariant) {
+    if (shiny) {
       ret += "s";
     }
 
@@ -502,7 +490,7 @@ export abstract class PokemonSpeciesForm {
 
     let formSpriteKey = this.getFormSpriteKey(formIndex);
     if (replacement) {
-      formSpriteKey = speciesDataRegistry
+      formSpriteKey = speciesRegistry
         .getPokemonSpeciesForm(replacement.speciesId, replacement.formIndex)
         .getFormSpriteKey(replacement.formIndex);
     }
@@ -520,10 +508,6 @@ export abstract class PokemonSpeciesForm {
           ret += `-${formSpriteKey}`;
           break;
       }
-    }
-
-    if (isVariant) {
-      ret += `_${variant + 1}`;
     }
 
     return ret;
@@ -552,11 +536,11 @@ export abstract class PokemonSpeciesForm {
       }
     }
     let ret: string = speciesId.toString();
-    const forms = speciesDataRegistry.getSpecies(speciesId).forms;
+    const forms = speciesRegistry.getSpecies(speciesId).forms;
     if (forms.length > 0) {
       if (formIndex !== undefined && formIndex >= forms.length) {
         console.warn(
-          `Attempted accessing form with index ${formIndex} of species ${speciesDataRegistry.getSpecies(speciesId).getName()} with only ${forms.length || 0} forms`,
+          `Attempted accessing form with index ${formIndex} of species ${speciesRegistry.getSpecies(speciesId).getName()} with only ${forms.length || 0} forms`,
         );
         formIndex = Math.min(formIndex, forms.length - 1);
       }
@@ -1007,12 +991,12 @@ export class PokemonSpecies extends PokemonSpeciesForm implements Localizable {
     const evolutionLevels: EvolutionLevel[] = [];
     const { speciesId } = this;
 
-    if (speciesDataRegistry.hasEvolutions(speciesId)) {
-      for (const e of speciesDataRegistry.getEvolutions(speciesId)) {
+    if (speciesRegistry.hasEvolutions(speciesId)) {
+      for (const e of speciesRegistry.getEvolutions(speciesId)) {
         const sId = e.speciesId;
         const level = e.level;
         evolutionLevels.push([sId, level]);
-        const nextEvolutionLevels = speciesDataRegistry.getSpecies(sId).getEvolutionLevels();
+        const nextEvolutionLevels = speciesRegistry.getSpecies(sId).getEvolutionLevels();
         for (const npl of nextEvolutionLevels) {
           evolutionLevels.push(npl);
         }
@@ -1039,9 +1023,9 @@ export class PokemonSpecies extends PokemonSpeciesForm implements Localizable {
   getPrevolutionLevels(withThresholds = false): EvolutionLevelWithThreshold[] | EvolutionLevel[] {
     const prevolutionLevels: (EvolutionLevel | EvolutionLevelWithThreshold)[] = [];
 
-    const allEvolvingPokemon = speciesDataRegistry.getSpeciesWithEvolutions();
+    const allEvolvingPokemon = speciesRegistry.getSpeciesWithEvolutions();
     for (const speciesId of allEvolvingPokemon) {
-      for (const e of speciesDataRegistry.getEvolutions(speciesId)) {
+      for (const e of speciesRegistry.getEvolutions(speciesId)) {
         if (
           e.speciesId === this.speciesId
           && (this.forms.length === 0 || !e.evoFormKey || e.evoFormKey === this.forms[this.formIndex].formKey)
@@ -1053,7 +1037,7 @@ export class PokemonSpecies extends PokemonSpeciesForm implements Localizable {
           } else {
             prevolutionLevels.push([speciesId, level]);
           }
-          const subPrevolutionLevels = speciesDataRegistry.getSpecies(speciesId).getPrevolutionLevels(withThresholds);
+          const subPrevolutionLevels = speciesRegistry.getSpecies(speciesId).getPrevolutionLevels(withThresholds);
           for (const spl of subPrevolutionLevels) {
             prevolutionLevels.push(spl);
           }
@@ -1065,8 +1049,8 @@ export class PokemonSpecies extends PokemonSpeciesForm implements Localizable {
   }
 
   getCompatibleFusionSpeciesFilter(): PokemonSpeciesFilter {
-    const hasEvolution = speciesDataRegistry.hasEvolutions(this.speciesId);
-    const hasPrevolution = speciesDataRegistry.hasPrevolution(this.speciesId);
+    const hasEvolution = speciesRegistry.hasEvolutions(this.speciesId);
+    const hasPrevolution = speciesRegistry.hasPrevolution(this.speciesId);
     const subLegendary = this.subLegendary;
     const legendary = this.legendary;
     const mythical = this.mythical;
@@ -1075,8 +1059,8 @@ export class PokemonSpecies extends PokemonSpeciesForm implements Localizable {
         (subLegendary
           || legendary
           || mythical
-          || (speciesDataRegistry.hasEvolutions(species.speciesId) === hasEvolution
-            && speciesDataRegistry.hasPrevolution(species.speciesId) === hasPrevolution))
+          || (speciesRegistry.hasEvolutions(species.speciesId) === hasEvolution
+            && speciesRegistry.hasPrevolution(species.speciesId) === hasPrevolution))
         && species.subLegendary === subLegendary
         && species.legendary === legendary
         && species.mythical === mythical

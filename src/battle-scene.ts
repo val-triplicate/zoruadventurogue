@@ -14,7 +14,7 @@ import { audioManager } from "#app/global-audio-manager";
 import { timedEventManager } from "#app/global-event-manager";
 import { initGlobalScene } from "#app/global-scene";
 import { settings } from "#app/global-settings-manager";
-import { speciesDataRegistry } from "#app/global-species-data-registry";
+import { speciesRegistry } from "#app/global-species-data-registry";
 import { InputsController } from "#app/inputs-controller";
 import { LoadingScene } from "#app/loading-scene";
 import { activeOverrides } from "#app/overrides";
@@ -28,6 +28,7 @@ import { TurnCommandManager } from "#app/turn-command-manager";
 import { UiInputs } from "#app/ui-inputs";
 import { STARTING_WAVE } from "#balance/misc";
 import { initCommonAnims, initMoveAnim, loadCommonAnimAssets, loadMoveAnimAssets } from "#data/battle-anims";
+import type { Character } from "#data/characters/character";
 import { allMoves, biomeDepths, modifierTypes } from "#data/data-lists";
 import { classicFinalBossDialogue } from "#data/dialogue";
 import { Gender } from "#data/gender";
@@ -44,7 +45,6 @@ import { MysteryEncounterTier } from "#enums/mystery-encounter-tier";
 import { MysteryEncounterType } from "#enums/mystery-encounter-type";
 import { Nature } from "#enums/nature";
 import { PlayerGender } from "#enums/player-gender";
-import type { PokeballType } from "#enums/pokeball";
 import type { PokemonAnimType } from "#enums/pokemon-anim-type";
 import { PokemonType } from "#enums/pokemon-type";
 import { SpeciesId } from "#enums/species-id";
@@ -96,7 +96,6 @@ import { allMysteryEncounters, mysteryEncountersByBiome } from "#mystery-encount
 import { MysteryEncounterSaveData } from "#mystery-encounters/mystery-encounter-save-data";
 import { expSpriteKeys } from "#sprites/sprite-keys";
 import { hasExpSprite } from "#sprites/sprite-utils";
-import type { Variant } from "#sprites/variant";
 import { clearVariantData, variantData } from "#sprites/variant";
 import type { Achv } from "#system/achv";
 import { achvs, ModifierAchv, MoneyAchv } from "#system/achv";
@@ -114,7 +113,6 @@ import type {
   NewBattleResolvedProps,
   NewBattleSavedProps,
 } from "#types/new-battle-props";
-import type { Character } from "#types/pokemon-species";
 import type { SessionSaveData } from "#types/save-data";
 import type { VolumeSettingsKey } from "#types/settings";
 import { AbilityBar } from "#ui/ability-bar";
@@ -147,8 +145,6 @@ import { decodeNickname } from "#utils/pokemon-utils";
 import { capitalizeFirstLetterOnly } from "#utils/strings";
 import i18next from "i18next";
 import Phaser from "phaser";
-
-export type PokeballCounts = Record<Exclude<PokeballType, PokeballType.LUXURY_BALL>, number>;
 
 export interface InfoToggle {
   toggleInfo(force?: boolean): void;
@@ -336,8 +332,6 @@ export class BattleScene extends SceneBase {
       }
     });
   }
-
-  public initParty(chars: Character[]) {}
 
   public loadPokemonAtlas(key: string, atlasPath: string, experimental = settings.expSpritesEnabled): void {
     const variant = atlasPath.includes("variant/") || /_[0-3]$/.test(atlasPath);
@@ -703,7 +697,7 @@ export class BattleScene extends SceneBase {
    * @param includeSwitching Whether a pokemon that is currently switching out is valid, default `true`
    */
   public getPlayerPokemon(includeSwitching = true): PlayerPokemon | undefined {
-    return this.getPlayerField().find(p => p.isActive() && (includeSwitching || p.switchOutStatus === false));
+    return this.getPlayerField().find(p => p.isActive() && (includeSwitching || !p.switchOutStatus));
   }
 
   // TODO: Add `undefined` to return type
@@ -731,7 +725,7 @@ export class BattleScene extends SceneBase {
    * @param includeSwitching Whether a pokemon that is currently switching out is valid, default `true`
    */
   public getEnemyPokemon(includeSwitching = true): EnemyPokemon | undefined {
-    return this.getEnemyField().find(p => p.isActive() && (includeSwitching || p.switchOutStatus === false));
+    return this.getEnemyField().find(p => p.isActive() && (includeSwitching || !p.switchOutStatus));
   }
 
   /**
@@ -821,7 +815,6 @@ export class BattleScene extends SceneBase {
     formIndex?: number,
     gender?: Gender,
     shiny?: boolean,
-    variant?: Variant,
     nature?: Nature,
     dataSource?: Pokemon | PokemonData,
     postProcess?: (playerPokemon: PlayerPokemon) => void,
@@ -834,7 +827,6 @@ export class BattleScene extends SceneBase {
       formIndex,
       gender,
       shiny,
-      variant,
       nature,
       dataSource,
     );
@@ -886,8 +878,7 @@ export class BattleScene extends SceneBase {
       speciesId = activeOverrides.ENEMY_SPECIES_OVERRIDE;
       // The fact that a Pokemon is a boss or not can change based on its Species and level
       boss =
-        this.getEncounterBossSegments(this.currentBattle.waveIndex, level, speciesDataRegistry.getSpecies(speciesId))
-        > 1;
+        this.getEncounterBossSegments(this.currentBattle.waveIndex, level, speciesRegistry.getSpecies(speciesId)) > 1;
     }
 
     const pokemon = new EnemyPokemon(speciesId, level, trainerSlot, boss, shinyLock, dataSource, forRival);
@@ -931,26 +922,6 @@ export class BattleScene extends SceneBase {
 
     pokemon.init();
     return pokemon;
-  }
-
-  /**
-   * Removes a {@linkcode PlayerPokemon} from the party, and clears modifiers for that Pokemon's id
-   * Useful for MEs/Challenges that remove Pokemon from the player party temporarily or permanently
-   * @param pokemon
-   * @param destroy Default true. If true, will destroy the {@linkcode PlayerPokemon} after removing
-   */
-  removePokemonFromPlayerParty(pokemon: PlayerPokemon, destroy = true) {
-    if (!pokemon) {
-      return;
-    }
-
-    const partyIndex = this.party.indexOf(pokemon);
-    this.party.splice(partyIndex, 1);
-    if (destroy) {
-      this.field.remove(pokemon, true);
-      pokemon.destroy();
-    }
-    this.updateModifiers(true);
   }
 
   addPokemonIcon(
@@ -1091,7 +1062,7 @@ export class BattleScene extends SceneBase {
 
     if (reloadI18n) {
       const localizable: Localizable[] = [
-        ...speciesDataRegistry.getAllSpecies(),
+        ...speciesRegistry.getAllSpecies(),
         ...allMoves,
         ...getEnumValues(ModifierPoolType)
           .map(mpt => getModifierPoolForType(mpt))
@@ -2157,13 +2128,13 @@ export class BattleScene extends SceneBase {
     const filteredSpecies = speciesFilter
       ? [
           ...new Set(
-            speciesDataRegistry
+            speciesRegistry
               .getAllSpecies()
               .filter(s => s.isCatchable() && speciesFilter(s))
               .map(s => {
                 if (!filterAllEvolutions) {
-                  while (speciesDataRegistry.hasPrevolution(s.speciesId)) {
-                    s = speciesDataRegistry.getSpecies(speciesDataRegistry.getPrevolution(s.speciesId)!);
+                  while (speciesRegistry.hasPrevolution(s.speciesId)) {
+                    s = speciesRegistry.getSpecies(speciesRegistry.getPrevolution(s.speciesId)!);
                   }
                 }
                 return s;
@@ -2171,7 +2142,7 @@ export class BattleScene extends SceneBase {
           ),
         ]
       : // TODO: Why is `filterAllEvolutions` only checked if there is a speciesFilter?
-        speciesDataRegistry.getAllSpecies().filter(s => s.isCatchable());
+        speciesRegistry.getAllSpecies().filter(s => s.isCatchable());
     return randSeedItem(filteredSpecies);
   }
 

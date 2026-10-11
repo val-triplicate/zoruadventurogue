@@ -1,7 +1,7 @@
 import { getRandomRivalPartyMemberFunc } from "#ai/rival-team-gen";
 import { timedEventManager } from "#app/global-event-manager";
 import { globalScene } from "#app/global-scene";
-import { speciesDataRegistry } from "#app/global-species-data-registry";
+import { speciesRegistry } from "#app/global-species-data-registry";
 import { signatureSpecies } from "#balance/signature-species";
 import { modifierTypes } from "#data/data-lists";
 import { doubleBattleDialogue } from "#data/double-battle-dialogue";
@@ -980,7 +980,7 @@ export function getRandomPartyMemberFunc(
     } while (typeof speciesId !== "number");
 
     if (!ignoreEvolution) {
-      speciesId = speciesDataRegistry
+      speciesId = speciesRegistry
         .getSpecies(speciesId)
         .getTrainerSpeciesForLevel(level, true, strength, evoThresholdKind);
     }
@@ -1003,7 +1003,7 @@ function getSpeciesFilterRandomPartyMemberFunc(
 
   return (level: number, strength: PartyMemberStrength) => {
     const waveIndex = globalScene.currentBattle.waveIndex;
-    const species = speciesDataRegistry.getSpecies(
+    const species = speciesRegistry.getSpecies(
       globalScene
         .randomSpecies(waveIndex, level, false, speciesFilter)
         // TODO: What EvoLevelThresholdKind to use here?

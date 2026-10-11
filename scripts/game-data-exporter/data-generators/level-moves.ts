@@ -5,7 +5,7 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { speciesDataRegistry } from "#app/global-species-data-registry";
+import { speciesRegistry } from "#app/global-species-data-registry";
 import { MoveId } from "#enums/move-id";
 import { SpeciesId } from "#enums/species-id";
 import chalk from "chalk";
@@ -15,7 +15,7 @@ import type { LevelMoveEntry } from "../types";
 export async function generateLevelMovesData(): Promise<void> {
   const entries: LevelMoveEntry[] = [];
 
-  for (const speciesData of Object.values(speciesDataRegistry.data)) {
+  for (const speciesData of Object.values(speciesRegistry.data)) {
     for (const [level, move] of speciesData.levelMoves) {
       const levelString = level === 0 ? "EVOLVE_MOVE" : level === -1 ? "RELEARN_MOVE" : level;
       const data: LevelMoveEntry = {

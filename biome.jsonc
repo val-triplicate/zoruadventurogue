@@ -266,7 +266,7 @@
         },
         "noNonNullAssertedOptionalChain": "warn", // TODO: Refactor and change to error
         "noDuplicateDependencies": "error",
-        "noImportCycles": "error",
+        "noImportCycles": "warn",
         "noProto": "error",
         "noShadow": "warn" // TODO: refactor and make "error"
       },

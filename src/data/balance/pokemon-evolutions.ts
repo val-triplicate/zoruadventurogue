@@ -1,6 +1,6 @@
 import type { determineEnemySpecies } from "#ai/ai-species-gen";
 import { globalScene } from "#app/global-scene";
-import { speciesDataRegistry } from "#app/global-species-data-registry";
+import { speciesRegistry } from "#app/global-species-data-registry";
 import { allMoves } from "#data/data-lists";
 import { type Gender, getGenderSymbol } from "#data/gender";
 import type { BiomeId } from "#enums/biome-id";
@@ -150,7 +150,7 @@ export class SpeciesEvolutionCondition {
           case EvoCondKey.EVO_TREASURE_TRACKER:
             return i18next.t("pokemonEvolutions:treasure");
           case EvoCondKey.SPECIES_CAUGHT: {
-            const species = speciesDataRegistry.getSpecies(cond.speciesCaught).name;
+            const species = speciesRegistry.getSpecies(cond.speciesCaught).name;
             return i18next.t("pokemonEvolutions:caught", { species });
           }
           case EvoCondKey.HELD_ITEM:

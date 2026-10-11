@@ -5,7 +5,7 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { speciesDataRegistry } from "#app/global-species-data-registry";
+import { speciesRegistry } from "#app/global-species-data-registry";
 import { EvoCondKey, EvolutionItem } from "#balance/pokemon-evolutions";
 import { Gender } from "#data/gender";
 import { MoveId } from "#enums/move-id";
@@ -21,7 +21,7 @@ import type { EvolutionEntry } from "../types";
 export async function generateEvolutionsData(): Promise<void> {
   const entries: EvolutionEntry[] = [];
 
-  for (const speciesData of Object.values(speciesDataRegistry.data)) {
+  for (const speciesData of Object.values(speciesRegistry.data)) {
     const evolutions = speciesData.evolutions;
     if (evolutions) {
       for (const evo of evolutions) {

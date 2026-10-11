@@ -1,20 +1,22 @@
-import { getDefaultSelectedMoves, getDefaultUnselectedMoves } from "#balance/custom-characters";
+import type { Character } from "#data/characters/character";
+import { getFormIndex, getGender, getName, isShiny } from "#data/characters/character-identities";
+import { getDefaultActiveMoves, getDefaultReserveMoves } from "#data/characters/character-move-pools";
 import { Gender } from "#data/gender";
 import type { MoveSet } from "#data/moveset";
 import { Nature } from "#enums/nature";
 import type { PokemonType } from "#enums/pokemon-type";
 import type { Variant } from "#sprites/variant";
-import type { Character, PreferenceDataMap } from "#types/pokemon-species";
+import type { PreferenceDataMap } from "#types/pokemon-species";
 import type { IconProps } from "#types/save-data";
 
-export class CharacterPreference {
+export class CharacterState {
   abilityIndex: number;
   passive: boolean;
   favorite: boolean;
   gender: Gender;
   formIndex: number;
   nature: number;
-  nickname?: string | undefined;
+  name?: string | undefined;
   shiny: boolean;
   tera: PokemonType;
   variant: Variant;
@@ -28,24 +30,24 @@ export class CharacterPreference {
     this.favorite = false;
     this.gender = Gender.GENDERLESS;
     this.nature = Nature.DOCILE;
-    this.nickname = char.getName();
+    this.name = getName(char);
     this.shiny = defaults.shiny;
     this.variant = defaults.variant;
     this.formIndex = defaults.formIndex;
-    this.activeMoves = getDefaultSelectedMoves(char);
-    this.reserveMoves = getDefaultUnselectedMoves(char);
+    this.activeMoves = getDefaultActiveMoves(char);
+    this.reserveMoves = getDefaultReserveMoves(char);
   }
 }
 
 export function initPreferences(chars: Character[]): PreferenceDataMap {
   const map: PreferenceDataMap = {} as PreferenceDataMap;
   for (const char of chars) {
-    map[char.id] = new CharacterPreference(char);
+    map[char.id] = new CharacterState(char);
   }
   return map;
 }
 
-export function getIconProps(char: Character, preferences?: CharacterPreference): IconProps {
+export function getIconProps(char: Character, preferences?: CharacterState): IconProps {
   const defaults = getDefaultIconProps(char);
   return {
     shiny: preferences?.shiny ?? defaults.shiny,
@@ -56,21 +58,5 @@ export function getIconProps(char: Character, preferences?: CharacterPreference)
 }
 
 export function getDefaultIconProps(char: Character): IconProps {
-  const gender = char?.identity?.gender || Gender.GENDERLESS;
-  const formIndex = char?.identity?.formIndex || 0;
-  const identity = char?.identity;
-
-  if (identity?.variants?.unshiny) {
-    return { shiny: false, gender, variant: 0, formIndex };
-  }
-  if (identity?.variants?.standard) {
-    return { shiny: true, gender, variant: 0, formIndex };
-  }
-  if (identity?.variants?.rare) {
-    return { shiny: false, gender, variant: 1, formIndex };
-  }
-  if (identity?.variants?.epic) {
-    return { shiny: false, gender, variant: 2, formIndex };
-  }
-  return { shiny: false, gender, variant: 0, formIndex };
+  return { shiny: isShiny(char), gender: getGender(char), variant: 0, formIndex: getFormIndex(char) };
 }

@@ -1,4 +1,4 @@
-import type { TeamRegistry } from "#data/team-registry";
+import type { TeamRegistry } from "#data/registries/team-registry";
 
 export let teamRegistry: TeamRegistry;
 

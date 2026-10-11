@@ -1,5 +1,5 @@
 import { globalScene } from "#app/global-scene";
-import { speciesDataRegistry } from "#app/global-species-data-registry";
+import { speciesRegistry } from "#app/global-species-data-registry";
 import type { SpeciesFormEvolution } from "#balance/pokemon-evolutions";
 import type { PokemonSpecies } from "#data/pokemon-species";
 import { EvoLevelThresholdKind } from "#enums/evo-level-threshold-kind";
@@ -114,12 +114,12 @@ export function determineEnemySpecies(
 ): SpeciesId {
   const requiredPrevo =
     tryForcePrevo
-    && speciesDataRegistry.hasPrevolution(species.speciesId)
+    && speciesRegistry.hasPrevolution(species.speciesId)
     && getRequiredPrevo(species, level, encounterKind);
   if (requiredPrevo) {
     return requiredPrevo;
   }
-  const evolutions = speciesDataRegistry.getEvolutions(species.speciesId);
+  const evolutions = speciesRegistry.getEvolutions(species.speciesId);
   if (
     // If evolutions shouldn't happen, add more cases here :)
     !allowEvolving
@@ -164,7 +164,7 @@ export function determineEnemySpecies(
   const randomLevel = randSeedIntRange(choice, Math.round(choice * multiplier));
   if (randomLevel <= level) {
     return determineEnemySpecies(
-      speciesDataRegistry.getSpecies(evoSpecies),
+      speciesRegistry.getSpecies(evoSpecies),
       level,
       true,
       forTrainer,

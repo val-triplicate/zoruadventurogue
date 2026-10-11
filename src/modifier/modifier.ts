@@ -1,7 +1,7 @@
 import { applyAbAttrs } from "#abilities/apply-ab-attrs";
 import { audioManager } from "#app/global-audio-manager";
 import { globalScene } from "#app/global-scene";
-import { speciesDataRegistry } from "#app/global-species-data-registry";
+import { speciesRegistry } from "#app/global-species-data-registry";
 import { getPokemonNameWithAffix } from "#app/messages";
 import { activeOverrides } from "#app/overrides";
 import { getBerryEffectFunc, getBerryPredicate } from "#data/berry";
@@ -1118,7 +1118,7 @@ export class EvolutionStatBoosterModifier extends StatBoosterModifier {
    * @see shouldApply
    */
   override apply(pokemon: Pokemon, stat: Stat, statValue: NumberHolder): boolean {
-    const isUnevolved = speciesDataRegistry.hasEvolutions(pokemon.getSpeciesForm(true).speciesId);
+    const isUnevolved = speciesRegistry.hasEvolutions(pokemon.getSpeciesForm(true).speciesId);
 
     if (isUnevolved) {
       // Full boost applied if holder is unfused and unevolved or, if fused, both parts of fusion are unevolved

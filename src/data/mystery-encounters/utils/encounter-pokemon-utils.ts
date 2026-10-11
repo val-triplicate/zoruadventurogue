@@ -1,6 +1,6 @@
 import { audioManager } from "#app/global-audio-manager";
 import { globalScene } from "#app/global-scene";
-import { speciesDataRegistry } from "#app/global-species-data-registry";
+import { speciesRegistry } from "#app/global-species-data-registry";
 import { getPokemonNameWithAffix } from "#app/messages";
 import { modifierTypes } from "#data/data-lists";
 import type { Gender } from "#data/gender";
@@ -38,7 +38,7 @@ export function getSpriteKeysFromSpecies(
   shiny?: boolean,
   variant?: number,
 ): { spriteKey: string; fileRoot: string } {
-  const species = speciesDataRegistry.getSpecies(speciesId);
+  const species = speciesRegistry.getSpecies(speciesId);
   const spriteKey = species.getSpriteKey(gender, formIndex ?? 0, shiny ?? false, variant ?? 0);
   const fileRoot = species.getSpriteAtlasPath(gender, formIndex ?? 0, shiny ?? false, variant ?? 0);
   return { spriteKey, fileRoot };
@@ -451,13 +451,13 @@ export function getGoldenBugNetSpecies(level: number): PokemonSpecies {
   for (const speciesWeightPair of GOLDEN_BUG_NET_SPECIES_POOL) {
     w += speciesWeightPair[1];
     if (roll < w) {
-      const initialSpecies = speciesDataRegistry.getSpecies(speciesWeightPair[0]);
-      return speciesDataRegistry.getSpecies(initialSpecies.getWildSpeciesForLevel(level, true, false));
+      const initialSpecies = speciesRegistry.getSpecies(speciesWeightPair[0]);
+      return speciesRegistry.getSpecies(initialSpecies.getWildSpeciesForLevel(level, true, false));
     }
   }
 
   // Defaults to Scyther
-  return speciesDataRegistry.getSpecies(SpeciesId.SCYTHER);
+  return speciesRegistry.getSpecies(SpeciesId.SCYTHER);
 }
 
 /**

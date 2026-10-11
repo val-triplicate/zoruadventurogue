@@ -2,7 +2,6 @@ import { globalScene } from "#app/global-scene";
 import { Device } from "#enums/devices";
 import { TextStyle } from "#enums/text-style";
 import { SettingKeyboard } from "#system/settings-keyboard";
-import type { CanCycle } from "#types/starter-select-types";
 import { getStarterSelectTextSettings } from "#ui/starter-select-ui-utils";
 import { addTextObject } from "#ui/text";
 import i18next from "i18next";
@@ -227,7 +226,7 @@ export class StarterSelectInstructionsContainer extends Phaser.GameObjects.Conta
     this.add([this.goFilterIconElement, this.goFilterLabel]);
   }
 
-  public updateInstructions(canCycle: CanCycle, isCaught = false, filterMode = false): void {
+  public updateInstructions(filterMode = false): void {
     this.instructionRowX = this.INSTRUCTION_ROW_X;
     this.instructionRowY = this.INSTRUCTION_ROW_Y;
 
@@ -245,42 +244,6 @@ export class StarterSelectInstructionsContainer extends Phaser.GameObjects.Conta
 
     if (!gamepadType) {
       return;
-    }
-
-    if (isCaught) {
-      if (canCycle.shiny) {
-        this.updateButtonIcon(SettingKeyboard.BUTTON_CYCLE_SHINY, gamepadType, this.shinyIconElement, this.shinyLabel);
-      }
-      if (canCycle.form) {
-        this.updateButtonIcon(SettingKeyboard.BUTTON_CYCLE_FORM, gamepadType, this.formIconElement, this.formLabel);
-      }
-      if (canCycle.gender) {
-        this.updateButtonIcon(
-          SettingKeyboard.BUTTON_CYCLE_GENDER,
-          gamepadType,
-          this.genderIconElement,
-          this.genderLabel,
-        );
-      }
-      if (canCycle.ability) {
-        this.updateButtonIcon(
-          SettingKeyboard.BUTTON_CYCLE_ABILITY,
-          gamepadType,
-          this.abilityIconElement,
-          this.abilityLabel,
-        );
-      }
-      if (canCycle.nature) {
-        this.updateButtonIcon(
-          SettingKeyboard.BUTTON_CYCLE_NATURE,
-          gamepadType,
-          this.natureIconElement,
-          this.natureLabel,
-        );
-      }
-      if (canCycle.tera) {
-        this.updateButtonIcon(SettingKeyboard.BUTTON_CYCLE_TERA, gamepadType, this.teraIconElement, this.teraLabel);
-      }
     }
 
     // if filter mode is inactive and `gamepadType` is not `undefined`, update the button icons

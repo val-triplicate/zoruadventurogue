@@ -1,4 +1,4 @@
-import type { CharacterRegistry } from "#data/character-registry";
+import type { CharacterRegistry } from "#data/registries/character-registry";
 
 export let characterRegistry: CharacterRegistry;
 

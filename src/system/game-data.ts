@@ -1,7 +1,6 @@
 import { pokerogueApi } from "#api/api";
 import { clientSessionId, getSessionDataLocalStorageKey, loggedInUser, updateUserInfo } from "#app/account";
 import { defaultTeams, saveKey } from "#app/constants";
-import { characterRegistry } from "#app/global-character-data-registry";
 import { globalScene } from "#app/global-scene";
 import { settings } from "#app/global-settings-manager";
 import { teamRegistry } from "#app/global-team-data-registry";
@@ -13,7 +12,6 @@ import { EntryHazardTag } from "#data/arena-tag";
 import { Gender } from "#data/gender";
 import { loadPositionalTag } from "#data/positional-tags/load-positional-tag";
 import { BattleType } from "#enums/battle-type";
-import type { CharacterId } from "#enums/character-id";
 import type { Device } from "#enums/devices";
 import { DexAttr } from "#enums/dex-attr";
 import { GameDataType } from "#enums/game-data-type";
@@ -1331,28 +1329,6 @@ export class GameData {
     }
 
     this.teamSaveData = teamSaveData;
-  }
-
-  public getDefaultIconProps(charId: CharacterId): IconProps {
-    const teamMember = characterRegistry.getCharacter(charId);
-    // Default is female only for species where malePercent is not null but 0
-    const gender = teamMember.identity?.gender || Gender.GENDERLESS;
-    const formIndex = teamMember.identity?.formIndex || 0;
-    const identity = teamMember.identity;
-
-    if (identity?.variants?.unshiny) {
-      return { shiny: false, gender, variant: 0, formIndex };
-    }
-    if (identity?.variants?.standard) {
-      return { shiny: true, gender, variant: 0, formIndex };
-    }
-    if (identity?.variants?.rare) {
-      return { shiny: false, gender, variant: 1, formIndex };
-    }
-    if (identity?.variants?.epic) {
-      return { shiny: false, gender, variant: 2, formIndex };
-    }
-    return { shiny: false, gender, variant: 0, formIndex };
   }
 
   /**

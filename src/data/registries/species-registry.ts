@@ -1,4 +1,3 @@
-import { characterRegistry } from "#app/global-character-data-registry";
 import { setSpeciesDataRegistry } from "#app/global-species-data-registry";
 import { initGenerationOne } from "#balance/generation-01";
 import { initGenerationTwo } from "#balance/generation-02";
@@ -12,7 +11,6 @@ import { initGenerationNine } from "#balance/generation-09";
 import type { SpeciesFormEvolution } from "#balance/pokemon-evolutions";
 import type { PokemonSpecies, PokemonSpeciesForm } from "#data/pokemon-species";
 import type { AbilityId } from "#enums/ability-id";
-import type { CharacterId } from "#enums/character-id";
 import type { MoveId } from "#enums/move-id";
 import { SpeciesFormKey } from "#enums/species-form-key";
 import type { SpeciesId } from "#enums/species-id";
@@ -23,7 +21,7 @@ import type { StarterSpeciesId } from "#types/starter-species-id";
 /**
  * The SpeciesDataRegistry is a singleton class responsible for managing and querying species-related information.
  */
-export class SpeciesDataRegistry {
+export class SpeciesRegistry {
   private readonly _data: SpeciesDataMap;
 
   // TODO: this (and the other methods) should use `ReadonlyDeep<...>` from type-fest
@@ -102,15 +100,6 @@ export class SpeciesDataRegistry {
    */
   public getSpecies(speciesId: SpeciesId): PokemonSpecies {
     return this.getSpeciesData(speciesId).species;
-  }
-
-  /**
-   * Get the species data for a given team member ID.
-   * @param teamMemberId - The {@linkcode CharacterId} of the team member to get data for
-   * @returns The {@linkcode PokemonSpecies}
-   */
-  public getSpeciesFromTeamMemberId(teamMemberId: CharacterId): PokemonSpecies {
-    return this.getSpecies(characterRegistry.getCharacter(teamMemberId).speciesId);
   }
 
   /**
@@ -391,5 +380,5 @@ export class SpeciesDataRegistry {
 }
 
 export function initSpeciesDataRegistry(): void {
-  setSpeciesDataRegistry(new SpeciesDataRegistry());
+  setSpeciesDataRegistry(new SpeciesRegistry());
 }

@@ -2,10 +2,11 @@ import { audioManager } from "#app/global-audio-manager";
 import { characterRegistry } from "#app/global-character-data-registry";
 import { globalScene } from "#app/global-scene";
 import { Phase } from "#app/phase";
+import type { Character } from "#data/characters/character";
+import { getSpeciesId } from "#data/characters/character-identities";
 import { blankMoveSet } from "#data/moveset";
 import { UiMode } from "#enums/ui-mode";
 import { overrideHeldItems, overrideModifiers } from "#modifiers/modifier";
-import type { Character } from "#types/pokemon-species";
 import { SaveSlotUiMode } from "#ui/save-slot-select-ui-handler";
 
 export class SelectStarterPhase extends Phase {
@@ -39,13 +40,12 @@ export class SelectStarterPhase extends Phase {
 
       const starterPokemon = globalScene.addPlayerPokemon(
         char.id,
-        char.speciesId,
+        getSpeciesId(char),
         globalScene.gameMode.getStartingLevel(),
         preferences.abilityIndex,
         preferences.formIndex,
         preferences.gender,
         preferences.shiny,
-        preferences.variant,
         preferences.nature,
       );
 

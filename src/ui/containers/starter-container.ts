@@ -1,10 +1,11 @@
-import { characterRegistry } from "#app/global-character-data-registry";
 import { globalScene } from "#app/global-scene";
+import type { Character } from "#data/characters/character";
+import { getSpecies } from "#data/characters/character-identities";
 import { Gender } from "#data/gender";
 import type { PokemonSpecies } from "#data/pokemon-species";
 import type { CharacterId } from "#enums/character-id";
 import { TextStyle } from "#enums/text-style";
-import type { Character } from "#types/pokemon-species";
+import { getDefaultIconProps } from "#types/character-state";
 import type { IconProps } from "#types/save-data";
 import { addTextObject } from "#ui/text";
 
@@ -24,7 +25,7 @@ export class CharacterContainer extends Phaser.GameObjects.Container {
   constructor(character: Character) {
     super(globalScene, 0, 0);
 
-    const defaultProps = globalScene.gameData.getDefaultIconProps(character.id);
+    const defaultProps = getDefaultIconProps(character);
 
     this.setCharacter(character, defaultProps);
 
@@ -76,7 +77,7 @@ export class CharacterContainer extends Phaser.GameObjects.Container {
   public setCharacter(char: Character, props: IconProps) {
     this.char = char;
     this.charId = char.id;
-    this.species = characterRegistry.getSpecies(this.charId);
+    this.species = getSpecies(this.charId);
 
     let { shiny, formIndex, gender, variant } = props;
 
@@ -88,12 +89,11 @@ export class CharacterContainer extends Phaser.GameObjects.Container {
     }
 
     this.icon = globalScene.add
-      .sprite(-2, 2, this.species.getIconAtlasKey(formIndex, shiny, variant))
+      .sprite(-2, 2, this.species.getIconAtlasKey())
       .setScale(0.5)
       .setOrigin(0)
-      .setFrame(this.species.getIconId(gender, formIndex, shiny, variant))
+      .setFrame(this.species.getIconId(gender, formIndex, shiny))
       .setTint(0);
-    this.checkIconId(gender, formIndex, shiny, variant);
     this.add(this.icon);
 
     [this.label, ...this.shinyIcons, this.hiddenAbilityIcon, this.favoriteIcon, this.classicWinIcon].forEach(icon => {
@@ -101,13 +101,5 @@ export class CharacterContainer extends Phaser.GameObjects.Container {
         this.bringToTop(icon);
       }
     });
-  }
-
-  checkIconId(female, formIndex, shiny, variant) {
-    if (this.icon.frame.name !== this.species.getIconId(female, formIndex, shiny, variant)) {
-      console.log(`${this.char.getName()}'s variant icon does not exist. Replacing with default.`);
-      this.icon.setTexture(this.species.getIconAtlasKey(formIndex, false, variant));
-      this.icon.setFrame(this.species.getIconId(female, formIndex, false, variant));
-    }
   }
 }

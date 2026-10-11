@@ -5,7 +5,7 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { speciesDataRegistry } from "#app/global-species-data-registry";
+import { speciesRegistry } from "#app/global-species-data-registry";
 import { speciesEggMoves } from "#balance/moves/egg-moves";
 import { GrowthRate } from "#data/exp";
 import { AbilityId } from "#enums/ability-id";
@@ -20,7 +20,7 @@ import type { SpeciesEntry } from "../types";
 export async function generateSpeciesData(): Promise<void> {
   const entries: SpeciesEntry[] = [];
 
-  for (const speciesData of Object.values(speciesDataRegistry.data)) {
+  for (const speciesData of Object.values(speciesRegistry.data)) {
     const species = speciesData.species;
     const passives = speciesData.passives;
     const normalizedSpriteKey = normalizeSpriteKey(species.getSpriteKey(false));

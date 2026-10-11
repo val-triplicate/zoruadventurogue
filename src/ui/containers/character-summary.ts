@@ -1,20 +1,21 @@
 import { characterRegistry } from "#app/global-character-data-registry";
 import { globalScene } from "#app/global-scene";
-import { speciesDataRegistry } from "#app/global-species-data-registry";
+import { speciesRegistry } from "#app/global-species-data-registry";
+import type { Character } from "#data/characters/character";
+import { getAbility, getNature, getPassive, getTeraType } from "#data/characters/character-balance";
+import { getFormIndex, getGender, getName, getSpeciesId, isShiny } from "#data/characters/character-identities";
 import { allAbilities, allMoves } from "#data/data-lists";
 import { GrowthRate, getGrowthRateColor } from "#data/exp";
-import { Gender, getGenderColor, getGenderSymbol } from "#data/gender";
+import { type Gender, getGenderColor, getGenderSymbol } from "#data/gender";
 import type { MoveSet } from "#data/moveset";
 import { getNatureName } from "#data/nature";
 import type { PokemonSpecies } from "#data/pokemon-species";
-import type { CharacterId } from "#enums/character-id";
 import { Passive } from "#enums/passive";
 import { PokemonType } from "#enums/pokemon-type";
 import { SpeciesId } from "#enums/species-id";
 import { TextStyle } from "#enums/text-style";
 import { getVariantIcon, getVariantTint, type Variant } from "#sprites/variant";
-import type { Character } from "#types/pokemon-species";
-import type { DefinedSpeciesDetails } from "#types/starter-select-types";
+import { getIconProps } from "#types/character-state";
 import { getStarterSelectTextSettings } from "#ui/starter-select-ui-utils";
 import { addBBCodeTextObject, addTextObject, getTextColor } from "#ui/text";
 import { getLocalizedSpriteKey, padInt } from "#utils/common";
@@ -23,7 +24,7 @@ import i18next from "i18next";
 import type { GameObjects } from "phaser";
 import type BBCodeText from "phaser3-rex-plugins/plugins/bbcodetext";
 
-export class StarterSummary extends Phaser.GameObjects.Container {
+export class CharacterSummary extends Phaser.GameObjects.Container {
   private readonly pokemonSprite: Phaser.GameObjects.Sprite;
   private readonly pokemonNumberText: Phaser.GameObjects.Text;
   private readonly shinyOverlay: Phaser.GameObjects.Image;
@@ -341,8 +342,8 @@ export class StarterSummary extends Phaser.GameObjects.Container {
   }
 
   private setNameAndNumber(char: Character): void {
-    this.pokemonNumberText.setText(padInt(char.speciesId, 4));
-    this.pokemonNameText.setText(char.getName());
+    this.pokemonNumberText.setText(padInt(getSpeciesId(char), 4));
+    this.pokemonNameText.setText(getName(char));
   }
 
   protected setTypeIcons(type1: PokemonType, type2: PokemonType | null): void {
@@ -377,18 +378,18 @@ export class StarterSummary extends Phaser.GameObjects.Container {
     this.cleanStarterSprite();
   }
 
-  public setCharacter(id: CharacterId): void {
+  public setCharacter(char: Character): void {
+    const id = char.id;
     const saveData = characterRegistry.getSaveData(id);
-    const character = characterRegistry.getCharacter(id);
     const preferences = characterRegistry.getPreferences(id);
-    this.speciesId = character.speciesId;
-    const species = speciesDataRegistry.getSpecies(this.speciesId);
+    this.speciesId = getSpeciesId(char);
+    const species = speciesRegistry.getSpecies(this.speciesId);
 
     this.pokemonAbilityText.off("pointerover");
     this.pokemonPassiveText.off("pointerover");
 
     if (saveData && saveData.isTeamUnlocked) {
-      this.setNameAndNumber(character);
+      this.setNameAndNumber(char);
       this.characterLockedText.setVisible(false);
       this.pokemonPermanentInfoContainer.setVisible(true);
       this.pokemonStatisticsContainer.setVisible(true);
@@ -405,18 +406,18 @@ export class StarterSummary extends Phaser.GameObjects.Container {
 
       this.pokemonShinyIcon.setY(104);
       this.pokemonFormText.setY(25);
-      const speciesForm = speciesDataRegistry.getPokemonSpeciesForm(species.speciesId, preferences.formIndex);
+      const speciesForm = speciesRegistry.getPokemonSpeciesForm(species.speciesId, preferences.formIndex);
       this.setTypeIcons(speciesForm.type1, speciesForm.type2);
 
       this.pokemonSprite.clearTint();
       return;
     }
 
-    this.cleanStarterSprite(character, saveData && saveData.isTeamUnlocked);
+    this.cleanStarterSprite(char, saveData && saveData.isTeamUnlocked);
 
-    const { gender, formIndex, shiny, variant } = globalScene.gameData.getDefaultIconProps(id);
+    const { gender, formIndex, shiny, variant } = getIconProps(char);
 
-    this.updateSprite(species, gender ?? Gender.NONBINARY, formIndex, shiny, variant);
+    this.updateSprite(species, gender, formIndex, shiny, variant);
     this.pokemonSprite //
       .setVisible(true)
       .setTint(saveData && saveData.isTeamUnlocked ? 0x808080 : 0x000000);
@@ -454,10 +455,13 @@ export class StarterSummary extends Phaser.GameObjects.Container {
     this.reserveMovesContainer.setVisible(false);
   }
 
-  public setStarterDetails(id: CharacterId, options: DefinedSpeciesDetails): void {
-    const { shiny, formIndex, gender, variant, abilityIndex, natureIndex, teraType } = options;
-
-    const species = characterRegistry.getSpecies(id);
+  public setStarterDetails(char: Character): void {
+    const id = char.id;
+    const species = speciesRegistry.getSpecies(getSpeciesId(char));
+    const shiny = isShiny(char);
+    const gender = getGender(char);
+    const formIndex = getFormIndex(char);
+    const teraType = getTeraType(char);
 
     this.pokemonSprite.setVisible(false);
     this.teraIcon.setVisible(false);
@@ -465,16 +469,14 @@ export class StarterSummary extends Phaser.GameObjects.Container {
     this.pokemonPreferencesContainer.setVisible(true);
 
     this.shinyOverlay.setVisible(shiny);
-    this.pokemonNumberText.setColor(
-      getTextColor(shiny ? TextStyle.SUMMARY_DEX_NUM_GOLD : TextStyle.SUMMARY_DEX_NUM, false),
-    );
-    this.pokemonNumberText.setShadowColor(
-      getTextColor(shiny ? TextStyle.SUMMARY_DEX_NUM_GOLD : TextStyle.SUMMARY_DEX_NUM, true),
-    );
 
-    this.setShinyIcon(shiny, variant);
+    const numberTextStyle: TextStyle = shiny ? TextStyle.SUMMARY_DEX_NUM_GOLD : TextStyle.SUMMARY_DEX_NUM;
+    this.pokemonNumberText.setColor(getTextColor(numberTextStyle, false));
+    this.pokemonNumberText.setShadowColor(getTextColor(numberTextStyle, true));
 
-    this.updateSprite(species, gender ?? Gender.NONBINARY, formIndex, shiny, variant);
+    this.setShinyIcon(shiny);
+
+    this.updateSprite(species, getGender(char), getFormIndex(char), shiny, 0);
 
     if (species.malePercent === null) {
       this.pokemonGenderText.setText("");
@@ -485,15 +487,12 @@ export class StarterSummary extends Phaser.GameObjects.Container {
         .setShadowColor(getGenderColor(gender, true));
     }
 
-    const speciesOrForm = species.forms.length > 1 ? species.forms[formIndex] : species;
-    const ability = allAbilities[speciesOrForm.getAbility(abilityIndex)];
+    const ability = allAbilities[getAbility(char)];
 
-    const isHidden = abilityIndex === (species.ability2 ? 2 : 1);
-    const textStyle = isHidden ? TextStyle.SUMMARY_GOLD : TextStyle.SUMMARY_ALT;
     this.pokemonAbilityText
       .setText(ability.name)
-      .setColor(getTextColor(textStyle))
-      .setShadowColor(getTextColor(textStyle, true));
+      .setColor(getTextColor(TextStyle.SUMMARY_ALT))
+      .setShadowColor(getTextColor(TextStyle.SUMMARY_ALT, true));
 
     if (this.pokemonAbilityText.visible) {
       if (this.activeTooltip === "ABILITY") {
@@ -514,9 +513,9 @@ export class StarterSummary extends Phaser.GameObjects.Container {
 
     this.updateMoveset(preference.activeMoves);
     this.updateReserveMoves(preference.reserveMoves);
-    this.updatePassiveDisplay(id, formIndex);
+    this.updatePassiveDisplay(char);
 
-    this.pokemonNatureText.setText(getNatureName(natureIndex, true, true, false));
+    this.pokemonNatureText.setText(getNatureName(getNature(char), true, true, false));
 
     const speciesForm = characterRegistry.getPokemonSpeciesForm(id, formIndex);
     const formText = species.getFormNameToDisplay(formIndex);
@@ -532,17 +531,15 @@ export class StarterSummary extends Phaser.GameObjects.Container {
     this.teraIcon.setVisible(true);
   }
 
-  private updatePassiveDisplay(id: CharacterId, formIndex = 0): void {
+  private updatePassiveDisplay(char: Character): void {
     this.pokemonPassiveLabelText.setVisible(false);
     this.pokemonPassiveText.setVisible(false);
     this.pokemonPassiveDisabledIcon.setVisible(false);
     this.pokemonPassiveLockedIcon.setVisible(false);
 
-    const saveData = characterRegistry.getSaveData(id);
+    const saveData = characterRegistry.getSaveData(char.id);
 
-    const defaultPassiveAbility = characterRegistry.getSpecies(id).getPassiveAbility(formIndex);
-    const customAbilities = characterRegistry.getCharacter(id).abilities;
-    const passiveAbility = customAbilities ? customAbilities[3] : defaultPassiveAbility;
+    const passiveAbility = allAbilities[getPassive(char)];
 
     if (!passiveAbility) {
       if (this.activeTooltip === "PASSIVE") {

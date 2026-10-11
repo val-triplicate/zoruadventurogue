@@ -5,7 +5,7 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { speciesDataRegistry } from "#app/global-species-data-registry";
+import { speciesRegistry } from "#app/global-species-data-registry";
 import {
   SpeciesFormChangeAbilityTrigger,
   SpeciesFormChangeActiveTrigger,
@@ -36,7 +36,7 @@ import type { FormChangeTextEntry } from "../types";
 export async function generateFormChangeTextsData() {
   const entries: FormChangeTextEntry[] = [];
   const entryFormChanges: SpeciesFormChange[] = [];
-  for (const speciesData of Object.values(speciesDataRegistry.data)) {
+  for (const speciesData of Object.values(speciesRegistry.data)) {
     const formChanges = speciesData.formChanges;
     if (formChanges) {
       for (const fc of formChanges) {

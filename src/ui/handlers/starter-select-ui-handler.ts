@@ -2,30 +2,27 @@ import { PLAYER_PARTY_MAX_SIZE } from "#app/constants";
 import { characterRegistry } from "#app/global-character-data-registry";
 import { globalScene } from "#app/global-scene";
 import { settings } from "#app/global-settings-manager";
-import { speciesDataRegistry } from "#app/global-species-data-registry";
+import { speciesRegistry } from "#app/global-species-data-registry";
 import { handleTutorial, Tutorial } from "#app/tutorial";
 import { allMoves } from "#data/data-lists";
 import { Gender } from "#data/gender";
 import type { PokemonSpecies } from "#data/pokemon-species";
 import { Button } from "#enums/buttons";
 import type { CharacterId } from "#enums/character-id";
-import { DexAttr } from "#enums/dex-attr";
 import { DropDownColumn } from "#enums/drop-down-column";
 import type { MoveId } from "#enums/move-id";
 import { PokemonIconAnimMode } from "#enums/pokemon-icon-anim-mode";
 import { PokemonType } from "#enums/pokemon-type";
 import { TextStyle } from "#enums/text-style";
 import { UiMode } from "#enums/ui-mode";
-import type { Variant } from "#sprites/variant";
 import { getVariantTint } from "#sprites/variant";
-import type { Character } from "#types/pokemon-species";
-import type { CanCycle } from "#types/starter-select-types";
 import type {
   CharacterSelectCallback,
   ConfirmModeConfig,
   OptionSelectItem,
   OptionSelectModeConfig,
 } from "#types/ui-types";
+import { CharacterSummary } from "#ui/character-summary";
 import { DropDown, DropDownLabel, DropDownOption, DropDownState, DropDownType, SortCriteria } from "#ui/dropdown";
 import { FilterBar } from "#ui/filter-bar";
 import { MessageUiHandler } from "#ui/message-ui-handler";
@@ -34,13 +31,7 @@ import { PokemonIconAnimHelper } from "#ui/pokemon-icon-anim-helper";
 import { ScrollBar } from "#ui/scroll-bar";
 import { CharacterContainer } from "#ui/starter-container";
 import { StarterSelectInstructionsContainer } from "#ui/starter-select-instructions";
-import {
-  getMovePool,
-  getStarterDetailsFromPreferences,
-  getTeamDataEntry,
-  sortCharacters,
-} from "#ui/starter-select-ui-utils";
-import { StarterSummary } from "#ui/starter-summary";
+import { getTeamDataEntry, sortCharacters } from "#ui/starter-select-ui-utils";
 import { addTextObject } from "#ui/text";
 import { addWindow } from "#ui/ui-theme";
 import { getLocalizedSpriteKey } from "#utils/common";
@@ -49,8 +40,12 @@ import type { GameObjects } from "phaser";
 
 import Sprite = Phaser.GameObjects.Sprite;
 
+import type { Character } from "#data/characters/character";
+import { getFormIndex, getGender, getSpecies, getSpeciesId, isShiny } from "#data/characters/character-identities";
+import { getMovePool } from "#data/characters/character-move-pools";
+import { type CharacterInput, unfold } from "#data/characters/character-utils";
 import { blankMoveSet, type MoveSet } from "#data/moveset";
-import { getIconProps } from "#types/character-preference";
+import { getIconProps } from "#types/character-state";
 
 const COLUMNS = 9;
 const ROWS = 9;
@@ -132,7 +127,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
   private startCursorObj: Phaser.GameObjects.NineSlice;
   private randomCursorObj: Phaser.GameObjects.NineSlice;
 
-  private starterSummary: StarterSummary;
+  private starterSummary: CharacterSummary;
 
   private filterBar: FilterBar;
   private filterMode: boolean;
@@ -148,14 +143,6 @@ export class StarterSelectUiHandler extends MessageUiHandler {
 
   private activeMoves: MoveSet;
   private reserveMoves: MoveSet;
-  private readonly canCycle: CanCycle = {
-    ability: false,
-    form: false,
-    gender: false,
-    nature: false,
-    shiny: false,
-    tera: false,
-  };
 
   //variables to keep track of the dynamically rendered list of instruction prompts for starter select
 
@@ -232,7 +219,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
       starterBoxContainer.add(starterContainer);
     }
 
-    this.starterSummary = new StarterSummary(0, 0);
+    this.starterSummary = new CharacterSummary(0, 0);
     this.instructionsContainer = new StarterSelectInstructionsContainer(0, 0);
     this.starterSelectMessageBoxContainer = globalScene.add.container(0, sHeight).setVisible(false);
     this.starterSelectMessageBox = addWindow(1, -1, 318, 28).setOrigin(0, 1);
@@ -529,7 +516,6 @@ export class StarterSelectUiHandler extends MessageUiHandler {
         } else if (this.partyCharacterIds.length > 0) {
           this.popPartyStarter(this.partyCharacterIds.length - 1);
           success = true;
-          this.updateInstructions();
         } else {
           this.tryExit();
           success = true;
@@ -703,7 +689,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
         const id = validTeamMembers[Math.floor(Math.random() * validTeamMembers.length)];
         const char = characterRegistry.getCharacter(id);
         const preferences = characterRegistry.getPreferences(id);
-        this.setCharacter(id);
+        this.setCharacter(char);
 
         const props = getIconProps(char, preferences);
         const speciesForm = characterRegistry.getPokemonSpeciesForm(id, props.formIndex);
@@ -1204,7 +1190,6 @@ export class StarterSelectUiHandler extends MessageUiHandler {
       if (this.partyCharacterIds.length > 0) {
         this.popPartyStarter(this.partyCharacterIds.length - 1);
         success = true;
-        this.updateInstructions();
       } else {
         this.tryExit();
         success = true;
@@ -1279,38 +1264,24 @@ export class StarterSelectUiHandler extends MessageUiHandler {
   private addToParty(id: CharacterId): void {
     const gender = Gender.FEMALE;
     const char = characterRegistry.getCharacter(id);
-    const species = characterRegistry.getSpecies(id);
+    const species = speciesRegistry.getSpecies(getSpeciesId(char));
     const props = getIconProps(char);
-    this.partyIcons[this.partyCharacterIds.length].setTexture(
-      species.getIconAtlasKey(props.formIndex, props.shiny, props.variant),
-    );
-    this.partyIcons[this.partyCharacterIds.length].setFrame(
-      species.getIconId(gender, props.formIndex, props.shiny, props.variant),
-    );
-    this.checkIconId(
-      this.partyIcons[this.partyCharacterIds.length],
-      species,
-      gender,
-      props.formIndex,
-      props.shiny,
-      props.variant,
-    );
+    this.partyIcons[this.partyCharacterIds.length].setTexture(species.getIconAtlasKey());
+    this.partyIcons[this.partyCharacterIds.length].setFrame(species.getIconId(gender, props.formIndex, props.shiny));
+    this.checkIconId(this.partyIcons[this.partyCharacterIds.length], species, gender, props.formIndex, props.shiny);
 
     this.partyCharacterIds.push(id);
-    speciesDataRegistry.getPokemonSpeciesForm(species.speciesId, props.formIndex).cry();
-    this.updateInstructions();
+    speciesRegistry.getPokemonSpeciesForm(species.speciesId, props.formIndex).cry();
   }
 
   private updatePartyIcon(id: CharacterId, index: number): void {
     const char = characterRegistry.getCharacter(id);
-    const species = characterRegistry.getSpecies(id);
+    const species = getSpecies(id);
 
-    let { gender, formIndex, shiny, variant } = getIconProps(char);
+    let { gender, formIndex, shiny } = getIconProps(char);
     gender = gender || Gender.NONBINARY;
-    this.partyIcons[index]
-      .setTexture(species.getIconAtlasKey(formIndex, shiny, variant))
-      .setFrame(species.getIconId(gender, formIndex, shiny, variant));
-    this.checkIconId(this.partyIcons[index], species, gender, formIndex, shiny, variant);
+    this.partyIcons[index].setTexture(species.getIconAtlasKey()).setFrame(species.getIconId(gender, formIndex, shiny));
+    this.checkIconId(this.partyIcons[index], species, gender, formIndex, shiny);
   }
 
   /**
@@ -1337,11 +1308,6 @@ export class StarterSelectUiHandler extends MessageUiHandler {
     this.setCharDetails(this.lastCharId);
   }
 
-  protected updateInstructions(): void {
-    const saveData = characterRegistry.getSaveData(this.lastCharId);
-    this.instructionsContainer.updateInstructions(this.canCycle, saveData?.isTeamUnlocked, this.filterMode);
-  }
-
   protected updateStarters(): void {
     this.scrollCursor = 0;
 
@@ -1365,8 +1331,8 @@ export class StarterSelectUiHandler extends MessageUiHandler {
   private filterStarters(): void {
     this.filteredCharIds = characterRegistry.getAllCharacterIds().filter(id => {
       const char = characterRegistry.getCharacter(id);
-      const speciesId = char.speciesId;
-      const species = speciesDataRegistry.getSpecies(speciesId);
+      const speciesId = getSpeciesId(char);
+      const species = speciesRegistry.getSpecies(speciesId);
       const saveData = characterRegistry.getSaveData(id);
 
       // Type filter
@@ -1415,17 +1381,16 @@ export class StarterSelectUiHandler extends MessageUiHandler {
       const charId = this.filteredCharIds[offset_i];
       const char = characterRegistry.getCharacter(charId);
       const saveData = characterRegistry.getSaveData(charId);
-      const species = speciesDataRegistry.getSpeciesFromTeamMemberId(charId);
+      const species = getSpecies(charId);
       const { gender, formIndex, shiny, variant } = getIconProps(char);
 
       container.setCharacter(char, { gender, formIndex, shiny, variant });
 
       const starterSprite = container.icon;
       starterSprite.setTexture(
-        species.getIconAtlasKey(formIndex, shiny, variant),
-        container.species.getIconId(gender ?? Gender.NONBINARY, formIndex, shiny, variant),
+        species.getIconAtlasKey(),
+        container.species.getIconId(gender ?? Gender.NONBINARY, formIndex, shiny),
       );
-      container.checkIconId(gender, formIndex, shiny, variant);
 
       if (saveData?.isTeamUnlocked) {
         container.icon.clearTint();
@@ -1442,24 +1407,10 @@ export class StarterSelectUiHandler extends MessageUiHandler {
       }
 
       container.label.setVisible(true);
-      const variants = char.identity?.variants;
-      for (let v = 0; v < 3; v++) {
-        const hasVariant = variants?.[v];
-        container.shinyIcons[v].setVisible(hasVariant);
-
-        if (!hasVariant) {
-          continue;
-        }
-
-        let setVariant: Variant = 2;
-        if (variants[v] === DexAttr.DEFAULT_VARIANT) {
-          setVariant = 0;
-        }
-        if (variants[v] === DexAttr.VARIANT_2) {
-          setVariant = 1;
-        }
-        container.shinyIcons[v].setTint(getVariantTint(setVariant));
-      }
+      container.shinyIcons[0].setVisible(isShiny(char));
+      container.shinyIcons[0].setTint(getVariantTint(0));
+      container.shinyIcons[1].setVisible(false);
+      container.shinyIcons[2].setVisible(false);
 
       container.starterPassiveBgs.setVisible(saveData?.isPassiveUnlocked || false);
       container.hiddenAbilityIcon.setVisible(saveData?.isAbilityUnlocked || false);
@@ -1484,11 +1435,10 @@ export class StarterSelectUiHandler extends MessageUiHandler {
       const pos = calcStarterContainerPosition(cursor);
       this.cursorObj.setPosition(pos.x - 1, pos.y + 1);
 
-      const teamMemberId = this.starterContainers[cursor].charId;
+      const characterId = this.starterContainers[cursor].charId;
 
-      if (teamMemberId) {
-        this.setCharacter(teamMemberId);
-        this.updateInstructions();
+      if (characterId) {
+        this.setCharacter(characterRegistry.getCharacter(characterId));
       } else {
         this.setNoStarter();
       }
@@ -1504,9 +1454,6 @@ export class StarterSelectUiHandler extends MessageUiHandler {
     if (filterMode !== this.filterMode) {
       this.filterMode = filterMode;
       this.setCursor(filterMode ? this.filterBarCursor : this.cursor);
-      if (filterMode) {
-        this.updateInstructions();
-      }
       return true;
     }
 
@@ -1521,7 +1468,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
     );
     if (this.partyCharacterIds.length > 0) {
       this.partyCursorObj.setVisible(true);
-      this.setPartyStarter(this.partyCharacterIds[index]);
+      this.setPartyStarter(characterRegistry.getCharacter(this.partyCharacterIds[index]));
     } else {
       this.partyCursorObj.setVisible(false);
       this.setNoStarter();
@@ -1551,36 +1498,35 @@ export class StarterSelectUiHandler extends MessageUiHandler {
    *
    * @param id - the id of the new starter
    */
-  private setCharacter(id: CharacterId): void {
-    const saveData = characterRegistry.getSaveData(id);
+  private setCharacter(char: Character): void {
+    const saveData = characterRegistry.getSaveData(char.id);
 
     // Stop animation for the previously selected starter
-    if (this.lastCharId && characterRegistry.getSpecies(this.lastCharId)) {
+    if (this.lastCharId && getSpecies(this.lastCharId)) {
       this.stopIconAnimation(this.oldCursor);
     }
 
-    this.lastCharId = id;
+    this.lastCharId = char.id;
 
     // Set the cursors, using preferences if possible, default options otherwise
-    this.starterSummary.setCharacter(id);
+    this.starterSummary.setCharacter(char);
 
     if (saveData?.isTeamUnlocked) {
-      this.setCharDetails(id);
+      this.setCharDetails(char);
       this.startIconAnimation(this.cursor);
-      this.activeMoves = characterRegistry.getActiveMoves(id);
-      this.reserveMoves = characterRegistry.getReserveMoves(id);
+      this.activeMoves = characterRegistry.getActiveMoves(char.id);
+      this.reserveMoves = characterRegistry.getReserveMoves(char.id);
     } else {
-      this.resetStarterDetails();
       this.activeMoves = blankMoveSet;
       this.reserveMoves = blankMoveSet;
     }
   }
 
-  private setPartyStarter(charId: CharacterId): void {
-    this.starterSummary.setCharacter(charId);
+  private setPartyStarter(char: Character): void {
+    this.starterSummary.setCharacter(char);
 
-    if (characterRegistry.getSaveData(charId)?.isTeamUnlocked) {
-      this.setCharDetails(charId);
+    if (characterRegistry.getSaveData(char.id)?.isTeamUnlocked) {
+      this.setCharDetails(char.id);
     }
   }
 
@@ -1611,13 +1557,8 @@ export class StarterSelectUiHandler extends MessageUiHandler {
     const char = characterRegistry.getCharacter(container.charId);
     let { gender, formIndex, shiny, variant } = getIconProps(char);
     gender = gender || Gender.NONBINARY;
-    this.checkIconId(lastStarterIcon, container.species, gender, formIndex, shiny, variant);
+    this.checkIconId(lastStarterIcon, container.species, gender, formIndex, shiny);
     this.setUpgradeAnimation(container.icon);
-  }
-
-  // TODO: check whether this is still necessary
-  private resetStarterDetails(): void {
-    this.updateInstructions();
   }
 
   /**
@@ -1628,28 +1569,22 @@ export class StarterSelectUiHandler extends MessageUiHandler {
    *
    * @param charId - the id of the new character
    */
-  private setCharDetails(charId: CharacterId): void {
-    const starterDetails = getStarterDetailsFromPreferences(charId);
-    const { shiny, variant, gender, formIndex } = starterDetails;
-    this.starterSummary.setStarterDetails(charId, starterDetails);
+  private setCharDetails(input: CharacterInput): void {
+    const [id, char] = unfold(input);
+    const [gender, formIndex, shiny] = [getGender(char), getFormIndex(char), isShiny(char)];
+    this.starterSummary.setStarterDetails(char);
 
-    const [isInParty, partyIndex]: [boolean, number] = this.isInParty(charId);
+    const [isInParty, partyIndex]: [boolean, number] = this.isInParty(id);
     if (isInParty) {
-      this.updatePartyIcon(charId, partyIndex);
+      this.updatePartyIcon(id, partyIndex);
     }
 
-    const currentContainer = this.starterContainers.find(p => p.charId === charId);
+    const currentContainer = this.starterContainers.find(p => p.charId === char.id);
     if (currentContainer) {
       const starterSprite = currentContainer.icon;
-      const species = characterRegistry.getSpecies(charId);
-      starterSprite.setTexture(
-        species.getIconAtlasKey(formIndex, shiny, variant),
-        species.getIconId(gender, formIndex, shiny, variant),
-      );
-      currentContainer.checkIconId(gender, formIndex, shiny, variant);
+      const species = getSpecies(char);
+      starterSprite.setTexture(species.getIconAtlasKey(), species.getIconId(gender, formIndex, shiny));
     }
-
-    this.updateInstructions();
   }
 
   /**
@@ -1664,13 +1599,11 @@ export class StarterSelectUiHandler extends MessageUiHandler {
     for (let s = 0; s < this.partyCharacterIds.length; s++) {
       const charId = this.partyCharacterIds[s];
       const char = characterRegistry.getCharacter(charId);
-      const species = speciesDataRegistry.getSpeciesFromTeamMemberId(charId);
+      const species = getSpecies(charId);
       let { gender, formIndex, shiny, variant } = getIconProps(char);
       gender = gender || Gender.NONBINARY;
-      this.partyIcons[s]
-        .setTexture(species.getIconAtlasKey(formIndex, shiny, variant))
-        .setFrame(species.getIconId(gender, formIndex, shiny, variant));
-      this.checkIconId(this.partyIcons[s], species, gender, formIndex, shiny, variant);
+      this.partyIcons[s].setTexture(species.getIconAtlasKey()).setFrame(species.getIconId(gender, formIndex, shiny));
+      this.checkIconId(this.partyIcons[s], species, gender, formIndex, shiny);
       if (s >= index) {
         this.starterCursorObjs[s]
           .setPosition(this.starterCursorObjs[s + 1].x, this.starterCursorObjs[s + 1].y)
@@ -1804,12 +1737,9 @@ export class StarterSelectUiHandler extends MessageUiHandler {
     gender: Gender,
     formIndex: number,
     shiny: boolean,
-    variant: number,
   ): void {
-    if (icon.frame.name !== species.getIconId(gender, formIndex, shiny, variant)) {
-      icon
-        .setTexture(species.getIconAtlasKey(formIndex, false, variant))
-        .setFrame(species.getIconId(gender, formIndex, false, variant));
+    if (icon.frame.name !== species.getIconId(gender, formIndex, shiny)) {
+      icon.setTexture(species.getIconAtlasKey()).setFrame(species.getIconId(gender, formIndex, false));
     }
   }
 

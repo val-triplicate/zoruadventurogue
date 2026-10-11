@@ -1,4 +1,4 @@
-import { speciesDataRegistry } from "#app/global-species-data-registry";
+import { speciesRegistry } from "#app/global-species-data-registry";
 import type { BattlerTag } from "#data/battler-tags";
 import { loadBattlerTag, SerializableBattlerTag } from "#data/battler-tags";
 import type { Gender } from "#data/gender";
@@ -61,7 +61,7 @@ function deserializePokemonSpeciesForm(value: SerializedSpeciesForm | PokemonSpe
     return null;
   }
 
-  return speciesDataRegistry.getPokemonSpeciesForm(id, formIdx);
+  return speciesRegistry.getPokemonSpeciesForm(id, formIdx);
 }
 
 interface SerializedPokemonSummonData {

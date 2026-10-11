@@ -5,7 +5,7 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { speciesDataRegistry } from "#app/global-species-data-registry";
+import { speciesRegistry } from "#app/global-species-data-registry";
 import { EvoCondKey, EvolutionItem, type SpeciesFormEvolution } from "#balance/pokemon-evolutions";
 import { getGenderSymbol } from "#data/gender";
 import { MoveId } from "#enums/move-id";
@@ -21,7 +21,7 @@ import type { EvolutionTextEntry } from "../types";
 export async function generateEvolutionTextsData() {
   const entries: EvolutionTextEntry[] = [];
   const entryEvolutions: SpeciesFormEvolution[] = [];
-  for (const speciesData of Object.values(speciesDataRegistry.data)) {
+  for (const speciesData of Object.values(speciesRegistry.data)) {
     const evolutions = speciesData.evolutions;
     if (evolutions) {
       for (const evo of evolutions) {
@@ -86,7 +86,7 @@ export function getEvoConditionDescription(evo: SpeciesFormEvolution, t: TFuncti
           return t("pokemonEvolutions:treasure");
         case EvoCondKey.SPECIES_CAUGHT:
           return t("pokemonEvolutions:caught", {
-            species: speciesDataRegistry.getSpecies(cond.speciesCaught)?.name,
+            species: speciesRegistry.getSpecies(cond.speciesCaught)?.name,
           });
         case EvoCondKey.HELD_ITEM:
           return t(`pokemonEvolutions:heldItem.${toCamelCase(cond.itemKey)}`);

@@ -1,5 +1,5 @@
 import { globalScene } from "#app/global-scene";
-import { speciesDataRegistry } from "#app/global-species-data-registry";
+import { speciesRegistry } from "#app/global-species-data-registry";
 import type { Gender } from "#data/gender";
 import type { CurrentMoves } from "#data/moveset";
 import { CustomPokemonData, PokemonBattleData, PokemonSummonData } from "#data/pokemon-data";
@@ -70,7 +70,7 @@ export class PokemonData {
     this.speciesId = sourcePokemon?.species.speciesId ?? source.speciesId;
     this.nickname = source.nickname;
     this.formIndex = Math.max(
-      Math.min(source.formIndex, speciesDataRegistry.getSpecies(this.speciesId).forms.length - 1),
+      Math.min(source.formIndex, speciesRegistry.getSpecies(this.speciesId).forms.length - 1),
       0,
     );
     this.abilityIndex = source.abilityIndex;
@@ -126,7 +126,6 @@ export class PokemonData {
           this.formIndex,
           this.gender,
           this.shiny,
-          this.variant,
           this.nature,
           this,
         )
@@ -146,7 +145,7 @@ export class PokemonData {
     // when loading from saved session, recover summonData.speciesFrom and form index species object
     // used to stay transformed on reload session
     if (this.summonData.speciesForm) {
-      ret.summonData.speciesForm = speciesDataRegistry.getPokemonSpeciesForm(
+      ret.summonData.speciesForm = speciesRegistry.getPokemonSpeciesForm(
         this.summonData.speciesForm.speciesId,
         this.summonDataSpeciesFormIndex,
       );

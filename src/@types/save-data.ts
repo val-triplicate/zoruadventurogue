@@ -12,7 +12,7 @@ import type { GameStats } from "#system/game-stats";
 import type { ModifierData } from "#system/modifier-data";
 import type { PokemonData } from "#system/pokemon-data";
 import type { TrainerData } from "#system/trainer-data";
-import type { CharacterPreference } from "#types/character-preference";
+import type { CharacterState } from "#types/character-state";
 
 export type AppliedMigrators = { [key: string]: number };
 
@@ -69,11 +69,11 @@ export interface AchvUnlocks {
   [key: string]: number;
 }
 
-export type AllPreferences = Record<CharacterId, CharacterPreference>;
+export type AllPreferences = Record<CharacterId, CharacterState>;
 
 export interface IconProps {
   shiny: boolean;
-  gender?: Gender | undefined;
+  gender: Gender;
   variant: Variant;
   formIndex: number;
 }

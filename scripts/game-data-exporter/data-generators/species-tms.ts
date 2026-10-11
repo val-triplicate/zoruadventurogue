@@ -5,7 +5,7 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { speciesDataRegistry } from "#app/global-species-data-registry";
+import { speciesRegistry } from "#app/global-species-data-registry";
 import { MoveId } from "#enums/move-id";
 import { SpeciesId } from "#enums/species-id";
 import chalk from "chalk";
@@ -15,8 +15,8 @@ import type { TmEntry } from "../types";
 export async function generateTmsData(): Promise<void> {
   const entries: TmEntry[] = [];
 
-  for (const speciesData of Object.values(speciesDataRegistry.data)) {
-    for (const move of speciesDataRegistry.getTms(speciesData.species.speciesId)) {
+  for (const speciesData of Object.values(speciesRegistry.data)) {
+    for (const move of speciesRegistry.getTms(speciesData.species.speciesId)) {
       const data: TmEntry = {
         dexNum: speciesData.species.speciesId,
         id: SpeciesId[speciesData.species.speciesId],

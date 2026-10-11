@@ -8,7 +8,7 @@ import { audioManager } from "#app/global-audio-manager";
 import { timedEventManager } from "#app/global-event-manager";
 import { globalScene } from "#app/global-scene";
 import { settings } from "#app/global-settings-manager";
-import { speciesDataRegistry } from "#app/global-species-data-registry";
+import { speciesRegistry } from "#app/global-species-data-registry";
 import { getPokemonNameWithAffix } from "#app/messages";
 import { activeOverrides } from "#app/overrides";
 import type { AnySound } from "#audio/audio-manager";
@@ -276,7 +276,7 @@ export abstract class Pokemon extends Phaser.GameObjects.Container {
   ) {
     super(globalScene, x, y);
 
-    this.species = speciesDataRegistry.getSpecies(speciesId);
+    this.species = speciesRegistry.getSpecies(speciesId);
     this.pokeball = dataSource?.pokeball || PokeballType.POKEBALL;
     this.level = level;
 
@@ -721,18 +721,12 @@ export abstract class Pokemon extends Phaser.GameObjects.Container {
   }
 
   getIconAtlasKey(ignoreOverride = false): string {
-    const { formIndex, variant } = this;
-    return this.getSpeciesForm(ignoreOverride).getIconAtlasKey(formIndex, this.isBaseShiny(), variant);
+    return this.getSpeciesForm(ignoreOverride).getIconAtlasKey();
   }
 
   getIconId(ignoreOverride?: boolean): string {
     const { formIndex, variant } = this;
-    return this.getSpeciesForm(ignoreOverride).getIconId(
-      this.getGender(ignoreOverride),
-      formIndex,
-      this.isBaseShiny(),
-      variant,
-    );
+    return this.getSpeciesForm(ignoreOverride).getIconId(this.getGender(ignoreOverride), formIndex, this.isBaseShiny());
   }
 
   // #endregion Atlas and sprite ID methods
@@ -2358,9 +2352,9 @@ export abstract class Pokemon extends Phaser.GameObjects.Container {
    * @returns The evolution this pokemon can currently evolve into, or `null` if it cannot evolve
    */
   public getEvolution(): SpeciesFormEvolution | null {
-    if (speciesDataRegistry.hasEvolutions(this.species.speciesId)) {
+    if (speciesRegistry.hasEvolutions(this.species.speciesId)) {
       const evolutions: SpeciesFormEvolution[] = [];
-      for (const evo of speciesDataRegistry.getEvolutions(this.species.speciesId)) {
+      for (const evo of speciesRegistry.getEvolutions(this.species.speciesId)) {
         evolutions.push(new SpeciesFormEvolution({ ...evo, item: evo.item!, condition: evo.condition?.data }));
       }
       for (const e of evolutions) {
@@ -4626,7 +4620,7 @@ export abstract class Pokemon extends Phaser.GameObjects.Container {
    */
   private hasSameAbilityInRootForm(abilityIndex: number): boolean {
     const currentAbilityIndex = this.abilityIndex;
-    const rootForm = speciesDataRegistry.getSpecies(this.species.getRootSpeciesId());
+    const rootForm = speciesRegistry.getSpecies(this.species.getRootSpeciesId());
     return rootForm.getAbility(abilityIndex) === rootForm.getAbility(currentAbilityIndex);
   }
 
@@ -4713,12 +4707,11 @@ export class PlayerPokemon extends Pokemon {
     formIndex?: number,
     gender?: Gender,
     shiny?: boolean,
-    variant?: Variant,
     nature?: Nature,
     dataSource?: Pokemon | PokemonData,
   ) {
     const maxIvs = [31, 31, 31, 31, 31, 31];
-    super(106, 148, speciesId, level, abilityIndex, formIndex, gender, shiny, variant, maxIvs, nature, dataSource);
+    super(106, 148, speciesId, level, abilityIndex, formIndex, gender, shiny, 0, maxIvs, nature, dataSource);
 
     this.characterId = charId;
     if (activeOverrides.STATUS_OVERRIDE) {

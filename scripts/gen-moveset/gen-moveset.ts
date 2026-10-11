@@ -11,7 +11,7 @@
 
 import { __INTERNAL_TEST_EXPORTS, generateMoveset } from "#app/ai/ai-moveset-gen";
 import { globalScene } from "#app/global-scene";
-import { speciesDataRegistry } from "#app/global-species-data-registry";
+import { speciesRegistry } from "#app/global-species-data-registry";
 import type { PokemonForm } from "#data/pokemon-species";
 import { BattleType } from "#enums/battle-type";
 import { SpeciesId } from "#enums/species-id";
@@ -75,7 +75,7 @@ function createTestablePokemon(
   speciesId: SpeciesId,
   { level, trainerSlot = TrainerSlot.NONE, boss = false, formIndex = 0 }: MockPokemonParams,
 ): EnemyPokemon {
-  const species = speciesDataRegistry.getSpecies(speciesId);
+  const species = speciesRegistry.getSpecies(speciesId);
   const pokemon = new EnemyPokemon(species, level, trainerSlot, boss);
   if (formIndex !== 0 && species?.forms.length > formIndex) {
     pokemon.formIndex = formIndex;
@@ -152,7 +152,7 @@ describe("gen-moveset", () => {
         }
       });
     }
-    if (payload.formIndex && speciesDataRegistry.getSpecies(payload.speciesId).forms[payload.formIndex] == null) {
+    if (payload.formIndex && speciesRegistry.getSpecies(payload.speciesId).forms[payload.formIndex] == null) {
       payload.formIndex = undefined;
     }
     pokemon = createTestablePokemon(payload.speciesId, payload);

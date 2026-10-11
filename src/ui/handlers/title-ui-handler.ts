@@ -5,7 +5,7 @@ import { eventBus } from "#app/event-bus";
 import { timedEventManager } from "#app/global-event-manager";
 import { globalScene } from "#app/global-scene";
 import { settings } from "#app/global-settings-manager";
-import { speciesDataRegistry } from "#app/global-species-data-registry";
+import { speciesRegistry } from "#app/global-species-data-registry";
 import { bypassLogin, isBeta, isDev } from "#constants/app-constants";
 import { getSplashMessages } from "#data/splash-messages";
 import { SpeciesId } from "#enums/species-id";
@@ -159,7 +159,7 @@ export class TitleUiHandler extends OptionSelectUiHandler {
       case "splashMessages:aWildPokemonAppeared":
       case "splashMessages:aprilFools.removedPokemon": {
         const randSpeciesId = randItem(getEnumValues(SpeciesId));
-        const species = speciesDataRegistry.getSpecies(randSpeciesId);
+        const species = speciesRegistry.getSpecies(randSpeciesId);
         const pokemonName = randSpeciesId > 2000 ? species.getFormNameToDisplay(0, true) : species.name;
         return { pokemonName };
       }

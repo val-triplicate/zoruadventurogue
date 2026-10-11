@@ -1,5 +1,5 @@
 import { EVOLVE_MOVE, RELEARN_MOVE } from "#app/constants";
-import { speciesDataRegistry } from "#app/global-species-data-registry";
+import { speciesRegistry } from "#app/global-species-data-registry";
 import { LearnMoveSituation } from "#enums/learn-move-situation";
 import { LearnableMoveSource } from "#enums/learnable-move-source";
 import type { MoveId } from "#enums/move-id";
@@ -63,10 +63,10 @@ function getPrevolutionMoves(
   const ret: LevelMovesWithSource = [];
   const speciesBase = context.pokemonSpeciesForm!;
 
-  const evolutionLine = [...speciesDataRegistry.getPrevolutionChain(speciesBase.speciesId), speciesBase.speciesId];
+  const evolutionLine = [...speciesRegistry.getPrevolutionChain(speciesBase.speciesId), speciesBase.speciesId];
   for (let index = 0; index < evolutionLine.length; index++) {
     const isPrevo = index < evolutionLine.length - 1;
-    const speciesLevelMoves = speciesDataRegistry
+    const speciesLevelMoves = speciesRegistry
       .getPokemonSpeciesForm(evolutionLine[index], context.pokemonFormIndex)
       .getLevelMoves();
 

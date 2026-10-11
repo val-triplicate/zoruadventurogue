@@ -1,5 +1,5 @@
 import { globalScene } from "#app/global-scene";
-import { speciesDataRegistry } from "#app/global-species-data-registry";
+import { speciesRegistry } from "#app/global-species-data-registry";
 import { modifierTypes } from "#data/data-lists";
 import { AbilityId } from "#enums/ability-id";
 import { BerryType } from "#enums/berry-type";
@@ -318,7 +318,7 @@ function initUltraModifierPool() {
     new WeightedModifierType(modifierTypes.EVIOLITE, (party: Pokemon[]) => {
       return party.some(p => {
         // Check if Pokemon's species (or fusion species, if applicable) can evolve or if they're G-Max'd
-        if (!p.isMax() && speciesDataRegistry.hasEvolutions(p.getSpeciesForm(true).speciesId)) {
+        if (!p.isMax() && speciesRegistry.hasEvolutions(p.getSpeciesForm(true).speciesId)) {
           // Check if Pokemon is already holding an Eviolite
           return !p.getHeldItems().some(i => i.type.id === "EVIOLITE");
         }

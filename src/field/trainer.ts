@@ -1,5 +1,5 @@
 import { globalScene } from "#app/global-scene";
-import { speciesDataRegistry } from "#app/global-species-data-registry";
+import { speciesRegistry } from "#app/global-species-data-registry";
 import { signatureSpecies } from "#balance/signature-species";
 import { EntryHazardTag } from "#data/arena-tag";
 import type { PokemonSpecies } from "#data/pokemon-species";
@@ -413,9 +413,9 @@ export class Trainer extends Phaser.GameObjects.Container {
 
       let species = this.genNewPartyMemberSpecies(level, strength);
       if (useNewSpeciesPool) {
-        species = speciesDataRegistry.getSpecies(randSeedItem(newSpeciesPool));
+        species = speciesRegistry.getSpecies(randSeedItem(newSpeciesPool));
       } else if (template.isSameSpecies(index) && index > offset) {
-        species = speciesDataRegistry.getSpecies(
+        species = speciesRegistry.getSpecies(
           battle.enemyParty[offset].species.getTrainerSpeciesForLevel(
             level,
             false,
@@ -426,7 +426,7 @@ export class Trainer extends Phaser.GameObjects.Container {
       }
 
       if (newSpeciesPool) {
-        species = speciesDataRegistry.getSpecies(
+        species = speciesRegistry.getSpecies(
           species.getSpeciesForLevel(level, true, true, strength, template.evoLevelThresholdKind),
         );
       }
@@ -478,19 +478,19 @@ export class Trainer extends Phaser.GameObjects.Container {
       while (typeof rolledSpecies !== "number") {
         rolledSpecies = randSeedItem(tierPool);
       }
-      baseSpecies = speciesDataRegistry.getSpecies(rolledSpecies);
+      baseSpecies = speciesRegistry.getSpecies(rolledSpecies);
     } else {
       baseSpecies = globalScene.randomSpecies(battle.waveIndex, level, false, this.config.speciesFilter);
     }
 
-    let ret = speciesDataRegistry.getSpecies(
+    let ret = speciesRegistry.getSpecies(
       baseSpecies.getTrainerSpeciesForLevel(level, true, strength, template.evoLevelThresholdKind),
     );
     let retry = false;
 
     console.log(ret.getName());
 
-    if (speciesDataRegistry.hasPrevolution(baseSpecies.speciesId) && ret.speciesId !== baseSpecies.speciesId) {
+    if (speciesRegistry.hasPrevolution(baseSpecies.speciesId) && ret.speciesId !== baseSpecies.speciesId) {
       retry = true;
     } else if (template.isBalanced(battle.enemyParty.length)) {
       const partyMemberTypes = battle.enemyParty.flatMap(p => p.getTypes());
@@ -509,7 +509,7 @@ export class Trainer extends Phaser.GameObjects.Container {
       console.log("Attempting reroll of species evolution to fit specialty type...");
       let evoAttempt = 0;
       while (retry && evoAttempt++ < 10) {
-        ret = speciesDataRegistry.getSpecies(
+        ret = speciesRegistry.getSpecies(
           baseSpecies.getTrainerSpeciesForLevel(level, true, strength, template.evoLevelThresholdKind),
         );
         console.log(ret.name);
@@ -541,8 +541,8 @@ export class Trainer extends Phaser.GameObjects.Container {
   checkDuplicateSpecies(baseSpecies: SpeciesId): boolean {
     const staticSpecies = (signatureSpecies[TrainerType[this.config.trainerType]] ?? []).flat(1).map(s => {
       let root = s;
-      while (speciesDataRegistry.hasPrevolution(root)) {
-        root = speciesDataRegistry.getPrevolution(root)!;
+      while (speciesRegistry.hasPrevolution(root)) {
+        root = speciesRegistry.getPrevolution(root)!;
       }
       return root;
     });
