@@ -1,10 +1,10 @@
 import { Gender } from "#data/gender";
-import { blankMovePool, type MovePool, type MoveSet, toMoveSet } from "#data/moveset";
+import { type MovePool, type MoveSet, toMoveSet } from "#data/moveset";
 import { CharacterId } from "#enums/character-id";
 import { MoveId } from "#enums/move-id";
 import { Nature } from "#enums/nature";
 import { SpeciesId } from "#enums/species-id";
-import type { Character, CharacterDataMap } from "#types/pokemon-species";
+import { Character, type CharacterDataMap } from "#types/pokemon-species";
 
 function addCharacter(
   map: CharacterDataMap,
@@ -14,13 +14,7 @@ function addCharacter(
   nature?: Nature,
   name?: string,
 ) {
-  map[id] = {
-    id,
-    identity: { name, gender, nature },
-    speciesId,
-    movePool: MOVE_POOLS.get(id) || blankMovePool,
-    abilities: {},
-  };
+  map[id] = new Character(id, speciesId, MOVE_POOLS.get(id) || undefined, { name, gender, nature });
 }
 
 const MOVE_POOLS: Map<CharacterId, MovePool> = new Map();

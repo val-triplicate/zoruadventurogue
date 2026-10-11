@@ -155,7 +155,6 @@ import {
 import { calculateBossSegmentDamage } from "#utils/damage";
 import { getEnumValues } from "#utils/enums";
 import { cachedFetch } from "#utils/fetch-utils";
-import { decodeNickname } from "#utils/pokemon-utils";
 import { weightedPick } from "#utils/random";
 import { inSpeedOrder } from "#utils/speed-order-generator";
 import { ValueHolder } from "#utils/value-holder";
@@ -377,7 +376,7 @@ export abstract class Pokemon extends Phaser.GameObjects.Container {
    */
   getNameToRender({ prependFormName = true }: { prependFormName?: boolean } = {}) {
     if (this.nickname) {
-      return decodeNickname(this.nickname, this.name);
+      return this.nickname;
     }
 
     if (prependFormName) {

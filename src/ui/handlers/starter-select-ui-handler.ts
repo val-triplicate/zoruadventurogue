@@ -1418,7 +1418,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
       const species = speciesDataRegistry.getSpeciesFromTeamMemberId(charId);
       const { gender, formIndex, shiny, variant } = getIconProps(char);
 
-      container.setCharacter(charId, { gender, formIndex, shiny, variant });
+      container.setCharacter(char, { gender, formIndex, shiny, variant });
 
       const starterSprite = container.icon;
       starterSprite.setTexture(

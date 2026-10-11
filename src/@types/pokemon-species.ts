@@ -1,6 +1,7 @@
+import { speciesDataRegistry } from "#app/global-species-data-registry";
 import type { SpeciesFormEvolution } from "#balance/pokemon-evolutions";
 import type { Gender } from "#data/gender";
-import type { MovePool } from "#data/moveset";
+import { blankMovePool, type MovePool } from "#data/moveset";
 import type { PokemonSpecies } from "#data/pokemon-species";
 import type { AbilityId } from "#enums/ability-id";
 import type { CharacterId } from "#enums/character-id";
@@ -55,12 +56,30 @@ export interface Team {
   origin: Origin;
 }
 
-export interface Character {
+export class Character {
   id: CharacterId;
-  identity?: CharacterIdentity | undefined;
+  identity: CharacterIdentity;
   speciesId: SpeciesId;
   movePool: MovePool;
   abilities: { first?: AbilityId; second?: AbilityId; hidden?: AbilityId; passive?: AbilityId };
+
+  constructor(
+    id: CharacterId,
+    speciesId: SpeciesId,
+    movePool?: MovePool,
+    identity?: CharacterIdentity,
+    abilities?: { first?: AbilityId; second?: AbilityId; hidden?: AbilityId; passive?: AbilityId },
+  ) {
+    this.id = id;
+    this.speciesId = speciesId;
+    this.movePool = movePool || blankMovePool;
+    this.identity = identity || {};
+    this.abilities = abilities || {};
+  }
+
+  public getName(): string {
+    return this.identity?.name ?? speciesDataRegistry.getSpecies(this.speciesId).name;
+  }
 }
 
 export interface CharacterIdentity {

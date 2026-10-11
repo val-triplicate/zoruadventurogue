@@ -13,7 +13,7 @@ import { PokemonType } from "#enums/pokemon-type";
 import { SpeciesId } from "#enums/species-id";
 import { TextStyle } from "#enums/text-style";
 import { getVariantIcon, getVariantTint, type Variant } from "#sprites/variant";
-import type { CharacterPreference } from "#types/character-preference";
+import type { Character } from "#types/pokemon-species";
 import type { DefinedSpeciesDetails } from "#types/starter-select-types";
 import { getStarterSelectTextSettings } from "#ui/starter-select-ui-utils";
 import { addBBCodeTextObject, addTextObject, getTextColor } from "#ui/text";
@@ -340,15 +340,9 @@ export class StarterSummary extends Phaser.GameObjects.Container {
     this.pokemonPassiveText.setVisible(true);
   }
 
-  private setNameAndNumber(species: PokemonSpecies, preferences?: CharacterPreference): void {
-    this.pokemonNumberText.setText(padInt(species.speciesId, 4));
-
-    if (preferences?.nickname) {
-      const name = decodeURIComponent(escape(atob(preferences.nickname)));
-      this.pokemonNameText.setText(name);
-    } else {
-      this.pokemonNameText.setText(species.name);
-    }
+  private setNameAndNumber(char: Character): void {
+    this.pokemonNumberText.setText(padInt(char.speciesId, 4));
+    this.pokemonNameText.setText(char.getName());
   }
 
   protected setTypeIcons(type1: PokemonType, type2: PokemonType | null): void {
@@ -394,7 +388,7 @@ export class StarterSummary extends Phaser.GameObjects.Container {
     this.pokemonPassiveText.off("pointerover");
 
     if (saveData && saveData.isTeamUnlocked) {
-      this.setNameAndNumber(species, preferences);
+      this.setNameAndNumber(character);
       this.characterLockedText.setVisible(false);
       this.pokemonPermanentInfoContainer.setVisible(true);
       this.pokemonStatisticsContainer.setVisible(true);
@@ -418,7 +412,7 @@ export class StarterSummary extends Phaser.GameObjects.Container {
       return;
     }
 
-    this.cleanStarterSprite(species, saveData && saveData.isTeamUnlocked);
+    this.cleanStarterSprite(character, saveData && saveData.isTeamUnlocked);
 
     const { gender, formIndex, shiny, variant } = globalScene.gameData.getDefaultIconProps(id);
 
@@ -428,16 +422,16 @@ export class StarterSummary extends Phaser.GameObjects.Container {
       .setTint(saveData && saveData.isTeamUnlocked ? 0x808080 : 0x000000);
   }
 
-  private cleanStarterSprite(species?: PokemonSpecies, isSeen = false): void {
-    if (isSeen && species) {
-      this.setNameAndNumber(species);
+  private cleanStarterSprite(char?: Character, isUnlocked = false): void {
+    if (isUnlocked && char) {
+      this.setNameAndNumber(char);
     } else {
       this.pokemonNumberText.setText(padInt(0, 4));
-      this.pokemonNameText.setText(species ? "???" : "");
+      this.pokemonNameText.setText(char ? "???" : "");
     }
 
-    this.pokemonSprite.setVisible(!!species);
-    this.characterLockedText.setVisible(!!species);
+    this.pokemonSprite.setVisible(!!char);
+    this.characterLockedText.setVisible(!!char);
 
     this.pokemonPermanentInfoContainer.setVisible(false);
     this.pokemonStatisticsContainer.setVisible(false);

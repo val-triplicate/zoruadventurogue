@@ -10,6 +10,7 @@ import { addTextObject } from "#ui/text";
 
 export class CharacterContainer extends Phaser.GameObjects.Container {
   public charId: CharacterId;
+  public char: Character;
   public species: PokemonSpecies;
   public icon: Phaser.GameObjects.Sprite;
   public shinyIcons: Phaser.GameObjects.Image[] = [];
@@ -25,7 +26,7 @@ export class CharacterContainer extends Phaser.GameObjects.Container {
 
     const defaultProps = globalScene.gameData.getDefaultIconProps(character.id);
 
-    this.setCharacter(character.id, defaultProps);
+    this.setCharacter(character, defaultProps);
 
     const starterPassiveBg = globalScene.add.image(2, 5, "passive_bg");
     starterPassiveBg.setOrigin(0, 0);
@@ -72,9 +73,10 @@ export class CharacterContainer extends Phaser.GameObjects.Container {
     this.classicWinIcon = classicWinIcon;
   }
 
-  public setCharacter(charId: CharacterId, props: IconProps) {
-    this.charId = charId;
-    this.species = characterRegistry.getSpecies(charId);
+  public setCharacter(char: Character, props: IconProps) {
+    this.char = char;
+    this.charId = char.id;
+    this.species = characterRegistry.getSpecies(this.charId);
 
     let { shiny, formIndex, gender, variant } = props;
 
@@ -103,7 +105,7 @@ export class CharacterContainer extends Phaser.GameObjects.Container {
 
   checkIconId(female, formIndex, shiny, variant) {
     if (this.icon.frame.name !== this.species.getIconId(female, formIndex, shiny, variant)) {
-      console.log(`${this.species.name}'s variant icon does not exist. Replacing with default.`);
+      console.log(`${this.char.getName()}'s variant icon does not exist. Replacing with default.`);
       this.icon.setTexture(this.species.getIconAtlasKey(formIndex, false, variant));
       this.icon.setFrame(this.species.getIconId(female, formIndex, false, variant));
     }

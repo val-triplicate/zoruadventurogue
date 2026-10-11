@@ -28,6 +28,7 @@ export class CharacterPreference {
     this.favorite = false;
     this.gender = Gender.GENDERLESS;
     this.nature = Nature.DOCILE;
+    this.nickname = char.getName();
     this.shiny = defaults.shiny;
     this.variant = defaults.variant;
     this.formIndex = defaults.formIndex;
