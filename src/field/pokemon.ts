@@ -12,7 +12,7 @@ import { speciesRegistry } from "#app/global-species-data-registry";
 import { getPokemonNameWithAffix } from "#app/messages";
 import { activeOverrides } from "#app/overrides";
 import type { AnySound } from "#audio/audio-manager";
-import { characterMovePools } from "#balance/egg-moves";
+import { speciesEggMoves } from "#balance/egg-moves";
 import { SpeciesFormEvolution } from "#balance/pokemon-evolutions";
 import { BASE_HIDDEN_ABILITY_RATE, BASE_SHINY_CHANCE, SHINY_EPIC_CHANCE, SHINY_VARIANT_CHANCE } from "#balance/rates";
 import type { FORCED_RIVAL_SIGNATURE_MOVES } from "#balance/signature-moves";
@@ -1477,7 +1477,7 @@ export abstract class Pokemon extends Phaser.GameObjects.Container {
   /** @returns A list of this Pokemon's possible egg moves */
   // TODO: remove `| undefined` once regular Pikachu is no longer a starter
   public getEggMoves(): MoveId[] | undefined {
-    return characterMovePools[this.getSpeciesForm().getRootSpeciesId()];
+    return speciesEggMoves[this.getSpeciesForm().getRootSpeciesId()];
   }
 
   /**

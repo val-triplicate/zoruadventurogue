@@ -12,6 +12,13 @@ export class CharacterBalance {
   passive?: AbilityId;
   nature?: Nature;
   teraType?: PokemonType;
+
+  constructor(ability?: AbilityId, passive?: AbilityId, nature?: Nature, teraType?: PokemonType) {
+    this.ability = ability ?? AbilityId.NONE;
+    this.ability = passive ?? AbilityId.NONE;
+    this.nature = nature ?? Nature.DOCILE;
+    this.teraType = teraType ?? PokemonType.NORMAL;
+  }
 }
 
 export function initBalances() {
@@ -27,6 +34,9 @@ export function initBalances() {
     teraType: PokemonType.STEEL,
     nature: Nature.CAREFUL,
   });
+
+  BALANCES.set(CharacterId.ES_ESPEON, {});
+  BALANCES.set(CharacterId.ES_SPIDOPS, {});
 
   BALANCES.set(CharacterId.DS_DIA, {
     ability: AbilityId.MAGIC_BOUNCE,

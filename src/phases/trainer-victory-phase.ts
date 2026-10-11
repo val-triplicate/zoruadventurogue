@@ -1,11 +1,8 @@
 import { audioManager } from "#app/global-audio-manager";
 import { globalScene } from "#app/global-scene";
 import { getCharVariantFromDialogue } from "#data/dialogue";
-import { BiomeId } from "#enums/biome-id";
 import { TrainerSlot } from "#enums/trainer-slot";
-import { TrainerType } from "#enums/trainer-type";
 import { BattlePhase } from "#phases/battle-phase";
-import { achvs } from "#system/achv";
 import { randSeedItem } from "#utils/common";
 import i18next from "i18next";
 
@@ -21,16 +18,6 @@ export class TrainerVictoryPhase extends BattlePhase {
     const modifierRewardFuncs = globalScene.currentBattle.trainer?.config.modifierRewardFuncs!; // TODO: is this bang correct?
     for (const modifierRewardFunc of modifierRewardFuncs) {
       globalScene.phaseManager.unshiftNew("ModifierRewardPhase", modifierRewardFunc);
-    }
-
-    const trainerType = globalScene.currentBattle.trainer?.config.trainerType!; // TODO: is this bang correct?
-    // Validate Voucher for boss trainers
-    // Breeders in Space achievement
-    if (
-      globalScene.arena.biomeId === BiomeId.SPACE
-      && (trainerType === TrainerType.BREEDER || trainerType === TrainerType.EXPERT_POKEMON_BREEDER)
-    ) {
-      globalScene.validateAchv(achvs.BREEDERS_IN_SPACE);
     }
 
     globalScene.ui.showText(

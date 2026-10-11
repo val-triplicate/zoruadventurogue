@@ -155,7 +155,6 @@ const commonSplashMessages = [
   "inCaseOfUpdateClearYourCache",
   "insertTextHere",
   "endingEndlessNotFound",
-  "iLikeMyEggsVouchered",
   "you",
   "noAddedSugar",
   "notSponsored",

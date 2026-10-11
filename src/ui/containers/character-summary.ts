@@ -52,7 +52,6 @@ export class CharacterSummary extends Phaser.GameObjects.Container {
   private readonly reserveMoveContainers: Phaser.GameObjects.Container[];
   private readonly reserveMoveBgs: Phaser.GameObjects.NineSlice[];
   private readonly reserveMoveLabels: Phaser.GameObjects.Text[];
-  private pokemonFormText: Phaser.GameObjects.Text;
   private pokemonShinyIcon: Phaser.GameObjects.Sprite;
   private pokemonPassiveDisabledIcon: Phaser.GameObjects.Sprite;
   private pokemonPassiveLockedIcon: Phaser.GameObjects.Sprite;
@@ -180,9 +179,6 @@ export class CharacterSummary extends Phaser.GameObjects.Container {
     this.pokemonGenderText = addTextObject(96, 112, "", TextStyle.SUMMARY_ALT) //
       .setOrigin(0);
 
-    this.pokemonFormText = addTextObject(6, 42, "Form", TextStyle.WINDOW_ALT, { fontSize: "42px" }) //
-      .setOrigin(0);
-
     this.pokemonAbilityLabelText = addTextObject(
       6,
       127 + starterInfoYOffset,
@@ -250,7 +246,6 @@ export class CharacterSummary extends Phaser.GameObjects.Container {
 
     pokemonPreferencesContainer.add([
       this.pokemonGenderText,
-      this.pokemonFormText,
       this.pokemonAbilityLabelText,
       this.pokemonAbilityText,
       this.pokemonPassiveLabelText,
@@ -405,7 +400,6 @@ export class CharacterSummary extends Phaser.GameObjects.Container {
         .setShadowColor(getGrowthRateColor(species.growthRate, true));
 
       this.pokemonShinyIcon.setY(104);
-      this.pokemonFormText.setY(25);
       const speciesForm = speciesRegistry.getPokemonSpeciesForm(species.speciesId, preferences.formIndex);
       this.setTypeIcons(speciesForm.type1, speciesForm.type2);
 
@@ -518,9 +512,6 @@ export class CharacterSummary extends Phaser.GameObjects.Container {
     this.pokemonNatureText.setText(getNatureName(getNature(char), true, true, false));
 
     const speciesForm = characterRegistry.getPokemonSpeciesForm(id, formIndex);
-    const formText = species.getFormNameToDisplay(formIndex);
-    this.pokemonFormText.setText(formText);
-
     this.setTypeIcons(speciesForm.type1, speciesForm.type2);
 
     let newTeraType = teraType;

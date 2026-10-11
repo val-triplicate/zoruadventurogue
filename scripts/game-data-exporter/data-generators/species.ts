@@ -8,8 +8,8 @@
 import { speciesRegistry } from "#app/global-species-data-registry";
 import { speciesEggMoves } from "#balance/moves/egg-moves";
 import { GrowthRate } from "#data/exp";
+import { Gender } from "#data/gender";
 import { AbilityId } from "#enums/ability-id";
-import { EggTier } from "#enums/egg-type";
 import { MoveId } from "#enums/move-id";
 import { PokemonType } from "#enums/pokemon-type";
 import { SpeciesId } from "#enums/species-id";
@@ -23,7 +23,7 @@ export async function generateSpeciesData(): Promise<void> {
   for (const speciesData of Object.values(speciesRegistry.data)) {
     const species = speciesData.species;
     const passives = speciesData.passives;
-    const normalizedSpriteKey = normalizeSpriteKey(species.getSpriteKey(false));
+    const normalizedSpriteKey = normalizeSpriteKey(species.getSpriteKey(Gender.GENDERLESS));
     const eggMoves = speciesEggMoves[speciesData.starter] as [MoveId, MoveId, MoveId, MoveId];
 
     const data: SpeciesEntry = {
@@ -35,7 +35,6 @@ export async function generateSpeciesData(): Promise<void> {
       starter: SpeciesId[speciesData.starter],
       startercost: speciesData.starterCost ?? null,
       prevolution: speciesData.prevolution ? SpeciesId[speciesData.prevolution] : null,
-      eggTier: speciesData.eggTier == null ? null : EggTier[speciesData.eggTier],
       generation: species.generation,
       spriteKey: normalizedSpriteKey,
       formKey: null,
@@ -79,12 +78,11 @@ export async function generateSpeciesData(): Promise<void> {
     }
 
     for (const [index, form] of Object.entries(species.forms)) {
-      const normalizedFormSpriteKey = normalizeSpriteKey(species.getSpriteKey(false, Number(index)));
+      const normalizedFormSpriteKey = normalizeSpriteKey(species.getSpriteKey(Gender.GENDERLESS, Number(index)));
 
       const formData: SpeciesEntry = {
         ...data,
         // these fields don't exist for forms
-        eggTier: Number(index) === 0 ? data.eggTier : null,
         startercost: Number(index) === 0 ? data.startercost : null,
         canChangeForm: Number(index) === 0 ? data.canChangeForm : null,
 

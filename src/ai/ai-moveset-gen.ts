@@ -9,7 +9,7 @@
 import { EVOLVE_MOVE, RELEARN_MOVE } from "#app/constants";
 import { globalScene } from "#app/global-scene";
 import { speciesRegistry } from "#app/global-species-data-registry";
-import { characterMovePools } from "#balance/egg-moves";
+import { speciesEggMoves } from "#balance/egg-moves";
 import { FORBIDDEN_SINGLES_MOVES, FORBIDDEN_TM_MOVES, LEVEL_BASED_DENYLIST } from "#balance/forbidden-moves";
 import {
   BASE_LEVEL_WEIGHT_OFFSET,
@@ -265,7 +265,7 @@ function getEggPoolForSpecies(
   excludeRare: boolean,
   rareEggMoveWeight = 0,
 ): void {
-  const eggMoves = characterMovePools[rootSpeciesId as Exclude<StarterSpeciesId, SpeciesId.PIKACHU>];
+  const eggMoves = speciesEggMoves[rootSpeciesId as Exclude<StarterSpeciesId, SpeciesId.PIKACHU>];
   if (eggMoves == null) {
     return;
   }

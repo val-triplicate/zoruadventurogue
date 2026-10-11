@@ -17,7 +17,6 @@ export interface SpeciesEntry {
   name: string;
   starter: string;
   startercost: number | null;
-  eggTier: string | null;
   prevolution: string | null;
   generation: number;
   spriteKey: string;
