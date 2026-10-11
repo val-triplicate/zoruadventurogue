@@ -1,21 +1,13 @@
-import type { PokeballCounts } from "#app/battle-scene";
-import { EvolutionItem } from "#balance/pokemon-evolutions";
 import { Gender } from "#data/gender";
 import { TerrainType } from "#data/terrain";
 import { AbilityId } from "#enums/ability-id";
 import { BattleType } from "#enums/battle-type";
-import { BerryType } from "#enums/berry-type";
 import { BiomeId } from "#enums/biome-id";
-import { BiomePoolTier } from "#enums/biome-pool-tier";
-import { FormChangeItem } from "#enums/form-change-item";
 import { MoveId } from "#enums/move-id";
 import { MysteryEncounterTier } from "#enums/mystery-encounter-tier";
 import { MysteryEncounterType } from "#enums/mystery-encounter-type";
 import { Nature } from "#enums/nature";
-import { PokeballType } from "#enums/pokeball";
-import { PokemonType } from "#enums/pokemon-type";
 import { SpeciesId } from "#enums/species-id";
-import { Stat } from "#enums/stat";
 import { StatusEffect } from "#enums/status-effect";
 import { TimeOfDay } from "#enums/time-of-day";
 import { TrainerType } from "#enums/trainer-type";
@@ -25,12 +17,6 @@ import { WeatherType } from "#enums/weather-type";
 import type { ModifierOverride } from "#modifiers/modifier-type";
 import type { Variant } from "#sprites/variant";
 import type { IntClosedRange, TupleOf } from "type-fest";
-
-/**
- * This comment block exists to prevent IDEs from automatically removing unused imports
- * {@linkcode BerryType}, {@linkcode EvolutionItem}, {@linkcode FormChangeItem}
- * {@linkcode Stat}, {@linkcode PokemonType} {@linkcode Challenges} {@linkcode BiomePoolTier}
- */
 
 /**
  * Overrides can be added to this object to aid in testing different in-game situations.
@@ -126,21 +112,8 @@ class DefaultOverrides {
   /** @defaultValue `1000` */
   // TODO: Make default value something other than `0`
   readonly STARTING_MONEY_OVERRIDE: number = 0;
-  /** Sets all shop item prices to 0 */
-  readonly WAIVE_SHOP_FEES_OVERRIDE: boolean = false;
   /** Sets reroll price to 0 */
   readonly WAIVE_ROLL_FEE_OVERRIDE: boolean = false;
-  readonly FREE_CANDY_UPGRADE_OVERRIDE: boolean = false;
-  readonly POKEBALL_OVERRIDE: { active: boolean; pokeballs: PokeballCounts } = {
-    active: false,
-    pokeballs: {
-      [PokeballType.POKEBALL]: 5,
-      [PokeballType.GREAT_BALL]: 0,
-      [PokeballType.ULTRA_BALL]: 0,
-      [PokeballType.ROGUE_BALL]: 0,
-      [PokeballType.MASTER_BALL]: 0,
-    },
-  };
   /** Forces an item to be UNLOCKED */
   readonly ITEM_UNLOCK_OVERRIDE: Unlockables[] = [];
   /** Set to `true` to show all tutorials */

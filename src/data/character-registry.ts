@@ -33,6 +33,10 @@ export class CharacterRegistry {
     return Object.values(this._data);
   }
 
+  public getCharacters(ids: CharacterId[]): Character[] {
+    return ids.map(id => this._data[id]);
+  }
+
   public getCharacter(id: CharacterId): Character {
     return this._data[id];
   }

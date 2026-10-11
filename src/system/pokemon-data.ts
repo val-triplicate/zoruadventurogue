@@ -67,7 +67,7 @@ export class PokemonData {
     this.characterId = source.characterId;
     this.id = source.id;
     this.player = sourcePokemon?.isPlayer() ?? source.player;
-    this.speciesId = sourcePokemon?.species.speciesId ?? source.species.speciesId;
+    this.speciesId = sourcePokemon?.species.speciesId ?? source.speciesId;
     this.nickname = source.nickname;
     this.formIndex = Math.max(
       Math.min(source.formIndex, speciesDataRegistry.getSpecies(this.speciesId).forms.length - 1),

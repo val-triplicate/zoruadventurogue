@@ -23,7 +23,7 @@ export interface FormModalConfig extends ModalConfig {
 }
 
 export type SaveSlotSelectCallback = (cursor: number) => void;
-export type TeamMemberSelectCallback = (starters: Character[]) => void;
+export type CharacterSelectCallback = (starters: Character[]) => void;
 export type TargetSelectCallback = (targets: BattlerIndex[]) => void;
 
 // TODO: Strongly type the index signature aside from simply being `string`

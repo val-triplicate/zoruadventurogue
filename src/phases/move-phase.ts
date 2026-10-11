@@ -424,7 +424,6 @@ export class MovePhase extends PokemonPhase {
     const moveId = move.moveId;
     const moveName = move.getName();
     let failedText: string | undefined;
-    const usability = new BooleanHolder(false);
     if (move.getMove().isUnimplemented) {
       failedText = i18next.t("battle:moveNotImplemented", { moveName: moveName.replace(" (N)", "") });
     } else if (moveId === MoveId.NONE || this.targets.length === 0) {
@@ -439,8 +438,6 @@ export class MovePhase extends PokemonPhase {
       console.warn(warningText);
 
       return true;
-    } else if (this.pokemon.isPlayer() && !usability.value) {
-      failedText = i18next.t("battle:moveCannotUseChallenge", { moveName });
     } else {
       return false;
     }

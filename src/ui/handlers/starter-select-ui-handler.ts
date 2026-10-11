@@ -21,10 +21,10 @@ import { getVariantTint } from "#sprites/variant";
 import type { Character } from "#types/pokemon-species";
 import type { CanCycle } from "#types/starter-select-types";
 import type {
+  CharacterSelectCallback,
   ConfirmModeConfig,
   OptionSelectItem,
   OptionSelectModeConfig,
-  TeamMemberSelectCallback,
 } from "#types/ui-types";
 import { DropDown, DropDownLabel, DropDownOption, DropDownState, DropDownType, SortCriteria } from "#ui/dropdown";
 import { FilterBar } from "#ui/filter-bar";
@@ -126,13 +126,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
   private partyCursorObj: Phaser.GameObjects.Image;
   private partyIconsCursorIndex: number;
   private readonly characters: Character[] = [];
-  // TODO: this should be a getter, not an array that needs to be kept in sync with `this.partyStarters`
-  public partyTeamMemberIds: CharacterId[] = [];
-  /*
-  public get partyStarterIds(): StarterSpeciesId[] {
-    return this.partyStarters.map(v => v.speciesId) as StarterSpeciesId[];
-  }
-  */
+  public partyCharacterIds: CharacterId[] = [];
 
   private valueLimitLabel: Phaser.GameObjects.Text;
   private startCursorObj: Phaser.GameObjects.NineSlice;
@@ -165,7 +159,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
 
   //variables to keep track of the dynamically rendered list of instruction prompts for starter select
 
-  private teamMemberSelectCallback: TeamMemberSelectCallback | null;
+  private characterSelectCallback: CharacterSelectCallback | null;
 
   /**
    * Used to check whether any moves were swapped using the reorder menu, to decide
@@ -429,7 +423,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
 
     if (args.length > 0 && args[0] instanceof Function) {
       super.show(args);
-      this.teamMemberSelectCallback = args[0] as TeamMemberSelectCallback;
+      this.characterSelectCallback = args[0] as CharacterSelectCallback;
 
       this.starterSelectContainer.setVisible(true);
       this.starterSummary.applyChallengeVisibility();
@@ -532,8 +526,8 @@ export class StarterSelectUiHandler extends MessageUiHandler {
           }
           this.updateStarters();
           success = true;
-        } else if (this.partyTeamMemberIds.length > 0) {
-          this.popPartyStarter(this.partyTeamMemberIds.length - 1);
+        } else if (this.partyCharacterIds.length > 0) {
+          this.popPartyStarter(this.partyCharacterIds.length - 1);
           success = true;
           this.updateInstructions();
         } else {
@@ -562,7 +556,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
           // UP from the last filter, move to start button
           this.setFilterMode(false);
           this.cursorObj.setVisible(false);
-          if (this.partyTeamMemberIds.length > 0) {
+          if (this.partyCharacterIds.length > 0) {
             this.startCursorObj.setVisible(true);
           } else {
             this.showRandomCursor();
@@ -640,8 +634,8 @@ export class StarterSelectUiHandler extends MessageUiHandler {
       case Button.UP:
         // UP from start button: go to pokemon in team if any, otherwise filter
         this.startCursorObj.setVisible(false);
-        if (this.partyTeamMemberIds.length > 0) {
-          this.partyIconsCursorIndex = this.partyTeamMemberIds.length - 1;
+        if (this.partyCharacterIds.length > 0) {
+          this.partyIconsCursorIndex = this.partyCharacterIds.length - 1;
           this.movePartyIconsCursor(this.partyIconsCursorIndex);
         } else {
           // TODO: how can we get here if start button can't be selected? this appears to be redundant
@@ -691,7 +685,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
         // This prevents repeated rapid button presses from adding duplicate starters to the party
         this.blockInput = true;
 
-        if (this.partyTeamMemberIds.length >= 6) {
+        if (this.partyCharacterIds.length >= 6) {
           this.blockInput = false;
           error = true;
           break;
@@ -728,7 +722,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
         break;
       case Button.DOWN:
         this.randomCursorObj.setVisible(false);
-        if (this.partyTeamMemberIds.length > 0) {
+        if (this.partyCharacterIds.length > 0) {
           this.partyIconsCursorIndex = 0;
           this.movePartyIconsCursor(this.partyIconsCursorIndex);
         } else {
@@ -804,7 +798,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
         success = true;
         break;
       case Button.DOWN:
-        if (this.partyIconsCursorIndex <= this.partyTeamMemberIds.length - 2) {
+        if (this.partyIconsCursorIndex <= this.partyCharacterIds.length - 2) {
           this.partyIconsCursorIndex++;
           this.movePartyIconsCursor(this.partyIconsCursorIndex);
         } else {
@@ -926,14 +920,14 @@ export class StarterSelectUiHandler extends MessageUiHandler {
           // from the first row of starters we go to the random selection
           this.leaveGrid();
           this.showRandomCursor();
-        } else if (this.partyTeamMemberIds.length === 0) {
+        } else if (this.partyCharacterIds.length === 0) {
           // no starter in team and not on first row > wrap around to the last column
           success = this.setCursor(this.cursor + Math.min(8, onScreenLastIndex - this.cursor));
           break;
         } else if (onScreenCurrentRow < 7) {
           // at least one pokemon in team > for the first 7 rows, go to closest starter
           this.leaveGrid();
-          this.partyIconsCursorIndex = findClosestStarterIndex(this.cursorObj.y - 1, this.partyTeamMemberIds.length);
+          this.partyIconsCursorIndex = findClosestStarterIndex(this.cursorObj.y - 1, this.partyCharacterIds.length);
           this.movePartyIconsCursor(this.partyIconsCursorIndex);
         } else {
           // at least one pokemon in team > from the bottom 2 rows, go to start run button
@@ -954,14 +948,14 @@ export class StarterSelectUiHandler extends MessageUiHandler {
           // from the first row of starters we go to the random selection
           this.leaveGrid();
           this.showRandomCursor();
-        } else if (this.partyTeamMemberIds.length === 0) {
+        } else if (this.partyCharacterIds.length === 0) {
           // no selected starter in team > wrap around to the first column
           success = this.setCursor(this.cursor - Math.min(8, this.cursor % 9));
           break;
         } else if (onScreenCurrentRow < 7) {
           // at least one pokemon in team > for the first 7 rows, go to closest starter
           this.leaveGrid();
-          this.partyIconsCursorIndex = findClosestStarterIndex(this.cursorObj.y - 1, this.partyTeamMemberIds.length);
+          this.partyIconsCursorIndex = findClosestStarterIndex(this.cursorObj.y - 1, this.partyCharacterIds.length);
           this.movePartyIconsCursor(this.partyIconsCursorIndex);
         } else {
           // at least one pokemon in team > from the bottom 2 rows, go to start run button
@@ -1002,7 +996,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
 
     const [isDupe, removeIndex]: [boolean, number] = this.isInParty(charId);
 
-    if (!isDupe && this.partyTeamMemberIds.length < PLAYER_PARTY_MAX_SIZE) {
+    if (!isDupe && this.partyCharacterIds.length < PLAYER_PARTY_MAX_SIZE) {
       options.push({
         label: i18next.t("starterSelectUiHandler:addToParty"),
         handler: () => {
@@ -1014,7 +1008,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
             return true;
           }
 
-          this.starterCursorObjs[this.partyTeamMemberIds.length]
+          this.starterCursorObjs[this.partyCharacterIds.length]
             .setVisible(true)
             .setPosition(this.cursorObj.x, this.cursorObj.y);
           this.addToParty(charId);
@@ -1207,8 +1201,8 @@ export class StarterSelectUiHandler extends MessageUiHandler {
     } else if (this.filterMode) {
       success = this.processFilterModeInput(button);
     } else if (button === Button.CANCEL) {
-      if (this.partyTeamMemberIds.length > 0) {
-        this.popPartyStarter(this.partyTeamMemberIds.length - 1);
+      if (this.partyCharacterIds.length > 0) {
+        this.popPartyStarter(this.partyCharacterIds.length - 1);
         success = true;
         this.updateInstructions();
       } else {
@@ -1234,7 +1228,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
       const saveData = characterRegistry.getSaveData(this.lastCharId);
       if (!saveData?.isTeamUnlocked) {
         error = true;
-      } else if (this.partyTeamMemberIds.length <= 6) {
+      } else if (this.partyCharacterIds.length <= 6) {
         this.openPokemonMenu();
         success = true;
       }
@@ -1272,8 +1266,8 @@ export class StarterSelectUiHandler extends MessageUiHandler {
   private isInParty(teamMemberId: CharacterId): [isDupe: boolean, removeIndex: number] {
     let removeIndex = 0;
     let isDupe = false;
-    for (let s = 0; s < this.partyTeamMemberIds.length; s++) {
-      if (this.partyTeamMemberIds[s] === teamMemberId) {
+    for (let s = 0; s < this.partyCharacterIds.length; s++) {
+      if (this.partyCharacterIds[s] === teamMemberId) {
         isDupe = true;
         removeIndex = s;
         break;
@@ -1287,14 +1281,14 @@ export class StarterSelectUiHandler extends MessageUiHandler {
     const char = characterRegistry.getCharacter(id);
     const species = characterRegistry.getSpecies(id);
     const props = getIconProps(char);
-    this.partyIcons[this.partyTeamMemberIds.length].setTexture(
+    this.partyIcons[this.partyCharacterIds.length].setTexture(
       species.getIconAtlasKey(props.formIndex, props.shiny, props.variant),
     );
-    this.partyIcons[this.partyTeamMemberIds.length].setFrame(
+    this.partyIcons[this.partyCharacterIds.length].setFrame(
       species.getIconId(gender, props.formIndex, props.shiny, props.variant),
     );
     this.checkIconId(
-      this.partyIcons[this.partyTeamMemberIds.length],
+      this.partyIcons[this.partyCharacterIds.length],
       species,
       gender,
       props.formIndex,
@@ -1302,7 +1296,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
       props.variant,
     );
 
-    this.partyTeamMemberIds.push(id);
+    this.partyCharacterIds.push(id);
     speciesDataRegistry.getPokemonSpeciesForm(species.speciesId, props.formIndex).cry();
     this.updateInstructions();
   }
@@ -1441,8 +1435,8 @@ export class StarterSelectUiHandler extends MessageUiHandler {
 
       // TODO: If next to unlock, set container.icon.setTint(0x808080);
 
-      if (this.partyTeamMemberIds.includes(charId)) {
-        this.starterCursorObjs[this.partyTeamMemberIds.indexOf(charId)]
+      if (this.partyCharacterIds.includes(charId)) {
+        this.starterCursorObjs[this.partyCharacterIds.indexOf(charId)]
           .setPosition(container.x - 1, container.y + 1)
           .setVisible(true);
       }
@@ -1525,9 +1519,9 @@ export class StarterSelectUiHandler extends MessageUiHandler {
       STARTER_ICONS_CURSOR_X_OFFSET,
       STARTER_ICONS_CURSOR_Y_OFFSET,
     );
-    if (this.partyTeamMemberIds.length > 0) {
+    if (this.partyCharacterIds.length > 0) {
       this.partyCursorObj.setVisible(true);
-      this.setPartyStarter(this.partyTeamMemberIds[index]);
+      this.setPartyStarter(this.partyCharacterIds[index]);
     } else {
       this.partyCursorObj.setVisible(false);
       this.setNoStarter();
@@ -1664,11 +1658,11 @@ export class StarterSelectUiHandler extends MessageUiHandler {
    * @param index - the index of the starter to remove in the party.
    */
   private popPartyStarter(index: number): void {
-    this.partyTeamMemberIds.splice(index, 1);
+    this.partyCharacterIds.splice(index, 1);
     this.characters.splice(index, 1);
 
-    for (let s = 0; s < this.partyTeamMemberIds.length; s++) {
-      const charId = this.partyTeamMemberIds[s];
+    for (let s = 0; s < this.partyCharacterIds.length; s++) {
+      const charId = this.partyCharacterIds[s];
       const char = characterRegistry.getCharacter(charId);
       const species = speciesDataRegistry.getSpeciesFromTeamMemberId(charId);
       let { gender, formIndex, shiny, variant } = getIconProps(char);
@@ -1683,14 +1677,14 @@ export class StarterSelectUiHandler extends MessageUiHandler {
           .setVisible(this.starterCursorObjs[s + 1].visible);
       }
     }
-    this.starterCursorObjs[this.partyTeamMemberIds.length].setVisible(false);
-    this.partyIcons[this.partyTeamMemberIds.length] //
+    this.starterCursorObjs[this.partyCharacterIds.length].setVisible(false);
+    this.partyIcons[this.partyCharacterIds.length] //
       .setTexture("pokemon_icons_0")
       .setFrame("unknown");
 
     if (this.partyCursorObj.visible) {
-      if (this.partyIconsCursorIndex === this.partyTeamMemberIds.length) {
-        if (this.partyTeamMemberIds.length > 0) {
+      if (this.partyIconsCursorIndex === this.partyCharacterIds.length) {
+        if (this.partyCharacterIds.length > 0) {
           this.partyIconsCursorIndex--;
         } else {
           // No more Pokemon selected, go back to filters
@@ -1701,7 +1695,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
         }
       }
       this.movePartyIconsCursor(this.partyIconsCursorIndex);
-    } else if (this.startCursorObj.visible && this.partyTeamMemberIds.length === 0) {
+    } else if (this.startCursorObj.visible && this.partyCharacterIds.length === 0) {
       // On the start button and no more Pokemon in party
       this.startCursorObj.setVisible(false);
       if (this.filteredCharIds.length > 0) {
@@ -1718,7 +1712,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
 
   // TODO: this is always called with `tryStart(true)`, is this param necessary?
   private tryStart(manualTrigger = false): boolean {
-    if (this.partyTeamMemberIds.length === 0) {
+    if (this.partyCharacterIds.length === 0) {
       return false;
     }
 
@@ -1727,18 +1721,19 @@ export class StarterSelectUiHandler extends MessageUiHandler {
     const cancelStartRun = () => {
       ui.setMode(UiMode.STARTER_SELECT);
       if (!manualTrigger) {
-        this.popPartyStarter(this.partyTeamMemberIds.length - 1);
+        this.popPartyStarter(this.partyCharacterIds.length - 1);
       }
       this.clearText();
     };
 
     const startRun = () => {
+      const chars = characterRegistry.getCharacters(this.partyCharacterIds);
       globalScene.money = globalScene.gameMode.getStartingMoney();
-      const starters = this.characters.slice(0);
+      globalScene.chars = chars;
       ui.setMode(UiMode.STARTER_SELECT);
-      const originalStarterSelectCallback = this.teamMemberSelectCallback;
-      this.teamMemberSelectCallback = null;
-      originalStarterSelectCallback?.(starters);
+      const originalStarterSelectCallback = this.characterSelectCallback;
+      this.characterSelectCallback = null;
+      originalStarterSelectCallback?.(chars);
     };
 
     const confirmStartOptions: ConfirmModeConfig = {
@@ -1798,8 +1793,8 @@ export class StarterSelectUiHandler extends MessageUiHandler {
     this.starterSelectContainer.setVisible(false);
     this.blockInput = false;
 
-    while (this.partyTeamMemberIds.length > 0) {
-      this.popPartyStarter(this.partyTeamMemberIds.length - 1);
+    while (this.partyCharacterIds.length > 0) {
+      this.popPartyStarter(this.partyCharacterIds.length - 1);
     }
   }
 

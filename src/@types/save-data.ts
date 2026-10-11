@@ -1,4 +1,3 @@
-import type { PokeballCounts } from "#app/battle-scene";
 import type { Tutorial } from "#app/tutorial";
 import type { Gender } from "#data/gender";
 import type { BattleType } from "#enums/battle-type";
@@ -40,7 +39,6 @@ export interface SessionSaveData {
   modifiers: ModifierData[];
   enemyModifiers: ModifierData[];
   arena: ArenaData;
-  pokeballCounts: PokeballCounts;
   money: number;
   score: number;
   waveIndex: number;

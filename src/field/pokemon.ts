@@ -332,6 +332,10 @@ export abstract class Pokemon extends Phaser.GameObjects.Container {
         this.trySetShiny();
       }
 
+      if (this.moves === undefined) {
+        this.moves = blankCurrentMoves;
+      }
+
       if (this.variant === undefined) {
         this.variant = this.shiny ? this.generateShinyVariant() : 0;
       }
@@ -4701,7 +4705,6 @@ export abstract class Pokemon extends Phaser.GameObjects.Container {
 
 export class PlayerPokemon extends Pokemon {
   declare protected battleInfo: PlayerBattleInfo;
-  public charId: CharacterId;
 
   constructor(
     charId: CharacterId,
@@ -4718,7 +4721,7 @@ export class PlayerPokemon extends Pokemon {
     const maxIvs = [31, 31, 31, 31, 31, 31];
     super(106, 148, speciesId, level, abilityIndex, formIndex, gender, shiny, variant, maxIvs, nature, dataSource);
 
-    this.charId = charId;
+    this.characterId = charId;
     if (activeOverrides.STATUS_OVERRIDE) {
       this.status = new Status(activeOverrides.STATUS_OVERRIDE, 0, 4, 4);
     }

@@ -114,6 +114,7 @@ import type {
   NewBattleResolvedProps,
   NewBattleSavedProps,
 } from "#types/new-battle-props";
+import type { Character } from "#types/pokemon-species";
 import type { SessionSaveData } from "#types/save-data";
 import type { VolumeSettingsKey } from "#types/settings";
 import { AbilityBar } from "#ui/ability-bar";
@@ -216,6 +217,7 @@ export class BattleScene extends SceneBase {
   public lastEnemyTrainer: Trainer | null;
   public currentBattle: Battle;
   public money: number;
+  public chars: Character[];
   private party: PlayerPokemon[];
   /** Session save data that pertains to Mystery Encounters */
   public mysteryEncounterSaveData: MysteryEncounterSaveData = new MysteryEncounterSaveData();
@@ -334,6 +336,8 @@ export class BattleScene extends SceneBase {
       }
     });
   }
+
+  public initParty(chars: Character[]) {}
 
   public loadPokemonAtlas(key: string, atlasPath: string, experimental = settings.expSpritesEnabled): void {
     const variant = atlasPath.includes("variant/") || /_[0-3]$/.test(atlasPath);
@@ -675,7 +679,10 @@ export class BattleScene extends SceneBase {
     deepMergeSpriteData(variantData, expVariantData);
   }
 
-  // TODO: Add a `getPartyOnSide` function for getting the party of a pokemon
+  public getCharacters(): Character[] {
+    return this.chars;
+  }
+
   public getPlayerParty(): PlayerPokemon[] {
     return this.party;
   }

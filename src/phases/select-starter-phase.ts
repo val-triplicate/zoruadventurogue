@@ -4,12 +4,13 @@ import { globalScene } from "#app/global-scene";
 import { Phase } from "#app/phase";
 import { blankMoveSet } from "#data/moveset";
 import { UiMode } from "#enums/ui-mode";
-import type { PlayerPokemon } from "#field/pokemon";
 import { overrideHeldItems, overrideModifiers } from "#modifiers/modifier";
+import type { Character } from "#types/pokemon-species";
 import { SaveSlotUiMode } from "#ui/save-slot-select-ui-handler";
 
 export class SelectStarterPhase extends Phase {
   public readonly phaseName = "SelectStarterPhase";
+
   start() {
     super.start();
 
@@ -33,24 +34,23 @@ export class SelectStarterPhase extends Phase {
   initBattle() {
     const party = globalScene.getPlayerParty();
     const loadPokemonAssets: Promise<void>[] = [];
-    party.forEach((pokemon: PlayerPokemon) => {
-      const char = characterRegistry.getCharacter(pokemon.charId);
-      const preferences = characterRegistry.getPreferences(pokemon.charId);
+    globalScene.getCharacters().forEach((char: Character) => {
+      const preferences = characterRegistry.getPreferences(char.id);
 
       const starterPokemon = globalScene.addPlayerPokemon(
-        pokemon.charId,
-        pokemon.species.speciesId,
+        char.id,
+        char.speciesId,
         globalScene.gameMode.getStartingLevel(),
-        pokemon.abilityIndex,
-        pokemon.formIndex,
-        pokemon.gender,
-        pokemon.shiny,
-        pokemon.variant,
-        pokemon.nature,
+        preferences.abilityIndex,
+        preferences.formIndex,
+        preferences.gender,
+        preferences.shiny,
+        preferences.variant,
+        preferences.nature,
       );
 
       starterPokemon.tryPopulateMoveset(preferences.activeMoves || blankMoveSet);
-      starterPokemon.passive = pokemon.passive;
+      starterPokemon.passive = preferences.passive;
       starterPokemon.luck = 0;
       starterPokemon.nickname = char.identity?.name;
       starterPokemon.teraType = preferences.tera || starterPokemon.species.type1;
