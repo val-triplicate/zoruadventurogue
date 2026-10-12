@@ -3,8 +3,15 @@ import { globalScene } from "#app/global-scene";
 import { settings } from "#app/global-settings-manager";
 import { speciesRegistry } from "#app/global-species-data-registry";
 import { handleTutorial, Tutorial } from "#app/tutorial";
+import { getFormIndex, getGender, getSpecies, getSpeciesId, isShiny } from "#data/characters/character-identities";
+import { getMovePool } from "#data/characters/character-move-pools";
+import type { Character } from "#data/characters/constant-data/character-data-objects";
+import { customRegistry } from "#data/characters/live-data/custom-registry";
+import { CharacterId } from "#data/characters/types/character-types-enums";
+import { type CharacterInput, unfoldC } from "#data/characters/utils/character-input";
 import { allMoves } from "#data/data-lists";
 import { Gender } from "#data/gender";
+import { blankMoveSet, type MoveSet } from "#data/moveset";
 import type { PokemonSpecies } from "#data/pokemon-species";
 import { Button } from "#enums/buttons";
 import { DropDownColumn } from "#enums/drop-down-column";
@@ -14,6 +21,7 @@ import { PokemonType } from "#enums/pokemon-type";
 import { TextStyle } from "#enums/text-style";
 import { UiMode } from "#enums/ui-mode";
 import { getVariantTint } from "#sprites/variant";
+import { getIconProps } from "#types/character-state";
 import type {
   CharacterSelectCallback,
   ConfirmModeConfig,
@@ -33,20 +41,11 @@ import { sortCharacters } from "#ui/starter-select-ui-utils";
 import { addTextObject } from "#ui/text";
 import { addWindow } from "#ui/ui-theme";
 import { getLocalizedSpriteKey } from "#utils/common";
+import { getEnumValues } from "#utils/enums";
 import i18next from "i18next";
 import type { GameObjects } from "phaser";
 
 import Sprite = Phaser.GameObjects.Sprite;
-
-import { getFormIndex, getGender, getSpecies, getSpeciesId, isShiny } from "#data/characters/character-identities";
-import { getMovePool } from "#data/characters/character-move-pools";
-import type { Character } from "#data/characters/constant-data/character-data-objects";
-import { customRegistry } from "#data/characters/live-data/custom-registry";
-import { CharacterId } from "#data/characters/types/character-types-enums";
-import { type CharacterInput, unfoldC } from "#data/characters/utils/character-input";
-import { blankMoveSet, type MoveSet } from "#data/moveset";
-import { getIconProps } from "#types/character-state";
-import { getEnumValues } from "#utils/enums";
 
 const COLUMNS = 9;
 const ROWS = 9;
@@ -820,6 +819,9 @@ export class StarterSelectUiHandler extends MessageUiHandler {
           // RIGHT from team and no Pokemon in filter > do nothing
           success = false;
         }
+        break;
+      case Button.ACTION:
+        this.openPokemonMenu();
         break;
     }
 
