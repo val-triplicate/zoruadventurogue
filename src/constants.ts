@@ -1,4 +1,4 @@
-import { TeamId } from "#enums/team-id";
+import { TeamId } from "#data/characters/types/character-types-enums";
 
 /** The maximum size of the player's party */
 export const PLAYER_PARTY_MAX_SIZE: number = 6;

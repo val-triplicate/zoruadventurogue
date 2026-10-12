@@ -1,7 +1,8 @@
-import { MOVE_POOLS, SIGNATURE_XMS } from "#data/characters/character-data";
-import { type CharacterInput, fromIdSafely } from "#data/characters/character-utils";
-import { blankMovePool, type MovePool, type MoveSet, toMoveSet } from "#data/moveset";
-import { CharacterId } from "#enums/character-id";
+import { MOVE_POOLS } from "#data/characters/data-maps/character-maps-objects";
+import { CharacterId } from "#data/characters/types/character-types-enums";
+import type { MovePool } from "#data/characters/types/character-types-objects";
+import { type CharacterInput, fromCIdSafely } from "#data/characters/utils/character-input";
+import { blankMovePool, type MoveSet, toMoveSet } from "#data/moveset";
 import { MoveId } from "#enums/move-id";
 
 export function initMovePools() {
@@ -49,12 +50,10 @@ export function initMovePools() {
     MoveId.SUBSTITUTE,
     MoveId.MOONLIGHT,
   ]);
-
-  SIGNATURE_XMS.set(CharacterId.VM_VAPOREON, MoveId.FREEZE_DRY);
 }
 
 export function getMovePool(input: CharacterInput): MovePool {
-  return fromIdSafely(input, id => MOVE_POOLS.get(id), blankMovePool);
+  return fromCIdSafely(input, id => MOVE_POOLS.get(id), blankMovePool);
 }
 
 export function getDefaultActiveMoves(input: CharacterInput): MoveSet {

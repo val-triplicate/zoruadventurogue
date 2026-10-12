@@ -1,7 +1,8 @@
+import { defaultTeams } from "#app/constants";
 import type { Tutorial } from "#app/tutorial";
+import type { CharacterId, TeamId } from "#data/characters/types/character-types-enums";
 import type { Gender } from "#data/gender";
 import type { BattleType } from "#enums/battle-type";
-import type { CharacterId } from "#enums/character-id";
 import type { GameModes } from "#enums/game-modes";
 import type { MysteryEncounterType } from "#enums/mystery-encounter-type";
 import type { PlayerGender } from "#enums/player-gender";
@@ -20,7 +21,7 @@ export interface SystemSaveData {
   trainerId: number;
   secretId: number;
   gender: PlayerGender;
-  teamSaveData: TeamSaveData;
+  teamSaveData: TeamSave;
   gameStats: GameStats;
   unlocks: Unlocks;
   achvUnlocks: AchvUnlocks;
@@ -88,16 +89,20 @@ export interface RunEntry {
   isFavorite: boolean;
 }
 
-export interface TeamSaveDataEntry {
+export class TeamSave {
   isTeamUnlocked: boolean;
   isAbilityUnlocked: boolean;
   isPassiveUnlocked: boolean;
   runCount: bigint;
   winCount: bigint;
-}
 
-export interface TeamSaveData {
-  [key: number]: TeamSaveDataEntry;
+  constructor(id: TeamId) {
+    this.isTeamUnlocked = defaultTeams.includes(id);
+    this.isAbilityUnlocked = false;
+    this.isPassiveUnlocked = false;
+    this.runCount = 0n;
+    this.winCount = 0n;
+  }
 }
 
 // TODO: Rework into a bitmask

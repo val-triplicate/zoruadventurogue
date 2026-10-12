@@ -1,11 +1,11 @@
 import { globalScene } from "#app/global-scene";
 import { speciesRegistry } from "#app/global-species-data-registry";
+import type { CharacterId } from "#data/characters/types/character-types-enums";
 import type { Gender } from "#data/gender";
 import type { CurrentMoves } from "#data/moveset";
 import { CustomPokemonData, PokemonBattleData, PokemonSummonData } from "#data/pokemon-data";
 import { Status } from "#data/status-effect";
 import { BattleType } from "#enums/battle-type";
-import type { CharacterId } from "#enums/character-id";
 import type { MoveId } from "#enums/move-id";
 import { Nature } from "#enums/nature";
 import { PokeballType } from "#enums/pokeball";

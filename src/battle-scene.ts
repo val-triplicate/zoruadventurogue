@@ -28,7 +28,7 @@ import { TurnCommandManager } from "#app/turn-command-manager";
 import { UiInputs } from "#app/ui-inputs";
 import { STARTING_WAVE } from "#balance/misc";
 import { initCommonAnims, initMoveAnim, loadCommonAnimAssets, loadMoveAnimAssets } from "#data/battle-anims";
-import type { Character } from "#data/characters/character";
+import type { CharacterId } from "#data/characters/types/character-types-enums";
 import { allMoves, biomeDepths, modifierTypes } from "#data/data-lists";
 import { classicFinalBossDialogue } from "#data/dialogue";
 import { Gender } from "#data/gender";
@@ -37,7 +37,6 @@ import { getTypeRgb } from "#data/type";
 import { BattleType } from "#enums/battle-type";
 import { BattlerTagType } from "#enums/battler-tag-type";
 import { BiomeId } from "#enums/biome-id";
-import type { CharacterId } from "#enums/character-id";
 import { ModifierPoolType } from "#enums/modifier-pool-type";
 import { MoveId } from "#enums/move-id";
 import { MysteryEncounterMode } from "#enums/mystery-encounter-mode";
@@ -145,6 +144,7 @@ import { decodeNickname } from "#utils/pokemon-utils";
 import { capitalizeFirstLetterOnly } from "#utils/strings";
 import i18next from "i18next";
 import Phaser from "phaser";
+import type { Character } from "./data/characters/constant-data/character-data-objects";
 
 export interface InfoToggle {
   toggleInfo(force?: boolean): void;

@@ -1,7 +1,6 @@
-import type { CharacterBalance } from "#data/characters/character-balance";
 import type { CharacterIdentity } from "#data/characters/character-identities";
-import type { MovePool } from "#data/moveset";
-import type { CharacterId } from "#enums/character-id";
+import type { CharacterId } from "#data/characters/types/character-types-enums";
+import type { CharacterBalance, MovePool } from "#data/characters/types/character-types-objects";
 
 export class Character {
   id: CharacterId;

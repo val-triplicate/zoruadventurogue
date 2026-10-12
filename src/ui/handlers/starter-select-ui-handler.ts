@@ -1,5 +1,4 @@
 import { PLAYER_PARTY_MAX_SIZE } from "#app/constants";
-import { characterRegistry } from "#app/global-character-data-registry";
 import { globalScene } from "#app/global-scene";
 import { settings } from "#app/global-settings-manager";
 import { speciesRegistry } from "#app/global-species-data-registry";
@@ -8,7 +7,6 @@ import { allMoves } from "#data/data-lists";
 import { Gender } from "#data/gender";
 import type { PokemonSpecies } from "#data/pokemon-species";
 import { Button } from "#enums/buttons";
-import type { CharacterId } from "#enums/character-id";
 import { DropDownColumn } from "#enums/drop-down-column";
 import type { MoveId } from "#enums/move-id";
 import { PokemonIconAnimMode } from "#enums/pokemon-icon-anim-mode";
@@ -31,7 +29,7 @@ import { PokemonIconAnimHelper } from "#ui/pokemon-icon-anim-helper";
 import { ScrollBar } from "#ui/scroll-bar";
 import { CharacterContainer } from "#ui/starter-container";
 import { StarterSelectInstructionsContainer } from "#ui/starter-select-instructions";
-import { getTeamDataEntry, sortCharacters } from "#ui/starter-select-ui-utils";
+import { sortCharacters } from "#ui/starter-select-ui-utils";
 import { addTextObject } from "#ui/text";
 import { addWindow } from "#ui/ui-theme";
 import { getLocalizedSpriteKey } from "#utils/common";
@@ -40,12 +38,15 @@ import type { GameObjects } from "phaser";
 
 import Sprite = Phaser.GameObjects.Sprite;
 
-import type { Character } from "#data/characters/character";
 import { getFormIndex, getGender, getSpecies, getSpeciesId, isShiny } from "#data/characters/character-identities";
 import { getMovePool } from "#data/characters/character-move-pools";
-import { type CharacterInput, unfold } from "#data/characters/character-utils";
+import type { Character } from "#data/characters/constant-data/character-data-objects";
+import { customRegistry } from "#data/characters/live-data/custom-registry";
+import { CharacterId } from "#data/characters/types/character-types-enums";
+import { type CharacterInput, unfoldC } from "#data/characters/utils/character-input";
 import { blankMoveSet, type MoveSet } from "#data/moveset";
 import { getIconProps } from "#types/character-state";
+import { getEnumValues } from "#utils/enums";
 
 const COLUMNS = 9;
 const ROWS = 9;
@@ -207,12 +208,12 @@ export class StarterSelectUiHandler extends MessageUiHandler {
 
     starterBoxContainer.add(this.cursorObj);
 
-    const allCharacters = characterRegistry.getAllCharacters();
+    const allCharacters = customRegistry.getAllCharacters();
 
     for (let i = 0; i < 81 && i < allCharacters.length; i++) {
       const pos = calcStarterContainerPosition(i);
       const starterContainer = new CharacterContainer(allCharacters[i]) //
-        .setVisible(characterRegistry.getSaveData(allCharacters[i]?.id)?.isTeamUnlocked || false)
+        .setVisible(customRegistry.getTeamSaveFromCharacter(allCharacters[i]?.id)?.isTeamUnlocked || false)
         .setPosition(pos.x, pos.y);
       this.iconAnimHandler.addOrUpdate(starterContainer.icon, PokemonIconAnimMode.NONE);
       this.starterContainers.push(starterContainer);
@@ -678,7 +679,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
         }
 
         const validTeamMembers = this.filteredCharIds.filter(charId => {
-          return !this.isInParty(charId) && getTeamDataEntry(charId).isTeamUnlocked;
+          return !this.isInParty(charId) && customRegistry.getTeamSaveFromCharacter(charId).isTeamUnlocked;
         });
         if (validTeamMembers.length === 0) {
           this.blockInput = false;
@@ -687,13 +688,13 @@ export class StarterSelectUiHandler extends MessageUiHandler {
         }
 
         const id = validTeamMembers[Math.floor(Math.random() * validTeamMembers.length)];
-        const char = characterRegistry.getCharacter(id);
-        const preferences = characterRegistry.getPreferences(id);
+        const char = customRegistry.getCharacter(id);
+        const characterState = customRegistry.getCharacterState(id);
         this.setCharacter(char);
 
-        const props = getIconProps(char, preferences);
-        const speciesForm = characterRegistry.getPokemonSpeciesForm(id, props.formIndex);
-        speciesForm.loadAssets(preferences.gender, props.formIndex, props.shiny, props.variant, true).then(() => {
+        const props = getIconProps(char, characterState);
+        const speciesForm = speciesRegistry.getPokemonSpeciesForm(char.identity.speciesId, 0);
+        speciesForm.loadAssets(characterState.gender, props.formIndex, props.shiny, props.variant, true).then(() => {
           this.addToParty(id);
           this.getUi().playSelect();
           this.blockInput = false;
@@ -966,8 +967,8 @@ export class StarterSelectUiHandler extends MessageUiHandler {
     const options: OptionSelectItem[] = [];
 
     const charId = this.lastCharId;
-    const preferences = characterRegistry.getPreferences(charId);
-    const saveData = characterRegistry.getSaveData(charId);
+    const characterState = customRegistry.getCharacterState(charId);
+    const teamSave = customRegistry.getTeamSaveFromCharacter(charId);
 
     let characterContainer: CharacterContainer;
 
@@ -1114,15 +1115,15 @@ export class StarterSelectUiHandler extends MessageUiHandler {
       },
     });
 
-    if (saveData?.isPassiveUnlocked) {
+    if (teamSave?.isPassiveUnlocked) {
       // this is for enabling and disabling the passive
       const label = i18next.t(
-        preferences.passive ? "starterSelectUiHandler:disablePassive" : "starterSelectUiHandler:enablePassive",
+        characterState.passive ? "starterSelectUiHandler:disablePassive" : "starterSelectUiHandler:enablePassive",
       );
       options.push({
         label,
         handler: () => {
-          preferences.passive = true;
+          characterState.passive = true;
           ui.setMode(UiMode.STARTER_SELECT);
           this.setCharDetails(charId);
           return true;
@@ -1130,15 +1131,15 @@ export class StarterSelectUiHandler extends MessageUiHandler {
       });
     }
     // if container.favorite is false, show the favorite option
-    const isFavorite = preferences?.favorite ?? false;
+    const isFavorite = characterState?.favorite ?? false;
     if (isFavorite) {
       options.push({
         label: i18next.t("starterSelectUiHandler:removeFromFavorites"),
         handler: () => {
-          preferences.favorite = false;
+          characterState.favorite = false;
           // if the starter container not exists, it means the species is not in the filtered starters
           if (characterContainer) {
-            characterContainer.favoriteIcon.setVisible(preferences.favorite);
+            characterContainer.favoriteIcon.setVisible(characterState.favorite);
           }
           ui.setMode(UiMode.STARTER_SELECT);
           return true;
@@ -1148,10 +1149,10 @@ export class StarterSelectUiHandler extends MessageUiHandler {
       options.push({
         label: i18next.t("starterSelectUiHandler:addToFavorites"),
         handler: () => {
-          preferences.favorite = true;
+          characterState.favorite = true;
           // if the starter container not exists, it means the species is not in the filtered starters
           if (characterContainer) {
-            characterContainer.favoriteIcon.setVisible(preferences.favorite);
+            characterContainer.favoriteIcon.setVisible(characterState.favorite);
           }
           ui.setMode(UiMode.STARTER_SELECT);
           return true;
@@ -1210,8 +1211,8 @@ export class StarterSelectUiHandler extends MessageUiHandler {
     } else if (this.randomCursorObj.visible) {
       [success, error] = this.processRandomCursorInput(button);
     } else if (button === Button.ACTION) {
-      const saveData = characterRegistry.getSaveData(this.lastCharId);
-      if (!saveData?.isTeamUnlocked) {
+      const teamSave = customRegistry.getTeamSaveFromCharacter(this.lastCharId);
+      if (!teamSave?.isTeamUnlocked) {
         error = true;
       } else if (this.partyCharacterIds.length <= 6) {
         this.openPokemonMenu();
@@ -1263,7 +1264,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
 
   private addToParty(id: CharacterId): void {
     const gender = Gender.FEMALE;
-    const char = characterRegistry.getCharacter(id);
+    const char = customRegistry.getCharacter(id);
     const species = speciesRegistry.getSpecies(getSpeciesId(char));
     const props = getIconProps(char);
     this.partyIcons[this.partyCharacterIds.length].setTexture(species.getIconAtlasKey());
@@ -1275,7 +1276,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
   }
 
   private updatePartyIcon(id: CharacterId, index: number): void {
-    const char = characterRegistry.getCharacter(id);
+    const char = customRegistry.getCharacter(id);
     const species = getSpecies(id);
 
     let { gender, formIndex, shiny } = getIconProps(char);
@@ -1300,9 +1301,9 @@ export class StarterSelectUiHandler extends MessageUiHandler {
     // Put the new move where it's supposed to go.
     this.activeMoves[targetIndex] = newMove;
     // Update the saved preferences.
-    const preference = characterRegistry.getPreferences(this.lastCharId);
-    preference.activeMoves = this.activeMoves;
-    preference.reserveMoves = this.reserveMoves;
+    const characterState = customRegistry.getCharacterState(this.lastCharId);
+    characterState.activeMoves = this.activeMoves;
+    characterState.reserveMoves = this.reserveMoves;
 
     this.hasSwappedMoves = true;
     this.setCharDetails(this.lastCharId);
@@ -1329,11 +1330,11 @@ export class StarterSelectUiHandler extends MessageUiHandler {
   }
 
   private filterStarters(): void {
-    this.filteredCharIds = characterRegistry.getAllCharacterIds().filter(id => {
-      const char = characterRegistry.getCharacter(id);
+    this.filteredCharIds = getEnumValues(CharacterId).filter(id => {
+      const char = customRegistry.getCharacter(id);
       const speciesId = getSpeciesId(char);
       const species = speciesRegistry.getSpecies(speciesId);
-      const saveData = characterRegistry.getSaveData(id);
+      const saveData = customRegistry.getTeamSaveFromCharacter(id);
 
       // Type filter
       const fitsType = this.filterBar
@@ -1347,7 +1348,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
       });
 
       // Favorite Filter
-      const isFavorite = characterRegistry.getPreferences(id).favorite || false;
+      const isFavorite = customRegistry.getCharacterState(id).favorite || false;
       const fitsFavorite = this.filterBar.getVals(DropDownColumn.MISC).some(misc => {
         if (misc.val === "FAVORITE" && misc.state === DropDownState.ON) {
           return isFavorite;
@@ -1379,8 +1380,8 @@ export class StarterSelectUiHandler extends MessageUiHandler {
       container.setVisible(true);
 
       const charId = this.filteredCharIds[offset_i];
-      const char = characterRegistry.getCharacter(charId);
-      const saveData = characterRegistry.getSaveData(charId);
+      const char = customRegistry.getCharacter(charId);
+      const teamSave = customRegistry.getTeamSaveFromCharacter(charId);
       const species = getSpecies(charId);
       const { gender, formIndex, shiny, variant } = getIconProps(char);
 
@@ -1392,7 +1393,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
         container.species.getIconId(gender ?? Gender.NONBINARY, formIndex, shiny),
       );
 
-      if (saveData?.isTeamUnlocked) {
+      if (teamSave?.isTeamUnlocked) {
         container.icon.clearTint();
       } else {
         container.icon.setTint(0);
@@ -1412,10 +1413,10 @@ export class StarterSelectUiHandler extends MessageUiHandler {
       container.shinyIcons[1].setVisible(false);
       container.shinyIcons[2].setVisible(false);
 
-      container.starterPassiveBgs.setVisible(saveData?.isPassiveUnlocked || false);
-      container.hiddenAbilityIcon.setVisible(saveData?.isAbilityUnlocked || false);
-      container.classicWinIcon.setVisible((saveData?.winCount || 0) > 0).setTexture("champion_ribbon");
-      container.favoriteIcon.setVisible(characterRegistry.getPreferences(charId).favorite);
+      container.starterPassiveBgs.setVisible(teamSave?.isPassiveUnlocked || false);
+      container.hiddenAbilityIcon.setVisible(teamSave?.isAbilityUnlocked || false);
+      container.classicWinIcon.setVisible((teamSave?.winCount || 0) > 0).setTexture("champion_ribbon");
+      container.favoriteIcon.setVisible(customRegistry.getCharacterState(charId).favorite);
       this.setUpgradeAnimation(container.icon);
     });
   }
@@ -1438,7 +1439,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
       const characterId = this.starterContainers[cursor].charId;
 
       if (characterId) {
-        this.setCharacter(characterRegistry.getCharacter(characterId));
+        this.setCharacter(customRegistry.getCharacter(characterId));
       } else {
         this.setNoStarter();
       }
@@ -1468,7 +1469,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
     );
     if (this.partyCharacterIds.length > 0) {
       this.partyCursorObj.setVisible(true);
-      this.setPartyStarter(characterRegistry.getCharacter(this.partyCharacterIds[index]));
+      this.setPartyStarter(customRegistry.getCharacter(this.partyCharacterIds[index]));
     } else {
       this.partyCursorObj.setVisible(false);
       this.setNoStarter();
@@ -1499,7 +1500,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
    * @param id - the id of the new starter
    */
   private setCharacter(char: Character): void {
-    const saveData = characterRegistry.getSaveData(char.id);
+    const saveData = customRegistry.getTeamSaveFromCharacter(char.id);
 
     // Stop animation for the previously selected starter
     if (this.lastCharId && getSpecies(this.lastCharId)) {
@@ -1514,8 +1515,9 @@ export class StarterSelectUiHandler extends MessageUiHandler {
     if (saveData?.isTeamUnlocked) {
       this.setCharDetails(char);
       this.startIconAnimation(this.cursor);
-      this.activeMoves = characterRegistry.getActiveMoves(char.id);
-      this.reserveMoves = characterRegistry.getReserveMoves(char.id);
+      const characterState = customRegistry.getCharacterState(char);
+      this.activeMoves = characterState.activeMoves;
+      this.reserveMoves = characterState.reserveMoves;
     } else {
       this.activeMoves = blankMoveSet;
       this.reserveMoves = blankMoveSet;
@@ -1525,8 +1527,8 @@ export class StarterSelectUiHandler extends MessageUiHandler {
   private setPartyStarter(char: Character): void {
     this.starterSummary.setCharacter(char);
 
-    if (characterRegistry.getSaveData(char.id)?.isTeamUnlocked) {
-      this.setCharDetails(char.id);
+    if (customRegistry.getTeamSaveFromCharacter(char)?.isTeamUnlocked) {
+      this.setCharDetails(char);
     }
   }
 
@@ -1554,7 +1556,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
     }
 
     const lastStarterIcon = container.icon;
-    const char = characterRegistry.getCharacter(container.charId);
+    const char = customRegistry.getCharacter(container.charId);
     let { gender, formIndex, shiny, variant } = getIconProps(char);
     gender = gender || Gender.NONBINARY;
     this.checkIconId(lastStarterIcon, container.species, gender, formIndex, shiny);
@@ -1570,7 +1572,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
    * @param charId - the id of the new character
    */
   private setCharDetails(input: CharacterInput): void {
-    const [id, char] = unfold(input);
+    const [id, char] = unfoldC(input);
     const [gender, formIndex, shiny] = [getGender(char), getFormIndex(char), isShiny(char)];
     this.starterSummary.setStarterDetails(char);
 
@@ -1598,7 +1600,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
 
     for (let s = 0; s < this.partyCharacterIds.length; s++) {
       const charId = this.partyCharacterIds[s];
-      const char = characterRegistry.getCharacter(charId);
+      const char = customRegistry.getCharacter(charId);
       const species = getSpecies(charId);
       let { gender, formIndex, shiny, variant } = getIconProps(char);
       gender = gender || Gender.NONBINARY;
@@ -1660,7 +1662,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
     };
 
     const startRun = () => {
-      const chars = characterRegistry.getCharacters(this.partyCharacterIds);
+      const chars = this.partyCharacterIds.map(c => customRegistry.getCharacter(c));
       globalScene.money = globalScene.gameMode.getStartingMoney();
       globalScene.chars = chars;
       ui.setMode(UiMode.STARTER_SELECT);

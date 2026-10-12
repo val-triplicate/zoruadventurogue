@@ -1,4 +1,3 @@
-import type { Character } from "#data/characters/character";
 import { getFormIndex, getGender, getName, isShiny } from "#data/characters/character-identities";
 import { getDefaultActiveMoves, getDefaultReserveMoves } from "#data/characters/character-move-pools";
 import { Gender } from "#data/gender";
@@ -8,6 +7,7 @@ import type { PokemonType } from "#enums/pokemon-type";
 import type { Variant } from "#sprites/variant";
 import type { PreferenceDataMap } from "#types/pokemon-species";
 import type { IconProps } from "#types/save-data";
+import type { Character } from "../data/characters/constant-data/character-data-objects";
 
 export class CharacterState {
   abilityIndex: number;

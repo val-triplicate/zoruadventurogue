@@ -1,13 +1,13 @@
 import { globalScene } from "#app/global-scene";
-import type { Character } from "#data/characters/character";
 import { getSpecies } from "#data/characters/character-identities";
+import type { CharacterId } from "#data/characters/types/character-types-enums";
 import { Gender } from "#data/gender";
 import type { PokemonSpecies } from "#data/pokemon-species";
-import type { CharacterId } from "#enums/character-id";
 import { TextStyle } from "#enums/text-style";
 import { getDefaultIconProps } from "#types/character-state";
 import type { IconProps } from "#types/save-data";
 import { addTextObject } from "#ui/text";
+import type { Character } from "../../data/characters/constant-data/character-data-objects";
 
 export class CharacterContainer extends Phaser.GameObjects.Container {
   public charId: CharacterId;

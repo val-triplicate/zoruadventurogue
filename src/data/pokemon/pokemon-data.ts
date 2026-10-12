@@ -17,7 +17,6 @@ import type { ObtainStatusEffectPhase } from "#phases/obtain-status-effect-phase
 import type { AttackMoveResult } from "#types/attack-move-result";
 import type { SerializedSpeciesForm } from "#types/pokemon-common";
 import type { TurnMove } from "#types/turn-move";
-import type { CoerceNullPropertiesToUndefined } from "#types/type-helpers";
 
 /**
  * Permanent data that can customize a Pokemon in non-standard ways from its Species.
@@ -62,24 +61,6 @@ function deserializePokemonSpeciesForm(value: SerializedSpeciesForm | PokemonSpe
   }
 
   return speciesRegistry.getPokemonSpeciesForm(id, formIdx);
-}
-
-interface SerializedPokemonSummonData {
-  statStages: number[];
-  moveQueue: TurnMove[];
-  tags: BattlerTag[];
-  abilitySuppressed: boolean;
-  abilitiesApplied: AbilityId[];
-  speciesForm?: SerializedSpeciesForm | undefined;
-  ability?: AbilityId | undefined;
-  passiveAbility?: AbilityId | undefined;
-  gender?: Gender | undefined;
-  stats: number[];
-  moveset?: PokemonMove[] | undefined;
-  types: PokemonType[];
-  addedType?: PokemonType | undefined;
-  berriesEatenLast: BerryType[];
-  moveHistory: TurnMove[];
 }
 
 /**
@@ -138,7 +119,7 @@ export class PokemonSummonData {
   // TODO: Rework this into a sort of "global move history" that also allows checking execution order (for Fusion Bolt/Flare)
   public moveHistory: TurnMove[] = [];
 
-  constructor(source?: PokemonSummonData | SerializedPokemonSummonData) {
+  constructor(source?: PokemonSummonData) {
     if (source == null) {
       return;
     }
@@ -177,36 +158,9 @@ export class PokemonSummonData {
       this[key] = value;
     }
   }
-
-  /**
-   * Serialize this PokemonSummonData to JSON, converting {@linkcode PokemonSpeciesForm}
-   * into simpler types instead of serializing all of their fields.
-   *
-   * @remarks
-   * - `IllusionData.fusionSpecies` is serialized as just the species ID
-   * - `PokemonSpeciesForm` and `PokemonSpeciesForm.fusionSpeciesForm` are converted into {@linkcode SerializedSpeciesForm} objects
-   */
-  public toJSON(): SerializedPokemonSummonData {
-    // Pokemon species forms are never saved, only the species ID.
-    const speciesForm = this.speciesForm;
-    const t = {
-      // the "as omit" is required to avoid TS resolving the overwritten properties to "never"
-      // We coerce null to undefined in the type, as the for loop below replaces `null` with `undefined`
-      ...(this as Omit<CoerceNullPropertiesToUndefined<PokemonSummonData>, "speciesForm">),
-      speciesForm: speciesForm == null ? undefined : { id: speciesForm.speciesId, formIdx: speciesForm.formIndex },
-      abilitiesApplied: [...this.abilitiesApplied.values()],
-    };
-    // Replace `null` with `undefined`, as `undefined` never gets serialized
-    for (const [key, value] of Object.entries<unknown>(t)) {
-      if (value === null) {
-        t[key] = undefined;
-      }
-    }
-    return t;
-  }
 }
 
-// TODO: Merge this inside `PokemonSummmonData` and exclude from save via `toJSON`
+// TODO: Merge this inside `PokemonSummonData` and exclude from save via `toJSON`
 export class PokemonTempSummonData {
   /**
    * The number of turns this pokemon has spent without switching out.
@@ -302,16 +256,9 @@ export class PokemonTurnData {
 
   public acted = false;
   public order: number;
-  /** Whether the Pokemon was brought in this turn by a switch action (not an intial encounter/summon) */
+  /** Whether the Pokemon was brought in this turn by a switch action (not an initial encounter/summon) */
   public switchedInThisTurn = false;
   public summonedThisTurn = false;
-
-  // TODO: This effectively only exists for castform/cherrim and is really ugly; revisit after form change rework
-  /**
-   * Tracker for what abilities have been applied due to form changes during this turn. \
-   * Used to prevent infinite loops from form change abilities triggering their own transformation conditions.
-   */
-  public formChangeAbilitiesApplied = new Set<AbilityId>();
 
   /**
    * Tracker for a pending status effect.

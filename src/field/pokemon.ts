@@ -34,6 +34,7 @@ import {
   TarShotTag,
   TrappedTag,
 } from "#data/battler-tags";
+import type { CharacterId } from "#data/characters/types/character-types-enums";
 import { allAbilities, allMoves } from "#data/data-lists";
 import { getLevelTotalExp } from "#data/exp";
 import { Gender } from "#data/gender";
@@ -62,7 +63,6 @@ import { BattlerIndex } from "#enums/battler-index";
 import { BattlerTagLapseType } from "#enums/battler-tag-lapse-type";
 import { BattlerTagType } from "#enums/battler-tag-type";
 import type { BerryType } from "#enums/berry-type";
-import type { CharacterId } from "#enums/character-id";
 import { DexAttr } from "#enums/dex-attr";
 import { ExpGainsSpeed } from "#enums/exp-gains-speed";
 import { FieldPosition } from "#enums/field-position";

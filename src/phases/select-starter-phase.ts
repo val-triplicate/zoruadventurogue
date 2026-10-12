@@ -1,9 +1,9 @@
 import { audioManager } from "#app/global-audio-manager";
-import { characterRegistry } from "#app/global-character-data-registry";
 import { globalScene } from "#app/global-scene";
 import { Phase } from "#app/phase";
-import type { Character } from "#data/characters/character";
 import { getSpeciesId } from "#data/characters/character-identities";
+import type { Character } from "#data/characters/constant-data/character-data-objects";
+import { customRegistry } from "#data/characters/live-data/custom-registry";
 import { blankMoveSet } from "#data/moveset";
 import { UiMode } from "#enums/ui-mode";
 import { overrideHeldItems, overrideModifiers } from "#modifiers/modifier";
@@ -36,24 +36,24 @@ export class SelectStarterPhase extends Phase {
     const party = globalScene.getPlayerParty();
     const loadPokemonAssets: Promise<void>[] = [];
     globalScene.getCharacters().forEach((char: Character) => {
-      const preferences = characterRegistry.getPreferences(char.id);
+      const characterState = customRegistry.getCharacterState(char);
 
       const starterPokemon = globalScene.addPlayerPokemon(
         char.id,
         getSpeciesId(char),
         globalScene.gameMode.getStartingLevel(),
-        preferences.abilityIndex,
-        preferences.formIndex,
-        preferences.gender,
-        preferences.shiny,
-        preferences.nature,
+        characterState.abilityIndex,
+        characterState.formIndex,
+        characterState.gender,
+        characterState.shiny,
+        characterState.nature,
       );
 
-      starterPokemon.tryPopulateMoveset(preferences.activeMoves || blankMoveSet);
-      starterPokemon.passive = preferences.passive;
+      starterPokemon.tryPopulateMoveset(characterState.activeMoves || blankMoveSet);
+      starterPokemon.passive = characterState.passive;
       starterPokemon.luck = 0;
       starterPokemon.nickname = char.identity?.name;
-      starterPokemon.teraType = preferences.tera || starterPokemon.species.type1;
+      starterPokemon.teraType = characterState.tera || starterPokemon.species.type1;
       starterPokemon.setVisible(false);
       party.push(starterPokemon);
       loadPokemonAssets.push(starterPokemon.loadAssets());

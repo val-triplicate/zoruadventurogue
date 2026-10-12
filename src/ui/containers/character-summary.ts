@@ -1,9 +1,9 @@
-import { characterRegistry } from "#app/global-character-data-registry";
 import { globalScene } from "#app/global-scene";
 import { speciesRegistry } from "#app/global-species-data-registry";
-import type { Character } from "#data/characters/character";
 import { getAbility, getNature, getPassive, getTeraType } from "#data/characters/character-balance";
 import { getFormIndex, getGender, getName, getSpeciesId, isShiny } from "#data/characters/character-identities";
+import { customRegistry } from "#data/characters/live-data/custom-registry";
+import { type CharacterInput, unfoldC } from "#data/characters/utils/character-input";
 import { allAbilities, allMoves } from "#data/data-lists";
 import { GrowthRate, getGrowthRateColor } from "#data/exp";
 import { type Gender, getGenderColor, getGenderSymbol } from "#data/gender";
@@ -23,6 +23,7 @@ import { toCamelCase, toTitleCase } from "#utils/strings";
 import i18next from "i18next";
 import type { GameObjects } from "phaser";
 import type BBCodeText from "phaser3-rex-plugins/plugins/bbcodetext";
+import type { Character } from "../../data/characters/constant-data/character-data-objects";
 
 export class CharacterSummary extends Phaser.GameObjects.Container {
   private readonly pokemonSprite: Phaser.GameObjects.Sprite;
@@ -373,17 +374,18 @@ export class CharacterSummary extends Phaser.GameObjects.Container {
     this.cleanStarterSprite();
   }
 
-  public setCharacter(char: Character): void {
-    const id = char.id;
-    const saveData = characterRegistry.getSaveData(id);
-    const preferences = characterRegistry.getPreferences(id);
+  public setCharacter(input: CharacterInput): void {
+    const [id, char] = unfoldC(input);
+
+    const teamSave = customRegistry.getTeamSaveFromCharacter(id);
+    const characterState = customRegistry.getCharacterState(id);
     this.speciesId = getSpeciesId(char);
     const species = speciesRegistry.getSpecies(this.speciesId);
 
     this.pokemonAbilityText.off("pointerover");
     this.pokemonPassiveText.off("pointerover");
 
-    if (saveData && saveData.isTeamUnlocked) {
+    if (teamSave && teamSave.isTeamUnlocked) {
       this.setNameAndNumber(char);
       this.characterLockedText.setVisible(false);
       this.pokemonPermanentInfoContainer.setVisible(true);
@@ -400,21 +402,21 @@ export class CharacterSummary extends Phaser.GameObjects.Container {
         .setShadowColor(getGrowthRateColor(species.growthRate, true));
 
       this.pokemonShinyIcon.setY(104);
-      const speciesForm = speciesRegistry.getPokemonSpeciesForm(species.speciesId, preferences.formIndex);
+      const speciesForm = speciesRegistry.getPokemonSpeciesForm(species.speciesId, characterState.formIndex);
       this.setTypeIcons(speciesForm.type1, speciesForm.type2);
 
       this.pokemonSprite.clearTint();
       return;
     }
 
-    this.cleanStarterSprite(char, saveData && saveData.isTeamUnlocked);
+    this.cleanStarterSprite(char, teamSave && teamSave.isTeamUnlocked);
 
     const { gender, formIndex, shiny, variant } = getIconProps(char);
 
     this.updateSprite(species, gender, formIndex, shiny, variant);
     this.pokemonSprite //
       .setVisible(true)
-      .setTint(saveData && saveData.isTeamUnlocked ? 0x808080 : 0x000000);
+      .setTint(teamSave && teamSave.isTeamUnlocked ? 0x808080 : 0x000000);
   }
 
   private cleanStarterSprite(char?: Character, isUnlocked = false): void {
@@ -449,8 +451,8 @@ export class CharacterSummary extends Phaser.GameObjects.Container {
     this.reserveMovesContainer.setVisible(false);
   }
 
-  public setStarterDetails(char: Character): void {
-    const id = char.id;
+  public setStarterDetails(input: CharacterInput): void {
+    const [id, char] = unfoldC(input);
     const species = speciesRegistry.getSpecies(getSpeciesId(char));
     const shiny = isShiny(char);
     const gender = getGender(char);
@@ -503,15 +505,15 @@ export class CharacterSummary extends Phaser.GameObjects.Container {
       });
     }
 
-    const preference = characterRegistry.getPreferences(id);
+    const characterState = customRegistry.getCharacterState(char);
 
-    this.updateMoveset(preference.activeMoves);
-    this.updateReserveMoves(preference.reserveMoves);
+    this.updateMoveset(characterState.activeMoves);
+    this.updateReserveMoves(characterState.reserveMoves);
     this.updatePassiveDisplay(char);
 
     this.pokemonNatureText.setText(getNatureName(getNature(char), true, true, false));
 
-    const speciesForm = characterRegistry.getPokemonSpeciesForm(id, formIndex);
+    const speciesForm = speciesRegistry.getPokemonSpeciesForm(char.identity.speciesId, 0);
     this.setTypeIcons(speciesForm.type1, speciesForm.type2);
 
     let newTeraType = teraType;
@@ -522,13 +524,15 @@ export class CharacterSummary extends Phaser.GameObjects.Container {
     this.teraIcon.setVisible(true);
   }
 
-  private updatePassiveDisplay(char: Character): void {
+  private updatePassiveDisplay(input: CharacterInput): void {
+    const [id, char] = unfoldC(input);
+
     this.pokemonPassiveLabelText.setVisible(false);
     this.pokemonPassiveText.setVisible(false);
     this.pokemonPassiveDisabledIcon.setVisible(false);
     this.pokemonPassiveLockedIcon.setVisible(false);
 
-    const saveData = characterRegistry.getSaveData(char.id);
+    const saveData = customRegistry.getTeamSaveFromCharacter(id);
 
     const passiveAbility = allAbilities[getPassive(char)];
 

@@ -1,10 +1,10 @@
-import type { Character } from "#data/characters/character";
 import type { BattlerIndex } from "#enums/battler-index";
 import type { TextStyle } from "#enums/text-style";
 import type { UiMode } from "#enums/ui-mode";
 import type { BaseOptionSelectUiHandler } from "#ui/base-option-select-ui-handler";
 import type Phaser from "phaser";
 import type InputText from "phaser3-rex-plugins/plugins/gameobjects/dom/inputtext/InputText";
+import type { Character } from "../data/characters/constant-data/character-data-objects";
 
 export interface TextStyleOptions {
   scale: number;

@@ -1,7 +1,7 @@
+import type { MovePool } from "#data/characters/types/character-types-objects";
 import { MoveId } from "#enums/move-id";
 import { PokemonMove } from "#moves/pokemon-move";
 
-export type MovePool = [MoveId, MoveId, MoveId, MoveId, MoveId, MoveId, MoveId, MoveId];
 export type MoveSet = [MoveId, MoveId, MoveId, MoveId];
 export type CurrentMoves = [PokemonMove, PokemonMove, PokemonMove, PokemonMove];
 

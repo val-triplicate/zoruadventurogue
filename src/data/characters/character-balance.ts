@@ -1,25 +1,11 @@
 import { getSpecies } from "#data/characters/character-identities";
-import { type CharacterInput, fromIdSafely } from "#data/characters/character-utils";
+import { BALANCES } from "#data/characters/data-maps/character-maps-objects";
+import { CharacterId } from "#data/characters/types/character-types-enums";
+import type { CharacterBalance } from "#data/characters/types/character-types-objects";
+import { type CharacterInput, fromCIdSafely } from "#data/characters/utils/character-input";
 import { AbilityId } from "#enums/ability-id";
-import { CharacterId } from "#enums/character-id";
 import { Nature } from "#enums/nature";
 import { PokemonType } from "#enums/pokemon-type";
-
-const BALANCES: Map<CharacterId, CharacterBalance> = new Map();
-
-export class CharacterBalance {
-  ability?: AbilityId;
-  passive?: AbilityId;
-  nature?: Nature;
-  teraType?: PokemonType;
-
-  constructor(ability?: AbilityId, passive?: AbilityId, nature?: Nature, teraType?: PokemonType) {
-    this.ability = ability ?? AbilityId.NONE;
-    this.ability = passive ?? AbilityId.NONE;
-    this.nature = nature ?? Nature.DOCILE;
-    this.teraType = teraType ?? PokemonType.NORMAL;
-  }
-}
 
 export function initBalances() {
   BALANCES.set(CharacterId.VM_VAPOREON, {
@@ -53,7 +39,7 @@ export function initBalances() {
 }
 
 export function getBalance(input: CharacterInput): CharacterBalance {
-  return fromIdSafely(input, id => BALANCES.get(id), {});
+  return fromCIdSafely(input, id => BALANCES.get(id), {});
 }
 
 export function getAbility(input: CharacterInput): AbilityId {

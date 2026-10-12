@@ -1,9 +1,8 @@
 import { pokerogueApi } from "#api/api";
 import { clientSessionId, getSessionDataLocalStorageKey, loggedInUser, updateUserInfo } from "#app/account";
-import { defaultTeams, saveKey } from "#app/constants";
+import { saveKey } from "#app/constants";
 import { globalScene } from "#app/global-scene";
 import { settings } from "#app/global-settings-manager";
-import { teamRegistry } from "#app/global-team-data-registry";
 import { activeOverrides } from "#app/overrides";
 import { isIos } from "#app/touch-controls";
 import { Tutorial } from "#app/tutorial";
@@ -43,7 +42,7 @@ import type {
   SeenDialogues,
   SessionSaveData,
   SystemSaveData,
-  TeamSaveData,
+  TeamSave,
   TutorialFlags,
   Unlocks,
 } from "#types/save-data";
@@ -68,7 +67,7 @@ const ErrorMessages = {
 export class GameData {
   public trainerId: number;
   public secretId: number;
-  public teamSaveData: TeamSaveData;
+  public teamSaveData: TeamSave;
 
   public gameStats: GameStats;
   public runHistory: RunHistoryData;
@@ -103,7 +102,6 @@ export class GameData {
     };
     this.achvUnlocks = {};
     this.unlockPity = [0, 0, 0, 0];
-    this.initCharacterData();
   }
 
   public getSystemSaveData(): SystemSaveData {
@@ -1312,23 +1310,6 @@ export class GameData {
     if (!isIos()) {
       saveFile.click();
     }
-  }
-
-  private initCharacterData(): void {
-    const teamSaveData: TeamSaveData = {};
-
-    const teams = teamRegistry.getAllTeams();
-    for (const team of teams) {
-      teamSaveData[team.id] = {
-        isTeamUnlocked: (team && defaultTeams.includes(team.id)) || false,
-        isAbilityUnlocked: false,
-        isPassiveUnlocked: false,
-        runCount: 0n,
-        winCount: 0n,
-      };
-    }
-
-    this.teamSaveData = teamSaveData;
   }
 
   /**
