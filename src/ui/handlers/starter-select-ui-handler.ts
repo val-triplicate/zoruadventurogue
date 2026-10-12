@@ -678,16 +678,16 @@ export class StarterSelectUiHandler extends MessageUiHandler {
           break;
         }
 
-        const validTeamMembers = this.filteredCharIds.filter(charId => {
-          return !this.isInParty(charId) && customRegistry.getTeamSaveFromCharacter(charId).isTeamUnlocked;
+        const validCharIds = this.filteredCharIds.filter(charId => {
+          return !this.isInParty(charId)[0] && customRegistry.getTeamSaveFromCharacter(charId).isTeamUnlocked;
         });
-        if (validTeamMembers.length === 0) {
+        if (validCharIds.length === 0) {
           this.blockInput = false;
           error = true;
           break;
         }
 
-        const id = validTeamMembers[Math.floor(Math.random() * validTeamMembers.length)];
+        const id = validCharIds[Math.floor(Math.random() * validCharIds.length)];
         const char = customRegistry.getCharacter(id);
         const characterState = customRegistry.getCharacterState(id);
         this.setCharacter(char);
