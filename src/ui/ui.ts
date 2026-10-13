@@ -72,7 +72,6 @@ const noTransitionModes = [
   UiMode.SETTINGS_GAMEPAD,
   UiMode.SETTINGS_KEYBOARD,
   UiMode.ACHIEVEMENTS,
-  UiMode.GAME_STATS,
   UiMode.LOADING,
   UiMode.UNAVAILABLE,
   UiMode.RENAME_POKEMON,

@@ -901,15 +901,8 @@ export class SummaryUiHandler extends UiHandler {
                 ? TextStyle.SUMMARY_STATS_PINK
                 : TextStyle.SUMMARY_STATS_BLUE,
           );
-          const ivLabel = addTextObject(
-            116 * colIndex + (colIndex === 1 ? 5 : 0),
-            16 * rowIndex,
-            statName,
-            this.pokemon?.ivs[stat] === 31 ? TextStyle.SUMMARY_STATS_GOLD : TextStyle.SUMMARY_STATS,
-          );
 
           statLabel.setOrigin(0.5, 0);
-          ivLabel.setOrigin(0.5, 0);
           this.permStatsContainer.add(statLabel);
 
           // TODO: are those bangs correct?
@@ -917,13 +910,10 @@ export class SummaryUiHandler extends UiHandler {
             stat === Stat.HP
               ? `${formatStat(this.pokemon?.hp!, true)}/${formatStat(this.pokemon?.getMaxHp()!, true)}`
               : formatStat(this.pokemon?.getStat(stat)!);
-          const ivText = `${this.pokemon?.ivs[stat]}/31`;
 
           const statValue = addTextObject(93 + 93 * colIndex, 16 * rowIndex, statValueText, TextStyle.WINDOW_ALT);
           statValue.setOrigin(1, 0);
           this.permStatsContainer.add(statValue);
-          const ivValue = addTextObject(93 + 93 * colIndex, 16 * rowIndex, ivText, TextStyle.WINDOW_ALT);
-          ivValue.setOrigin(1, 0);
         });
 
         const itemModifiers = (

@@ -17,6 +17,7 @@ import type { ObtainStatusEffectPhase } from "#phases/obtain-status-effect-phase
 import type { AttackMoveResult } from "#types/attack-move-result";
 import type { SerializedSpeciesForm } from "#types/pokemon-common";
 import type { TurnMove } from "#types/turn-move";
+import type { CoerceNullPropertiesToUndefined } from "#types/type-helpers";
 
 /**
  * Permanent data that can customize a Pokemon in non-standard ways from its Species.
@@ -61,6 +62,26 @@ function deserializePokemonSpeciesForm(value: SerializedSpeciesForm | PokemonSpe
   }
 
   return speciesRegistry.getPokemonSpeciesForm(id, formIdx);
+}
+
+interface SerializedPokemonSummonData {
+  statStages: number[];
+  moveQueue: TurnMove[];
+  tags: BattlerTag[];
+  abilitySuppressed: boolean;
+  abilitiesApplied: AbilityId[];
+  speciesForm?: SerializedSpeciesForm | undefined;
+  fusionSpeciesForm?: SerializedSpeciesForm | undefined;
+  ability?: AbilityId | undefined;
+  passiveAbility?: AbilityId | undefined;
+  gender?: Gender | undefined;
+  fusionGender?: Gender | undefined;
+  stats: number[];
+  moveset?: PokemonMove[] | undefined;
+  types: PokemonType[];
+  addedType?: PokemonType | undefined;
+  berriesEatenLast: BerryType[];
+  moveHistory: TurnMove[];
 }
 
 /**
@@ -157,6 +178,41 @@ export class PokemonSummonData {
 
       this[key] = value;
     }
+  }
+
+  // This is absolutely used - it's required to properly save Pokemon.
+  // Otherwise, you get a crash trying to iterate over a POJO. (POTSO?)
+  // noinspection JSUnusedGlobalSymbols
+  /**
+   * Serialize this PokemonSummonData to JSON, converting {@linkcode PokemonSpeciesForm} and {@linkcode IllusionData.fusionSpecies}
+   * into simpler types instead of serializing all of their fields.
+   *
+   * @remarks
+   * - `IllusionData.fusionSpecies` is serialized as just the species ID
+   * - `PokemonSpeciesForm` and `PokemonSpeciesForm.fusionSpeciesForm` are converted into {@linkcode SerializedSpeciesForm} objects
+   */
+  public toJSON(): SerializedPokemonSummonData {
+    // Pokemon species forms are never saved, only the species ID.
+    const speciesForm = this.speciesForm;
+    const t = {
+      // the "as omit" is required to avoid TS resolving the overwritten properties to "never"
+      // We coerce null to undefined in the type, as the for loop below replaces `null` with `undefined`
+      ...(this as Omit<
+        CoerceNullPropertiesToUndefined<PokemonSummonData>,
+        "speciesForm" | "fusionSpeciesForm" | "illusion"
+      >),
+      speciesForm: speciesForm == null ? undefined : { id: speciesForm.speciesId, formIdx: speciesForm.formIndex },
+      abilitiesApplied: [...this.abilitiesApplied.values()],
+      turnCount: undefined,
+      waveTurnCount: undefined,
+    };
+    // Replace `null` with `undefined`, as `undefined` never gets serialized
+    for (const [key, value] of Object.entries<unknown>(t)) {
+      if (value === null) {
+        t[key] = undefined;
+      }
+    }
+    return t;
   }
 }
 

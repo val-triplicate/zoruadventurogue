@@ -28,12 +28,7 @@ interface ConditionalMenu {
 enum MenuOptions {
   GAME_SETTINGS,
   ACHIEVEMENTS,
-  STATS,
-  EGG_LIST,
-  EGG_GACHA,
-  POKEDEX,
   MANAGE_DATA,
-  COMMUNITY,
   SAVE_AND_QUIT,
   LOG_OUT,
 }
@@ -54,7 +49,6 @@ export class MenuUiHandler extends OptionSelectUiHandler {
   private readonly excludedMenus: () => ConditionalMenu[];
 
   protected manageDataConfig: OptionSelectModeConfig;
-  protected communityConfig: OptionSelectModeConfig;
 
   public bgmBar: BgmBar;
 
@@ -64,7 +58,7 @@ export class MenuUiHandler extends OptionSelectUiHandler {
     this.excludedMenus = () => [
       {
         excluded: globalScene.phaseManager.getCurrentPhase().is("SelectModifierPhase"),
-        options: [MenuOptions.EGG_GACHA, MenuOptions.EGG_LIST],
+        options: [],
       },
       { excluded: bypassLogin, options: [MenuOptions.LOG_OUT] },
       { excluded: !globalScene.currentBattle, options: [MenuOptions.SAVE_AND_QUIT] },
@@ -429,11 +423,6 @@ export class MenuUiHandler extends OptionSelectUiHandler {
         return true;
       },
     });
-    this.communityConfig = {
-      xOffset: this.optionSelectBg.displayWidth,
-      yOffset: this.menuMessageBox.displayHeight + 1,
-      options: communityOptions,
-    };
     this.setCursor(0);
   }
 
@@ -466,10 +455,6 @@ export class MenuUiHandler extends OptionSelectUiHandler {
         break;
       case MenuOptions.ACHIEVEMENTS:
         ui.setOverlayMode(UiMode.ACHIEVEMENTS);
-        success = true;
-        break;
-      case MenuOptions.STATS:
-        ui.setOverlayMode(UiMode.GAME_STATS);
         success = true;
         break;
       case MenuOptions.MANAGE_DATA:
@@ -541,10 +526,6 @@ export class MenuUiHandler extends OptionSelectUiHandler {
           );
         }
         ui.setOverlayMode(UiMode.MENU_OPTION_SELECT, this.manageDataConfig);
-        success = true;
-        break;
-      case MenuOptions.COMMUNITY:
-        ui.setOverlayMode(UiMode.MENU_OPTION_SELECT, this.communityConfig);
         success = true;
         break;
       case MenuOptions.SAVE_AND_QUIT: {
