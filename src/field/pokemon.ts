@@ -34,6 +34,7 @@ import {
   TarShotTag,
   TrappedTag,
 } from "#data/battler-tags";
+import { getAbility } from "#data/characters/character-balance";
 import type { CharacterId } from "#data/characters/types/character-types-enums";
 import { allAbilities, allMoves } from "#data/data-lists";
 import { getLevelTotalExp } from "#data/exp";
@@ -1616,7 +1617,7 @@ export abstract class Pokemon extends Phaser.GameObjects.Container {
       return allAbilities[this.summonData.ability];
     }
     if (activeOverrides.ABILITY_OVERRIDE && this.isPlayer()) {
-      return allAbilities[activeOverrides.ABILITY_OVERRIDE];
+      return allAbilities[this.ability];
     }
     if (activeOverrides.ENEMY_ABILITY_OVERRIDE && this.isEnemy()) {
       return allAbilities[activeOverrides.ENEMY_ABILITY_OVERRIDE];
@@ -1625,6 +1626,10 @@ export abstract class Pokemon extends Phaser.GameObjects.Container {
       return allAbilities[this.customPokemonData.ability];
     }
     let abilityId = this.getSpeciesForm(ignoreOverride).getAbility(this.abilityIndex);
+
+    if (this.isPlayer() && this.characterId) {
+      abilityId = getAbility(this.characterId);
+    }
     if (abilityId === AbilityId.NONE) {
       abilityId = this.species.ability1;
     }
@@ -4698,12 +4703,13 @@ export abstract class Pokemon extends Phaser.GameObjects.Container {
 
 export class PlayerPokemon extends Pokemon {
   declare protected battleInfo: PlayerBattleInfo;
+  public readonly ability: AbilityId;
 
   constructor(
     charId: CharacterId,
     speciesId: SpeciesId,
     level: number,
-    abilityIndex?: number,
+    ability: AbilityId,
     formIndex?: number,
     gender?: Gender,
     shiny?: boolean,
@@ -4711,9 +4717,10 @@ export class PlayerPokemon extends Pokemon {
     dataSource?: Pokemon | PokemonData,
   ) {
     const maxIvs = [31, 31, 31, 31, 31, 31];
-    super(106, 148, speciesId, level, abilityIndex, formIndex, gender, shiny, 0, maxIvs, nature, dataSource);
+    super(106, 148, speciesId, level, 0, formIndex, gender, shiny, 0, maxIvs, nature, dataSource);
 
     this.characterId = charId;
+    this.ability = ability;
     if (activeOverrides.STATUS_OVERRIDE) {
       this.status = new Status(activeOverrides.STATUS_OVERRIDE, 0, 4, 4);
     }

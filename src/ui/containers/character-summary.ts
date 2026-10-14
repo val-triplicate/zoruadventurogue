@@ -6,7 +6,7 @@ import { customRegistry } from "#data/characters/live-data/custom-registry";
 import { type CharacterInput, unfoldC } from "#data/characters/utils/character-input";
 import { allAbilities, allMoves } from "#data/data-lists";
 import { GrowthRate, getGrowthRateColor } from "#data/exp";
-import { type Gender, getGenderColor, getGenderSymbol } from "#data/gender";
+import { Gender, getGenderColor, getGenderSymbol } from "#data/gender";
 import type { MoveSet } from "#data/moveset";
 import { getNatureName } from "#data/nature";
 import type { PokemonSpecies } from "#data/pokemon-species";
@@ -456,7 +456,6 @@ export class CharacterSummary extends Phaser.GameObjects.Container {
     const species = speciesRegistry.getSpecies(getSpeciesId(char));
     const shiny = isShiny(char);
     const gender = getGender(char);
-    const formIndex = getFormIndex(char);
     const teraType = getTeraType(char);
 
     this.pokemonSprite.setVisible(false);
@@ -474,7 +473,7 @@ export class CharacterSummary extends Phaser.GameObjects.Container {
 
     this.updateSprite(species, getGender(char), getFormIndex(char), shiny, 0);
 
-    if (species.malePercent === null) {
+    if (gender === Gender.GENDERLESS) {
       this.pokemonGenderText.setText("");
     } else {
       this.pokemonGenderText

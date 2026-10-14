@@ -42,7 +42,7 @@ export class SelectStarterPhase extends Phase {
         char.id,
         getSpeciesId(char),
         globalScene.gameMode.getStartingLevel(),
-        characterState.abilityIndex,
+        characterState.ability,
         characterState.formIndex,
         characterState.gender,
         characterState.shiny,

@@ -1,16 +1,18 @@
+import { getAbility } from "#data/characters/character-balance";
 import { getFormIndex, getGender, getName, isShiny } from "#data/characters/character-identities";
 import { getDefaultActiveMoves, getDefaultReserveMoves } from "#data/characters/character-move-pools";
+import type { Character } from "#data/characters/constant-data/character-data-objects";
 import { Gender } from "#data/gender";
 import type { MoveSet } from "#data/moveset";
+import type { AbilityId } from "#enums/ability-id";
 import { Nature } from "#enums/nature";
 import type { PokemonType } from "#enums/pokemon-type";
 import type { Variant } from "#sprites/variant";
 import type { PreferenceDataMap } from "#types/pokemon-species";
 import type { IconProps } from "#types/save-data";
-import type { Character } from "../data/characters/constant-data/character-data-objects";
 
 export class CharacterState {
-  abilityIndex: number;
+  ability: AbilityId;
   passive: boolean;
   favorite: boolean;
   gender: Gender;
@@ -25,7 +27,7 @@ export class CharacterState {
 
   constructor(char: Character) {
     const defaults = getDefaultIconProps(char);
-    this.abilityIndex = 0;
+    this.ability = getAbility(char);
     this.passive = false;
     this.favorite = false;
     this.gender = Gender.GENDERLESS;

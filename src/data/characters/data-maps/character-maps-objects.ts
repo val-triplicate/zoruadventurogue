@@ -1,3 +1,4 @@
+import { initBalances } from "#data/characters/character-balance";
 import { type CharacterIdentity, initIdentities } from "#data/characters/character-identities";
 import { initMovePools } from "#data/characters/character-move-pools";
 import { initBios } from "#data/characters/character-origins";
@@ -25,6 +26,7 @@ export function initEnumMaps() {
 
 export function initObjectMaps() {
   initIdentities();
+  initBalances();
   initMovePools();
   initBios();
 }

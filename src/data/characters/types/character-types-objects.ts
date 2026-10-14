@@ -13,7 +13,7 @@ export class CharacterBalance {
 
   constructor(ability?: AbilityId, passive?: AbilityId, nature?: Nature, teraType?: PokemonType) {
     this.ability = ability ?? AbilityId.NONE;
-    this.ability = passive ?? AbilityId.NONE;
+    this.passive = passive ?? AbilityId.NONE;
     this.nature = nature ?? Nature.DOCILE;
     this.teraType = teraType ?? PokemonType.NORMAL;
   }

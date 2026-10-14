@@ -34,6 +34,7 @@ import { classicFinalBossDialogue } from "#data/dialogue";
 import { Gender } from "#data/gender";
 import type { PokemonSpecies, PokemonSpeciesFilter } from "#data/pokemon-species";
 import { getTypeRgb } from "#data/type";
+import type { AbilityId } from "#enums/ability-id";
 import { BattleType } from "#enums/battle-type";
 import { BattlerTagType } from "#enums/battler-tag-type";
 import { BiomeId } from "#enums/biome-id";
@@ -811,7 +812,7 @@ export class BattleScene extends SceneBase {
     charId: CharacterId,
     speciesId: SpeciesId,
     level: number,
-    abilityIndex?: number,
+    ability: AbilityId,
     formIndex?: number,
     gender?: Gender,
     shiny?: boolean,
@@ -819,17 +820,7 @@ export class BattleScene extends SceneBase {
     dataSource?: Pokemon | PokemonData,
     postProcess?: (playerPokemon: PlayerPokemon) => void,
   ): PlayerPokemon {
-    const pokemon = new PlayerPokemon(
-      charId,
-      speciesId,
-      level,
-      abilityIndex,
-      formIndex,
-      gender,
-      shiny,
-      nature,
-      dataSource,
-    );
+    const pokemon = new PlayerPokemon(charId, speciesId, level, ability, formIndex, gender, shiny, nature, dataSource);
 
     if (postProcess) {
       postProcess(pokemon);

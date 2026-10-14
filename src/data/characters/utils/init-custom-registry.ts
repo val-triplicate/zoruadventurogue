@@ -1,7 +1,11 @@
-import { getBalance } from "#data/characters/character-balance";
-import { getIdentity } from "#data/characters/character-identities";
 import { getOriginIdFromTeam, TEAM_MEMBERS } from "#data/characters/data-maps/character-maps-enums";
-import { getMovePool, initEnumMaps, initObjectMaps } from "#data/characters/data-maps/character-maps-objects";
+import {
+  getBalance,
+  getIdentity,
+  getMovePool,
+  initEnumMaps,
+  initObjectMaps,
+} from "#data/characters/data-maps/character-maps-objects";
 import { type CharacterId, TeamId } from "#data/characters/types/character-types-enums";
 import type {
   CharacterDataMap,

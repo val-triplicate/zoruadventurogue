@@ -1,10 +1,12 @@
 import { globalScene } from "#app/global-scene";
 import { speciesRegistry } from "#app/global-species-data-registry";
+import { getAbility } from "#data/characters/character-balance";
 import type { CharacterId } from "#data/characters/types/character-types-enums";
 import type { Gender } from "#data/gender";
 import type { CurrentMoves } from "#data/moveset";
 import { CustomPokemonData, PokemonBattleData, PokemonSummonData } from "#data/pokemon-data";
 import { Status } from "#data/status-effect";
+import { AbilityId } from "#enums/ability-id";
 import { BattleType } from "#enums/battle-type";
 import type { MoveId } from "#enums/move-id";
 import { Nature } from "#enums/nature";
@@ -24,6 +26,7 @@ export class PokemonData {
   public nickname: string;
   public formIndex: number;
   public abilityIndex: number;
+  public ability: AbilityId;
   public passive: boolean;
   public shiny: boolean;
   public variant: Variant;
@@ -53,7 +56,6 @@ export class PokemonData {
   public summonDataSpeciesFormIndex: number;
 
   public customPokemonData: CustomPokemonData;
-  public fusionCustomPokemonData: CustomPokemonData;
 
   /**
    * Construct a new {@linkcode PokemonData} instance out of a {@linkcode Pokemon}
@@ -74,6 +76,7 @@ export class PokemonData {
       0,
     );
     this.abilityIndex = source.abilityIndex;
+    this.ability = sourcePokemon?.isPlayer() ? getAbility(this.characterId) : AbilityId.NONE;
     this.passive = source.passive;
     this.shiny = source.shiny;
     this.variant = source.variant;
@@ -113,7 +116,6 @@ export class PokemonData {
       sourcePokemon?.summonData.speciesForm?.formIndex ?? source.summonDataSpeciesFormIndex;
 
     this.customPokemonData = new CustomPokemonData(source.customPokemonData);
-    this.fusionCustomPokemonData = new CustomPokemonData(source.fusionCustomPokemonData);
   }
 
   toPokemon(battleType?: BattleType, partyMemberIndex = 0, double = false): Pokemon {
@@ -122,7 +124,7 @@ export class PokemonData {
           this.characterId,
           this.speciesId,
           this.level,
-          this.abilityIndex,
+          this.ability,
           this.formIndex,
           this.gender,
           this.shiny,

@@ -71,17 +71,17 @@ export function getIdentitySafely(id: CharacterId): CharacterIdentity {
 }
 
 export function getName(input: CharacterInput): string {
-  return getIdentity(input).name ?? speciesRegistry.getSpecies(getSpeciesId(input)).name;
+  return getIdentity(input).name || speciesRegistry.getSpecies(getSpeciesId(input)).name;
 }
 
 export function getFormIndex(input: CharacterInput): number {
-  return getIdentity(input).formIndex ?? 0;
+  return getIdentity(input).formIndex || 0;
 }
 
 export function getGender(input: CharacterInput): Gender {
-  return getIdentity(input).gender ?? Gender.GENDERLESS;
+  return getIdentity(input).gender || Gender.GENDERLESS;
 }
 
 export function isShiny(input: CharacterInput): boolean {
-  return getIdentity(input).isShiny ?? false;
+  return getIdentity(input).isShiny || false;
 }
