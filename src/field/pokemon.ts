@@ -40,7 +40,7 @@ import { allAbilities, allMoves } from "#data/data-lists";
 import { getLevelTotalExp } from "#data/exp";
 import { Gender } from "#data/gender";
 import type { VariableMoveTypeAttr } from "#data/moves/move";
-import { blankCurrentMoves, type CurrentMoves, type MoveSet } from "#data/moveset";
+import type { MoveSet } from "#data/moveset";
 import { getNatureStatMultiplier } from "#data/nature";
 import {
   CustomPokemonData,
@@ -196,7 +196,7 @@ export abstract class Pokemon extends Phaser.GameObjects.Container {
   public stats: number[];
   public ivs: number[];
   public nature: Nature;
-  public moves: CurrentMoves;
+  public moves: PokemonMove[];
   /**
    * This Pokemon's current {@link https://m.bulbapedia.bulbagarden.net/wiki/Status_condition#Non-volatile_status | non-volatile status condition},
    * or `null` if none exist.
@@ -333,7 +333,7 @@ export abstract class Pokemon extends Phaser.GameObjects.Container {
       }
 
       if (this.moves === undefined) {
-        this.moves = blankCurrentMoves;
+        this.moves = [];
       }
 
       if (this.variant === undefined) {
@@ -1385,7 +1385,7 @@ export abstract class Pokemon extends Phaser.GameObjects.Container {
    * @param ignoreOverride - Whether to ignore any overrides caused by {@linkcode MoveId.TRANSFORM | Transform}; default `false`
    * @returns An array of {@linkcode PokemonMove}, as described above.
    */
-  public getMoveset(ignoreOverride = false): CurrentMoves {
+  public getMoveset(ignoreOverride = false): PokemonMove[] {
     // Override moveset based on arrays specified in overrides.ts
     const overrideArray = coerceArray(
       this.isPlayer() ? activeOverrides.MOVESET_OVERRIDE : activeOverrides.ENEMY_MOVESET_OVERRIDE,
@@ -1394,12 +1394,12 @@ export abstract class Pokemon extends Phaser.GameObjects.Container {
       return !ignoreOverride && this.summonData.moves ? this.summonData.moves : this.moves;
     }
 
-    const moves = blankCurrentMoves;
+    this.moves = [];
 
     // TODO: Preserve PP used while the moveset override is active
     overrideArray.forEach((move: MoveId, index: number) => {
       const ppUsed = this.moves[index]?.ppUsed ?? 0;
-      moves[index] = new PokemonMove(move, Math.min(ppUsed, allMoves[move].pp));
+      this.moves[index] = new PokemonMove(move, Math.min(ppUsed, allMoves[move].pp));
     });
 
     return !ignoreOverride && this.summonData.moves ? this.summonData.moves : this.moves;

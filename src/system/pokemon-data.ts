@@ -3,7 +3,6 @@ import { speciesRegistry } from "#app/global-species-data-registry";
 import { getAbility } from "#data/characters/character-balance";
 import type { CharacterId } from "#data/characters/types/character-types-enums";
 import type { Gender } from "#data/gender";
-import type { CurrentMoves } from "#data/moveset";
 import { CustomPokemonData, PokemonBattleData, PokemonSummonData } from "#data/pokemon-data";
 import { Status } from "#data/status-effect";
 import { AbilityId } from "#enums/ability-id";
@@ -39,10 +38,9 @@ export class PokemonData {
   public stats: number[];
   public ivs: number[];
   public nature: Nature;
-  public moves: CurrentMoves;
+  public moves: PokemonMove[];
   public status: Status | null;
   public luck: number;
-  public pauseEvolutions: boolean;
   public usedTMs: MoveId[];
   public teraType: PokemonType;
   public isTerastallized: boolean;
@@ -91,7 +89,7 @@ export class PokemonData {
 
     // TODO: Can't we move some of this verification stuff to an upgrade script?
     this.nature = source.nature ?? Nature.HARDY;
-    this.moves = source.moveset?.map((m: any) => PokemonMove.loadMove(m)) ?? [];
+    this.moves = source.moves?.map((m: any) => PokemonMove.loadMove(m)) ?? [];
     this.status = source.status
       ? new Status(
           source.status.effect,
@@ -101,7 +99,6 @@ export class PokemonData {
         )
       : null;
     this.luck = source.luck ?? (source.shiny ? source.variant + 1 : 0);
-    this.pauseEvolutions = !!source.pauseEvolutions;
     this.usedTMs = source.usedTMs ?? [];
     this.teraType = source.teraType as PokemonType;
     this.isTerastallized = !!source.isTerastallized;

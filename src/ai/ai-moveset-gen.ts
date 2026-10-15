@@ -42,7 +42,6 @@ import { SUPERCEDED_MOVES } from "#balance/superceded-moves";
 import { tmPoolTiers } from "#balance/tm-pool-tiers";
 import { IS_TEST, isBeta, isDev } from "#constants/app-constants";
 import { allMoves } from "#data/data-lists";
-import { blankCurrentMoves } from "#data/moveset";
 import { AbilityId } from "#enums/ability-id";
 import { BattlerTagType } from "#enums/battler-tag-type";
 import { ModifierTier } from "#enums/modifier-tier";
@@ -1219,7 +1218,7 @@ function debugMoveWeights(pokemon: Pokemon, pool: Map<MoveId, number>, note: str
  */
 export function generateMoveset(pokemon: Pokemon, forceRivalSignatures = false): void {
   globalScene.movesetGenInProgress = true;
-  pokemon.moves = blankCurrentMoves;
+  pokemon.moves = [];
   const isBoss = pokemon.isBoss();
   // Step 1: Generate the pools from various sources: level up, egg moves, and TMs
   const learnPool = getAndWeightLevelMoves(pokemon);

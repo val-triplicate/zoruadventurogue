@@ -1,7 +1,6 @@
 import { audioManager } from "#app/global-audio-manager";
 import { globalScene } from "#app/global-scene";
 import { getPokemonNameWithAffix } from "#app/messages";
-import { toCurrentMoves } from "#data/moveset";
 import type { BattlerIndex } from "#enums/battler-index";
 import { BattlerTagType } from "#enums/battler-tag-type";
 import { MoveId } from "#enums/move-id";
@@ -52,16 +51,14 @@ export class PokemonTransformPhase extends PokemonPhase {
       user.setStatStage(s, target.getStatStage(s));
     }
 
-    user.summonData.moves = toCurrentMoves(
-      target.getMoveset().map(m => {
-        if (m) {
-          // If PP value is less than 5, do nothing. If greater, we need to reduce the value to 5.
-          return new PokemonMove(m.moveId, 0, 0, Math.min(m.getMove().pp, 5));
-        }
-        console.warn(`Transform: somehow iterating over a ${m} value when copying moveset!`);
-        return new PokemonMove(MoveId.NONE);
-      }),
-    );
+    user.summonData.moves = target.getMoveset().map(m => {
+      if (m) {
+        // If PP value is less than 5, do nothing. If greater, we need to reduce the value to 5.
+        return new PokemonMove(m.moveId, 0, 0, Math.min(m.getMove().pp, 5));
+      }
+      console.warn(`Transform: somehow iterating over a ${m} value when copying moveset!`);
+      return new PokemonMove(MoveId.NONE);
+    });
 
     // TODO: This should fallback to the target's original typing if none are left (from Burn Up, etc.)
     user.summonData.types = target.getTypes({ includeTeraType: false });

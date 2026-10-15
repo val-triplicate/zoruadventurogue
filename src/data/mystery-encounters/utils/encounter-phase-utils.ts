@@ -8,7 +8,7 @@ import { BASE_HIDDEN_ABILITY_RATE, BASE_SHINY_CHANCE } from "#balance/rates";
 import { initMoveAnim, loadMoveAnimAssets } from "#data/battle-anims";
 import { modifierTypes } from "#data/data-lists";
 import type { Gender } from "#data/gender";
-import { type MoveSet, toCurrentMoves } from "#data/moveset";
+import type { MoveSet } from "#data/moveset";
 import { getNatureName } from "#data/nature";
 import type { CustomPokemonData } from "#data/pokemon-data";
 import type { PokemonSpecies } from "#data/pokemon-species";
@@ -348,7 +348,7 @@ export async function initBattleWithEnemyConfig(partyConfig: EnemyPartyConfig): 
 
       // Set moves
       if (config.moveSet && config.moveSet.length > 0) {
-        const moves = toCurrentMoves(config.moveSet.map(m => new PokemonMove(m)));
+        const moves = config.moveSet.map(m => new PokemonMove(m));
         enemyPokemon.moves = moves;
         enemyPokemon.summonData.moves = moves;
       }

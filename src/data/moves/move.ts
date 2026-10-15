@@ -30,7 +30,6 @@ import {
 } from "#data/battler-tags";
 import { getBerryEffectFunc } from "#data/berry";
 import { allAbilities, allMoves } from "#data/data-lists";
-import { toCurrentMoves } from "#data/moveset";
 import { getNonVolatileStatusEffects, getStatusEffectHealText, isNonVolatileStatusEffect } from "#data/status-effect";
 import { TerrainType } from "#data/terrain";
 import { getTypeDamageMultiplier } from "#data/type";
@@ -8316,7 +8315,7 @@ export class MovesetCopyMoveAttr extends OverrideMoveEffectAttr {
     }
 
     // Populate summon data with a copy of the current moveset, replacing the copying move with the copied move
-    user.summonData.moves = toCurrentMoves(user.getMoveset().slice(0));
+    user.summonData.moves = user.getMoveset().slice(0);
     user.summonData.moves[thisMoveIndex] = new PokemonMove(copiedMove.id);
 
     globalScene.phaseManager.queueMessage(

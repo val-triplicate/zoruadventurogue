@@ -537,7 +537,7 @@ export class MenuUiHandler extends OptionSelectUiHandler {
           ui.setMode(UiMode.LOADING, {
             buttonActions: [],
             fadeOut: () =>
-              globalScene.gameData.saveAll(true, true, true, true).then(() => {
+              globalScene.gameData.saveAll(true, true, false, true).then(() => {
                 globalScene.reset(true);
               }),
           });

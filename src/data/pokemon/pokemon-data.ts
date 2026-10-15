@@ -2,7 +2,6 @@ import { speciesRegistry } from "#app/global-species-data-registry";
 import type { BattlerTag } from "#data/battler-tags";
 import { loadBattlerTag, SerializableBattlerTag } from "#data/battler-tags";
 import type { Gender } from "#data/gender";
-import type { CurrentMoves } from "#data/moveset";
 import type { PokemonSpeciesForm } from "#data/pokemon-species";
 import type { TypeDamageMultiplier } from "#data/type";
 import type { AbilityId } from "#enums/ability-id";
@@ -119,7 +118,7 @@ export class PokemonSummonData {
   public passiveAbility: AbilityId | undefined;
   public gender: Gender | undefined;
   public stats: number[] = [0, 0, 0, 0, 0, 0];
-  public moves: CurrentMoves | null;
+  public moves: PokemonMove[] | null;
 
   /**
    * An array containing any temporary {@link https://bulbapedia.bulbagarden.net/wiki/Type_change | typing overrides}
