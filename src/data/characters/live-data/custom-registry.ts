@@ -8,7 +8,7 @@ import type {
   TeamSaveDataMap,
 } from "#data/characters/types/character-types-maps";
 import type { Team } from "#data/characters/types/character-types-objects";
-import { type CharacterInput, fromC, fromCId, getCId } from "#data/characters/utils/character-input";
+import { type CharacterInput, fromC, fromCId, getCId, unfoldC } from "#data/characters/utils/character-input";
 import { createCustomRegistry } from "#data/characters/utils/init-custom-registry";
 import { fromT, fromTId, getTId, type TeamInput } from "#data/characters/utils/team-input";
 import type { CharacterState } from "#types/character-state";
@@ -37,6 +37,18 @@ class CustomRegistry {
       id => this.characterData[id],
       char => char,
     );
+  }
+
+  public getTeammateId(input: CharacterInput): CharacterId {
+    const [charId, char] = unfoldC(input);
+    const team = this.getTeamFromCharacter(input);
+    if (team.leader === charId) {
+      return team.follower;
+    }
+    if (team.follower === charId) {
+      return team.leader;
+    }
+    throw new Error("Character ID: " + charId + " was not found in Team ID: " + team.id);
   }
 
   public getCharacterIdsFromTeam(input: TeamId): CharacterId[] {

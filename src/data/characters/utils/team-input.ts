@@ -1,13 +1,26 @@
+import { customRegistry } from "#data/characters/live-data/custom-registry";
 import type { TeamId } from "#data/characters/types/character-types-enums";
 import type { Team } from "#data/characters/types/character-types-objects";
 
 export type TeamInput = TeamId | Team;
 
+export function unfoldT(input: TeamInput): [TeamId, Team] {
+  return [getTId(input), getTObj(input)];
+}
+
 export function getTId(input: TeamInput) {
   return fromT(
     input,
     id => id,
-    char => char.id,
+    team => team.id,
+  );
+}
+
+export function getTObj(input: TeamInput) {
+  return fromT(
+    input,
+    id => customRegistry.getTeam(id),
+    team => team,
   );
 }
 

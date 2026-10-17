@@ -47,6 +47,8 @@ import type { GameObjects } from "phaser";
 
 import Sprite = Phaser.GameObjects.Sprite;
 
+import { type TeamInput, unfoldT } from "#data/characters/utils/team-input";
+
 const COLUMNS = 9;
 const ROWS = 9;
 const STARTER_ICONS_CURSOR_X_OFFSET = -3;
@@ -132,6 +134,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
   private filterBar: FilterBar;
   private filterMode: boolean;
   private filterBarCursor = 0;
+  private showStatsMode: boolean;
 
   private instructionsContainer: StarterSelectInstructionsContainer;
 
@@ -153,6 +156,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
    * whether a save should be performed or not.
    */
   private hasSwappedMoves = false;
+  private isShowingStats = false;
 
   protected blockInput = false;
   private oldCursor = -1;
@@ -694,7 +698,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
         const props = getIconProps(char, characterState);
         const speciesForm = speciesRegistry.getPokemonSpeciesForm(char.identity.speciesId, 0);
         speciesForm.loadAssets(characterState.gender, props.formIndex, props.shiny, props.variant, true).then(() => {
-          this.addToParty(id);
+          this.addTeamToParty(customRegistry.getTeamIdFromCharacter(char));
           this.getUi().playSelect();
           this.blockInput = false;
         });
@@ -821,6 +825,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
         }
         break;
       case Button.ACTION:
+        this.lastCharId = this.partyCharacterIds[this.partyIconsCursorIndex];
         this.openPokemonMenu();
         break;
     }
@@ -1000,7 +1005,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
           this.starterCursorObjs[this.partyCharacterIds.length]
             .setVisible(true)
             .setPosition(this.cursorObj.x, this.cursorObj.y);
-          this.addToParty(charId);
+          this.addTeamToParty(customRegistry.getTeamIdFromCharacter(charId));
           ui.playSelect();
           return true;
         },
@@ -1016,6 +1021,15 @@ export class StarterSelectUiHandler extends MessageUiHandler {
         },
       });
     }
+
+    options.push({
+      label: i18next.t("starterSelectUiHandler:toggleStats"),
+      handler: () => {
+        this.toggleShowStatsMode();
+        ui.setMode(UiMode.STARTER_SELECT);
+        return true;
+      },
+    });
 
     const movePool = getMovePool(charId);
     const showSwapOptions = (activeMoves: MoveSet) => {
@@ -1190,7 +1204,10 @@ export class StarterSelectUiHandler extends MessageUiHandler {
     } else if (this.filterMode) {
       success = this.processFilterModeInput(button);
     } else if (button === Button.CANCEL) {
-      if (this.partyCharacterIds.length > 0) {
+      if (this.showStatsMode) {
+        this.toggleShowStatsMode(false);
+        success = true;
+      } else if (this.partyCharacterIds.length > 0) {
         this.popPartyStarter(this.partyCharacterIds.length - 1);
         success = true;
       } else {
@@ -1264,17 +1281,23 @@ export class StarterSelectUiHandler extends MessageUiHandler {
     return [isDupe, removeIndex];
   }
 
-  private addToParty(id: CharacterId): void {
-    const gender = Gender.FEMALE;
-    const char = customRegistry.getCharacter(id);
-    const species = speciesRegistry.getSpecies(getSpeciesId(char));
+  private addTeamToParty(input: TeamInput): void {
+    const [id, team] = unfoldT(input);
+    this.addCharToParty(team.leader);
+    this.addCharToParty(team.follower);
+    speciesRegistry.getPokemonSpeciesForm(getSpecies(team.leader).speciesId, getIconProps(team.leader).formIndex).cry();
+  }
+
+  private addCharToParty(input: CharacterInput): void {
+    const [id, char] = unfoldC(input);
+    const gender = getGender(input);
+    const species = getSpecies(input);
     const props = getIconProps(char);
     this.partyIcons[this.partyCharacterIds.length].setTexture(species.getIconAtlasKey());
     this.partyIcons[this.partyCharacterIds.length].setFrame(species.getIconId(gender, props.formIndex, props.shiny));
     this.checkIconId(this.partyIcons[this.partyCharacterIds.length], species, gender, props.formIndex, props.shiny);
 
     this.partyCharacterIds.push(id);
-    speciesRegistry.getPokemonSpeciesForm(species.speciesId, props.formIndex).cry();
   }
 
   private updatePartyIcon(id: CharacterId, index: number): void {
@@ -1591,12 +1614,22 @@ export class StarterSelectUiHandler extends MessageUiHandler {
     }
   }
 
+  private popPartyStarter(index: number): void {
+    const teammateId = customRegistry.getTeammateId(this.partyCharacterIds[index]);
+    this.actuallyPopPartyStarter(index);
+    const teammateIndex = this.partyCharacterIds.indexOf(teammateId);
+    if (teammateIndex < 0) {
+      throw new Error("Teammate ID: " + teammateId + " not found in party.");
+    }
+    this.actuallyPopPartyStarter(teammateIndex);
+  }
+
   /**
    * Removes a starter from the party.
    *
    * @param index - the index of the starter to remove in the party.
    */
-  private popPartyStarter(index: number): void {
+  private actuallyPopPartyStarter(index: number): void {
     this.partyCharacterIds.splice(index, 1);
     this.characters.splice(index, 1);
 
@@ -1604,7 +1637,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
       const charId = this.partyCharacterIds[s];
       const char = customRegistry.getCharacter(charId);
       const species = getSpecies(charId);
-      let { gender, formIndex, shiny, variant } = getIconProps(char);
+      let { gender, formIndex, shiny } = getIconProps(char);
       gender = gender || Gender.NONBINARY;
       this.partyIcons[s].setTexture(species.getIconAtlasKey()).setFrame(species.getIconId(gender, formIndex, shiny));
       this.checkIconId(this.partyIcons[s], species, gender, formIndex, shiny);
@@ -1683,6 +1716,15 @@ export class StarterSelectUiHandler extends MessageUiHandler {
       ui.setModeWithoutClear(UiMode.CONFIRM, confirmStartOptions);
     });
     return true;
+  }
+
+  private toggleShowStatsMode(on = !this.showStatsMode): void {
+    this.showStatsMode = on;
+    if (on) {
+      this.starterSummary.showIvs();
+    } else {
+      this.starterSummary.hideIvs(true);
+    }
   }
 
   public override clearText(): void {

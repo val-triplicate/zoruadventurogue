@@ -59,7 +59,12 @@ export function getSpecies(input: CharacterInput): PokemonSpecies {
 }
 
 export function getIdentity(input: CharacterInput): CharacterIdentity {
-  return fromCIdUnsafely(input, id => IDENTITIES.get(id));
+  try {
+    return fromCIdUnsafely(input, id => IDENTITIES.get(id));
+  } catch (e) {
+    console.log("Character not found: " + input);
+    throw e;
+  }
 }
 
 export function getIdentitySafely(id: CharacterId): CharacterIdentity {

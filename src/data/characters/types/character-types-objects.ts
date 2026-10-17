@@ -6,12 +6,14 @@ import { PokemonType } from "#enums/pokemon-type";
 import type { Character } from "../constant-data/character-data-objects";
 
 export class CharacterBalance {
-  ability?: AbilityId;
-  passive?: AbilityId;
-  nature?: Nature;
-  teraType?: PokemonType;
+  stats: BaseStats;
+  ability: AbilityId;
+  passive: AbilityId;
+  nature: Nature;
+  teraType: PokemonType;
 
-  constructor(ability?: AbilityId, passive?: AbilityId, nature?: Nature, teraType?: PokemonType) {
+  constructor(stats?: BaseStats, ability?: AbilityId, passive?: AbilityId, nature?: Nature, teraType?: PokemonType) {
+    this.stats = stats ?? [1, 1, 1, 1, 1, 1];
     this.ability = ability ?? AbilityId.NONE;
     this.passive = passive ?? AbilityId.NONE;
     this.nature = nature ?? Nature.DOCILE;
@@ -20,6 +22,8 @@ export class CharacterBalance {
 }
 
 export type MovePool = [MoveId, MoveId, MoveId, MoveId, MoveId, MoveId, MoveId, MoveId];
+
+export type BaseStats = [number, number, number, number, number, number];
 
 export class Team {
   id: TeamId;

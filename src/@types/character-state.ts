@@ -2,6 +2,7 @@ import { getAbility } from "#data/characters/character-balance";
 import { getFormIndex, getGender, getName, isShiny } from "#data/characters/character-identities";
 import { getDefaultActiveMoves, getDefaultReserveMoves } from "#data/characters/character-move-pools";
 import type { Character } from "#data/characters/constant-data/character-data-objects";
+import type { CharacterInput } from "#data/characters/utils/character-input";
 import { Gender } from "#data/gender";
 import type { MoveSet } from "#data/moveset";
 import type { AbilityId } from "#enums/ability-id";
@@ -49,8 +50,8 @@ export function initPreferences(chars: Character[]): PreferenceDataMap {
   return map;
 }
 
-export function getIconProps(char: Character, preferences?: CharacterState): IconProps {
-  const defaults = getDefaultIconProps(char);
+export function getIconProps(input: CharacterInput, preferences?: CharacterState): IconProps {
+  const defaults = getDefaultIconProps(input);
   return {
     shiny: preferences?.shiny ?? defaults.shiny,
     variant: preferences?.variant ?? defaults.variant,
@@ -59,6 +60,6 @@ export function getIconProps(char: Character, preferences?: CharacterState): Ico
   };
 }
 
-export function getDefaultIconProps(char: Character): IconProps {
-  return { shiny: isShiny(char), gender: getGender(char), variant: 0, formIndex: getFormIndex(char) };
+export function getDefaultIconProps(input: CharacterInput): IconProps {
+  return { shiny: isShiny(input), gender: getGender(input), variant: 0, formIndex: getFormIndex(input) };
 }
