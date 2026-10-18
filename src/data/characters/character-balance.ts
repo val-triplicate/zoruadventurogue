@@ -11,7 +11,7 @@ export function initBalances() {
   BALANCES.set(
     CharacterId.VM_VAPOREON,
     new CharacterBalance(
-      [5, 20, 1, 31, 1, 15],
+      [115, 90, 50, 150, 60, 100],
       AbilityId.WATER_ABSORB,
       AbilityId.BERSERK,
       Nature.RASH,
@@ -28,7 +28,13 @@ export function initBalances() {
 
   BALANCES.set(
     CharacterId.DS_DIA,
-    new CharacterBalance(undefined, AbilityId.MAGIC_BOUNCE, AbilityId.FILTER, Nature.QUIET, PokemonType.GHOST),
+    new CharacterBalance(
+      [1, 200, 1, 1, 200, 1],
+      AbilityId.MAGIC_BOUNCE,
+      AbilityId.FILTER,
+      Nature.QUIET,
+      PokemonType.GHOST,
+    ),
   );
   BALANCES.set(
     CharacterId.DS_SILVER,

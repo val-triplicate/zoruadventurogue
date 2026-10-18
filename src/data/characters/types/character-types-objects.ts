@@ -6,14 +6,14 @@ import { PokemonType } from "#enums/pokemon-type";
 import type { Character } from "../constant-data/character-data-objects";
 
 export class CharacterBalance {
-  stats: BaseStats;
+  stats?: BaseStats | undefined;
   ability: AbilityId;
   passive: AbilityId;
   nature: Nature;
   teraType: PokemonType;
 
   constructor(stats?: BaseStats, ability?: AbilityId, passive?: AbilityId, nature?: Nature, teraType?: PokemonType) {
-    this.stats = stats ?? [1, 1, 1, 1, 1, 1];
+    this.stats = stats;
     this.ability = ability ?? AbilityId.NONE;
     this.passive = passive ?? AbilityId.NONE;
     this.nature = nature ?? Nature.DOCILE;

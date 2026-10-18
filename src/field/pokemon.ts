@@ -35,6 +35,7 @@ import {
   TrappedTag,
 } from "#data/battler-tags";
 import { getAbility } from "#data/characters/character-balance";
+import { getBalance } from "#data/characters/data-maps/character-maps-objects";
 import type { CharacterId } from "#data/characters/types/character-types-enums";
 import { allAbilities, allMoves } from "#data/data-lists";
 import { getLevelTotalExp } from "#data/exp";
@@ -1240,7 +1241,9 @@ export abstract class Pokemon extends Phaser.GameObjects.Container {
   }
 
   calculateBaseStats(): number[] {
-    const baseStats = this.getSpeciesForm(true).baseStats.slice(0);
+    const charStats = this.characterId ? getBalance(this.characterId).stats : undefined;
+    const speciesStats = this.getSpeciesForm(true).baseStats.slice(0);
+    const baseStats = charStats ?? speciesStats;
     // Shuckle Juice
     globalScene.applyModifiers(PokemonBaseStatTotalModifier, this.isPlayer(), this, baseStats);
     // Old Gateau

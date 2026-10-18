@@ -386,9 +386,9 @@ export class CharacterSummary extends Phaser.GameObjects.Container {
   }
 
   protected showStatsContainer(): void {
-    this.statsContainer //
-      .setVisible(true)
-      .updateStats(this.char.balance.stats, this.toBaseStats(this.char.identity.speciesId));
+    const canonStats = this.toBaseStats(this.char.identity.speciesId);
+    const customStats = this.char.balance.stats ?? canonStats;
+    this.statsContainer.setVisible(true).updateStats(customStats, canonStats);
   }
 
   private toBaseStats(speciesId: SpeciesId): BaseStats {
