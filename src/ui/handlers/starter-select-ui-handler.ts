@@ -4,30 +4,22 @@ import { settings } from "#app/global-settings-manager";
 import { speciesRegistry } from "#app/global-species-data-registry";
 import { handleTutorial, Tutorial } from "#app/tutorial";
 import { getFormIndex, getGender, getSpecies, getSpeciesId, isShiny } from "#data/characters/character-identities";
-import { getMovePool } from "#data/characters/character-move-pools";
 import type { Character } from "#data/characters/constant-data/character-data-objects";
 import { customRegistry } from "#data/characters/live-data/custom-registry";
 import { CharacterId } from "#data/characters/types/character-types-enums";
 import { type CharacterInput, unfoldC } from "#data/characters/utils/character-input";
-import { allMoves } from "#data/data-lists";
 import { Gender } from "#data/gender";
 import { blankMoveSet, type MoveSet } from "#data/moveset";
 import type { PokemonSpecies } from "#data/pokemon-species";
 import { Button } from "#enums/buttons";
 import { DropDownColumn } from "#enums/drop-down-column";
-import type { MoveId } from "#enums/move-id";
 import { PokemonIconAnimMode } from "#enums/pokemon-icon-anim-mode";
 import { PokemonType } from "#enums/pokemon-type";
 import { TextStyle } from "#enums/text-style";
 import { UiMode } from "#enums/ui-mode";
 import { getVariantTint } from "#sprites/variant";
 import { getIconProps } from "#types/character-state";
-import type {
-  CharacterSelectCallback,
-  ConfirmModeConfig,
-  OptionSelectItem,
-  OptionSelectModeConfig,
-} from "#types/ui-types";
+import type { CharacterSelectCallback, ConfirmModeConfig, OptionSelectItem } from "#types/ui-types";
 import { CharacterSummary } from "#ui/character-summary";
 import { DropDown, DropDownLabel, DropDownOption, DropDownState, DropDownType, SortCriteria } from "#ui/dropdown";
 import { FilterBar } from "#ui/filter-bar";
@@ -48,6 +40,7 @@ import type { GameObjects } from "phaser";
 import Sprite = Phaser.GameObjects.Sprite;
 
 import { type TeamInput, unfoldT } from "#data/characters/utils/team-input";
+import { MoveSelectUiHandlerHelper } from "#ui/handler-helpers/move-select-ui-handler-helper";
 
 const COLUMNS = 9;
 const ROWS = 9;
@@ -108,6 +101,8 @@ function findClosestStarterIndex(y: number, teamSize = 6): number {
 }
 
 export class StarterSelectUiHandler extends MessageUiHandler {
+  private moveSelectHelper: MoveSelectUiHandlerHelper;
+
   private starterSelectContainer: Phaser.GameObjects.Container;
 
   private starterContainers: CharacterContainer[] = [];
@@ -116,7 +111,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
   private starterSelectScrollBar: ScrollBar;
   private scrollCursor: number;
   private filteredCharIds: CharacterId[] = [];
-  private lastCharId: CharacterId;
+  public lastCharId: CharacterId;
 
   private partyColumn: GameObjects.Container;
   private partyIcons: Phaser.GameObjects.Sprite[];
@@ -142,23 +137,16 @@ export class StarterSelectUiHandler extends MessageUiHandler {
 
   private starterSelectMessageBox: Phaser.GameObjects.NineSlice;
   private starterSelectMessageBoxContainer: Phaser.GameObjects.Container;
-  private moveInfoOverlay: MoveInfoOverlay;
+  public moveInfoOverlay: MoveInfoOverlay;
 
-  private activeMoves: MoveSet;
-  private reserveMoves: MoveSet;
+  public activeMoves: MoveSet;
+  public reserveMoves: MoveSet;
 
   //variables to keep track of the dynamically rendered list of instruction prompts for starter select
 
   private characterSelectCallback: CharacterSelectCallback | null;
 
-  /**
-   * Used to check whether any moves were swapped using the reorder menu, to decide
-   * whether a save should be performed or not.
-   */
-  private hasSwappedMoves = false;
-  private isShowingStats = false;
-
-  protected blockInput = false;
+  public blockInput = false;
   private oldCursor = -1;
 
   public override setup(): void {
@@ -259,6 +247,8 @@ export class StarterSelectUiHandler extends MessageUiHandler {
 
     this.initTutorialOverlay(this.starterSelectContainer);
     this.starterSelectContainer.bringToTop(this.starterSelectMessageBoxContainer);
+
+    this.moveSelectHelper = new MoveSelectUiHandlerHelper(this);
   }
 
   private setupFilterBar(): FilterBar {
@@ -1031,102 +1021,11 @@ export class StarterSelectUiHandler extends MessageUiHandler {
       },
     });
 
-    const movePool = getMovePool(charId);
-    const showSwapOptions = (activeMoves: MoveSet) => {
-      this.blockInput = true;
-
-      ui.setMode(UiMode.STARTER_SELECT).then(() => {
-        ui.showText(i18next.t("starterSelectUiHandler:selectMoveSwapOut"), null, () => {
-          this.moveInfoOverlay.show(allMoves[activeMoves[0]]);
-
-          ui.setModeWithoutClear(UiMode.OPTION_SELECT, {
-            options: activeMoves
-              .map((activeId: MoveId, activeIndex: number) => {
-                const option: OptionSelectItem = {
-                  label: allMoves[activeId].name,
-                  handler: () => {
-                    this.blockInput = true;
-                    ui.setMode(UiMode.STARTER_SELECT).then(() => {
-                      ui.showText(
-                        `${i18next.t("starterSelectUiHandler:selectMoveSwapWith")} ${allMoves[activeId].name}.`,
-                        null,
-                        () => {
-                          const possibleMoves = movePool.filter((poolMoveId: MoveId) => poolMoveId !== activeId);
-                          this.moveInfoOverlay.show(allMoves[possibleMoves[0]]);
-
-                          ui.setModeWithoutClear(UiMode.OPTION_SELECT, {
-                            options: possibleMoves
-                              .map(newMoveId => {
-                                // make an option for each available starter move
-                                return {
-                                  label: allMoves[newMoveId].name,
-                                  handler: () => {
-                                    this.switchMoveHandler(activeIndex, newMoveId, activeId);
-                                    showSwapOptions(this.activeMoves!); // TODO: is this bang correct?
-                                    return true;
-                                  },
-                                  onHover: () => {
-                                    this.moveInfoOverlay.show(allMoves[newMoveId]);
-                                  },
-                                } satisfies OptionSelectItem as OptionSelectItem;
-                              })
-                              .concat({
-                                label: i18next.t("menu:cancel"),
-                                handler: () => {
-                                  showSwapOptions(this.activeMoves!); // TODO: is this bang correct?
-                                  return true;
-                                },
-                                onHover: () => {
-                                  this.moveInfoOverlay.clear();
-                                },
-                              }),
-                            maxOptions: 8,
-                            yOffset: 29,
-                          } satisfies OptionSelectModeConfig as OptionSelectModeConfig);
-                          this.blockInput = false;
-                        },
-                      );
-                    });
-                    return true;
-                  },
-                  onHover: () => {
-                    this.moveInfoOverlay.show(allMoves[activeId]);
-                  },
-                };
-                return option;
-              })
-              .concat({
-                label: i18next.t("menu:cancel"),
-                handler: () => {
-                  this.moveInfoOverlay.clear();
-                  this.clearText();
-                  // Only saved if moves were actually swapped
-                  if (this.hasSwappedMoves) {
-                    globalScene.gameData.saveSystem().then(success => {
-                      if (!success) {
-                        return globalScene.reset(true);
-                      }
-                    });
-                  }
-                  ui.setMode(UiMode.STARTER_SELECT);
-                  return true;
-                },
-                onHover: () => {
-                  this.moveInfoOverlay.clear();
-                },
-              }),
-            maxOptions: 8,
-            yOffset: 29,
-          } satisfies OptionSelectModeConfig as OptionSelectModeConfig);
-          this.blockInput = false;
-        });
-      });
-    };
     options.push({
       label: i18next.t("starterSelectUiHandler:manageMoves"),
       handler: () => {
-        this.hasSwappedMoves = false;
-        showSwapOptions(this.activeMoves!); // TODO: is this bang correct?
+        this.moveSelectHelper.hasSwappedMoves = false;
+        this.moveSelectHelper.startSwapDialogue();
         return true;
       },
     });
@@ -1308,30 +1207,6 @@ export class StarterSelectUiHandler extends MessageUiHandler {
     gender = gender || Gender.NONBINARY;
     this.partyIcons[index].setTexture(species.getIconAtlasKey()).setFrame(species.getIconId(gender, formIndex, shiny));
     this.checkIconId(this.partyIcons[index], species, gender, formIndex, shiny);
-  }
-
-  /**
-   * Puts a move at the requested index in the current highlighted Pokemon's moveset. \
-   * If the move was already present in the moveset, swap its position with the one at the requested index.
-   * @param targetIndex - The index to place the move
-   * @param newMove - The move to place in the moveset
-   * @param previousMove - The move that was previously in the spot
-   */
-  private switchMoveHandler(targetIndex: number, newMove: MoveId, previousMove: MoveId): void {
-    // The current location (active/reserve, index in that moveset) of the move being activated.
-    const currentMoveset = this.activeMoves.indexOf(newMove) === -1 ? this.reserveMoves : this.activeMoves;
-    const currentIndex = currentMoveset.indexOf(newMove);
-    // Put the previous move where the new move was.
-    currentMoveset[currentIndex] = previousMove;
-    // Put the new move where it's supposed to go.
-    this.activeMoves[targetIndex] = newMove;
-    // Update the saved preferences.
-    const characterState = customRegistry.getCharacterState(this.lastCharId);
-    characterState.activeMoves = this.activeMoves;
-    characterState.reserveMoves = this.reserveMoves;
-
-    this.hasSwappedMoves = true;
-    this.setCharDetails(this.lastCharId);
   }
 
   protected updateStarters(): void {
@@ -1596,7 +1471,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
    *
    * @param charId - the id of the new character
    */
-  private setCharDetails(input: CharacterInput): void {
+  public setCharDetails(input: CharacterInput): void {
     const [id, char] = unfoldC(input);
     const [gender, formIndex, shiny] = [getGender(char), getFormIndex(char), isShiny(char)];
     this.starterSummary.setStarterDetails(char);
