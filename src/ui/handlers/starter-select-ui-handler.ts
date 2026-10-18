@@ -1596,9 +1596,9 @@ export class StarterSelectUiHandler extends MessageUiHandler {
   private toggleShowStatsMode(on = !this.showStatsMode): void {
     this.showStatsMode = on;
     if (on) {
-      this.starterSummary.showIvs();
+      this.starterSummary.showStats();
     } else {
-      this.starterSummary.hideIvs(true);
+      this.starterSummary.hideStats();
     }
   }
 

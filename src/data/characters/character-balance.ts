@@ -10,7 +10,13 @@ import { PokemonType } from "#enums/pokemon-type";
 export function initBalances() {
   BALANCES.set(
     CharacterId.VM_VAPOREON,
-    new CharacterBalance(undefined, AbilityId.WATER_ABSORB, AbilityId.BERSERK, Nature.RASH, PokemonType.ICE),
+    new CharacterBalance(
+      [5, 20, 1, 31, 1, 15],
+      AbilityId.WATER_ABSORB,
+      AbilityId.BERSERK,
+      Nature.RASH,
+      PokemonType.ICE,
+    ),
   );
   BALANCES.set(
     CharacterId.VM_MAWILE,

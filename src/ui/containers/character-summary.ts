@@ -4,6 +4,7 @@ import { getAbility, getNature, getPassive, getTeraType } from "#data/characters
 import { getFormIndex, getGender, getName, getSpeciesId, isShiny } from "#data/characters/character-identities";
 import { customRegistry } from "#data/characters/live-data/custom-registry";
 import type { CharacterId } from "#data/characters/types/character-types-enums";
+import type { BaseStats } from "#data/characters/types/character-types-objects";
 import { type CharacterInput, unfoldC } from "#data/characters/utils/character-input";
 import { allAbilities, allMoves } from "#data/data-lists";
 import { GrowthRate, getGrowthRateColor } from "#data/exp";
@@ -370,24 +371,30 @@ export class CharacterSummary extends Phaser.GameObjects.Container {
     }
   }
 
-  public showIvs(): void {
-    this.showStats();
+  public showStats(): void {
+    this.showStatsContainer();
     this.statsMode = true;
     this.pokemonSprite.setVisible(false);
     this.teraIcon.setVisible(false);
   }
 
-  public hideIvs(caught = true): void {
+  public hideStats(): void {
     this.statsMode = false;
     this.statsContainer.setVisible(false);
-    this.pokemonSprite.setVisible(caught);
+    this.pokemonSprite.setVisible(true);
     this.teraIcon.setVisible(true);
   }
 
-  protected showStats(): void {
+  protected showStatsContainer(): void {
     this.statsContainer //
       .setVisible(true)
-      .updateStats(this.char.balance.stats);
+      .updateStats(this.char.balance.stats, this.toBaseStats(this.char.identity.speciesId));
+  }
+
+  private toBaseStats(speciesId: SpeciesId): BaseStats {
+    const species = speciesRegistry.getSpecies(speciesId);
+    const stats = species.baseStats;
+    return [stats[0] ?? 0, stats[1] ?? 0, stats[2] ?? 0, stats[3] ?? 0, stats[4] ?? 0, stats[5] ?? 0];
   }
 
   private setShinyIcon(shiny = true, variant: Variant = 0): void {
@@ -424,7 +431,7 @@ export class CharacterSummary extends Phaser.GameObjects.Container {
 
     if (this.statsMode) {
       this.statsContainer.setVisible(true);
-      this.showStats();
+      this.showStatsContainer();
     }
 
     if (teamSave && teamSave.isTeamUnlocked) {

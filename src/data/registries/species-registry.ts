@@ -158,16 +158,6 @@ export class SpeciesRegistry {
   }
 
   /**
-   * Checks if a given species has any form specific level moves.
-   * @param speciesId - The {@linkcode SpeciesId} of the species to check
-   * @returns Whether the species has any form specific level moves
-   */
-  public hasFormLevelMoves(speciesId: SpeciesId): boolean {
-    const speciesData = this.getSpeciesData(speciesId);
-    return !!speciesData.formLevelMoves && Object.keys(speciesData.formLevelMoves).length > 0;
-  }
-
-  /**
    * Get the passive ability for a given species and form.
    * @param speciesId - The {@linkcode SpeciesId} of the species to get the passive for
    * @param form - The `formIndex` or `formKey` of the form to get the passive for.
@@ -200,7 +190,6 @@ export class SpeciesRegistry {
    * @returns An array of all starter {@linkcode SpeciesId}s or {@linkcode PokemonSpecies}s
    */
   public getAllStarters(getSpecies?: false): StarterSpeciesId[];
-  public getAllStarters(getSpecies: true): PokemonSpecies[];
   public getAllStarters(getSpecies = false): StarterSpeciesId[] | PokemonSpecies[] {
     const ret: (StarterSpeciesId | PokemonSpecies)[] = [];
     for (const speciesData of Object.values(this._data)) {
@@ -212,43 +201,12 @@ export class SpeciesRegistry {
   }
 
   /**
-   * Get all starters for a given starter cost.
-   * @param starterCost - The starter cost
-   * @returns An array of all starter species that have the given starter cost
-   */
-  public getStartersForCost(starterCost: number): StarterSpeciesId[] {
-    const ret: StarterSpeciesId[] = [];
-    for (const speciesData of Object.values(this._data)) {
-      if (speciesData.starterCost === starterCost) {
-        ret.push(speciesData.species.speciesId as StarterSpeciesId);
-      }
-    }
-    return ret;
-  }
-
-  /**
    * Get the evolutions for a given species.
    * @param speciesId - The {@linkcode SpeciesId} of the species to get evolutions for
    * @returns An array of {@linkcode SpeciesFormEvolution}s
    */
   public getEvolutions(speciesId: SpeciesId): SpeciesFormEvolution[] {
     return this.getSpeciesData(speciesId).evolutions;
-  }
-
-  /**
-   * Get all species in the evolution chain for a given species.
-   * Does NOT include the given species itself.
-   * @param speciesId - The {@linkcode SpeciesId} of the species to get the evolution chain for
-   * @returns An array of {@linkcode SpeciesId}s representing the evolution chain
-   */
-  public getEvolutionChain(speciesId: SpeciesId): SpeciesId[] {
-    const evoLine: SpeciesId[] = [];
-    const evolutions = this.getEvolutions(speciesId);
-    for (const evolution of evolutions) {
-      evoLine.push(evolution.speciesId);
-      evoLine.push(...this.getEvolutionChain(evolution.speciesId));
-    }
-    return [...new Set(evoLine)];
   }
 
   /**
@@ -281,8 +239,6 @@ export class SpeciesRegistry {
    * @returns The prevolution {@linkcode SpeciesId} or {@linkcode PokemonSpecies}
    */
   public getPrevolution(speciesId: SpeciesId): SpeciesId | null;
-  public getPrevolution(speciesId: SpeciesId, getSpecies: false): SpeciesId | null;
-  public getPrevolution(speciesId: SpeciesId, getSpecies: true): PokemonSpecies | null;
   public getPrevolution(speciesId: SpeciesId, getSpecies = false): SpeciesId | PokemonSpecies | null {
     const speciesData = this.getSpeciesData(speciesId);
     const { prevolution } = speciesData;
