@@ -52,14 +52,14 @@ export function initMovePools() {
   ]);
 }
 
-export function getMovePool(input: CharacterInput): MovePool {
+export function getMovePoolFromMap(input: CharacterInput): MovePool {
   return fromCIdSafely(input, id => MOVE_POOLS.get(id), blankMovePool);
 }
 
 export function getDefaultActiveMoves(input: CharacterInput): MoveSet {
-  return toMoveSet(getMovePool(input).slice(0, 4));
+  return toMoveSet(getMovePoolFromMap(input).slice(0, 4));
 }
 
 export function getDefaultReserveMoves(input: CharacterInput): MoveSet {
-  return toMoveSet(getMovePool(input).slice(4, 8));
+  return toMoveSet(getMovePoolFromMap(input).slice(4, 8));
 }

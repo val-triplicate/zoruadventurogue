@@ -34,7 +34,6 @@ import {
   TarShotTag,
   TrappedTag,
 } from "#data/battler-tags";
-import { getAbility } from "#data/characters/character-balance";
 import { getBalance } from "#data/characters/data-maps/character-maps-objects";
 import type { CharacterId } from "#data/characters/types/character-types-enums";
 import { allAbilities, allMoves } from "#data/data-lists";
@@ -1631,7 +1630,7 @@ export abstract class Pokemon extends Phaser.GameObjects.Container {
     let abilityId = this.getSpeciesForm(ignoreOverride).getAbility(this.abilityIndex);
 
     if (this.isPlayer() && this.characterId) {
-      abilityId = getAbility(this.characterId);
+      abilityId = getBalance(this.characterId).ability;
     }
     if (abilityId === AbilityId.NONE) {
       abilityId = this.species.ability1;

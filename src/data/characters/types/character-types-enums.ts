@@ -1,9 +1,9 @@
 export enum AuthorId {
   SHARED = 0,
-  VAL,
   ANGEL,
-  REMY,
   GENE,
+  REMY,
+  VAL,
 }
 
 export enum CharacterId {
@@ -15,7 +15,7 @@ export enum CharacterId {
   DS_SILVER,
 }
 
-export enum OriginId {
+export enum StoryId {
   MISCELLANEOUS = 0,
   BLIND_PI,
   MANY_MOONS,

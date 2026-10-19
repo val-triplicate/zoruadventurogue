@@ -1,7 +1,8 @@
 import type { Ability } from "#abilities/ability";
-import { loggedInUser } from "#app/account";
 import { globalScene } from "#app/global-scene";
 import { settings } from "#app/global-settings-manager";
+import { getAuthorIdFromCharacter } from "#data/characters/data-maps/character-maps-enums";
+import { AUTHORS, getBio } from "#data/characters/data-maps/character-maps-objects";
 import { getLevelRelExp, getLevelTotalExp } from "#data/exp";
 import { getGenderColor, getGenderSymbol } from "#data/gender";
 import { getNatureStatMultiplier } from "#data/nature";
@@ -27,6 +28,10 @@ import { fixedInt, formatStat, getLocalizedSpriteKey, getShinyDescriptor, padInt
 import { getEnumValues } from "#utils/enums";
 import { getDexNumber } from "#utils/pokemon-utils";
 import i18next from "i18next";
+
+import Container = Phaser.GameObjects.Container;
+import Text = Phaser.GameObjects.Text;
+import Graphics = Phaser.GameObjects.Graphics;
 
 enum Page {
   PROFILE,
@@ -676,9 +681,10 @@ export class SummaryUiHandler extends UiHandler {
         const profileContainer = globalScene.add.container(0, -pageBg.height);
         pageContainer.add(profileContainer);
         const otColor = settings.isPlayerFemale ? TextStyle.SUMMARY_PINK : TextStyle.SUMMARY_BLUE;
-        const usernameReplacement = settings.isPlayerFemale
-          ? i18next.t("trainerNames:playerF")
-          : i18next.t("trainerNames:playerM");
+        const charId = this.pokemon?.characterId;
+
+        let author = charId ? AUTHORS.get(getAuthorIdFromCharacter(charId)) : undefined;
+        author = author ?? "Anonymous";
 
         const profileContainerProfileTitle = globalScene.add //
           .image(7, 4, getLocalizedSpriteKey("summary_profile_profile_title")) // Pixel text 'PROFILE'
@@ -689,12 +695,7 @@ export class SummaryUiHandler extends UiHandler {
         const trainerText = addBBCodeTextObject(
           7,
           10,
-          `${getBBCodeFrag(`${i18next.t("pokemonSummary:ot")}/`, TextStyle.SUMMARY_ALT)}${getBBCodeFrag(
-            settings.display.hideUsername
-              ? usernameReplacement
-              : loggedInUser?.username || i18next.t("pokemonSummary:unknownTrainer"),
-            otColor,
-          )}`,
+          `${getBBCodeFrag("OT/", TextStyle.SUMMARY_ALT)}${getBBCodeFrag(author, otColor)}`,
           TextStyle.SUMMARY_ALT,
         ).setOrigin(0);
         profileContainer.add(trainerText);
@@ -793,64 +794,13 @@ export class SummaryUiHandler extends UiHandler {
           profileContainer.add(this.abilityPrompt);
         }
 
-        allAbilityInfo.forEach(abilityInfo => {
-          abilityInfo.labelImage.setPosition(17, 47);
-          abilityInfo.labelImage.setVisible(true);
-          abilityInfo.labelImage.setOrigin(0, 0.5);
-          profileContainer.add(abilityInfo.labelImage);
-
-          abilityInfo.nameText = addTextObject(7, 68, abilityInfo.ability?.name!, TextStyle.SUMMARY_ALT); // TODO: is this bang correct?
-          abilityInfo.nameText.setOrigin(0, 1);
-          profileContainer.add(abilityInfo.nameText);
-
-          abilityInfo.descriptionText = addTextObject(7, 71, abilityInfo.ability?.description!, TextStyle.WINDOW_ALT, {
-            wordWrap: { width: 1224 },
-          }); // TODO: is this bang correct?
-          abilityInfo.descriptionText.setOrigin(0, 0);
-          profileContainer.add(abilityInfo.descriptionText);
-
-          // Sets up the mask that hides the description text to give an illusion of scrolling
-          const descriptionTextMaskRect = globalScene.make.graphics({});
-          descriptionTextMaskRect.setScale(6);
-          descriptionTextMaskRect.fillStyle(0xffffff);
-          descriptionTextMaskRect.beginPath();
-          descriptionTextMaskRect.fillRect(110, 90, 206, 31);
-
-          const abilityDescriptionTextMask = descriptionTextMaskRect.createGeometryMask();
-
-          abilityInfo.descriptionText.setMask(abilityDescriptionTextMask);
-
-          const abilityDescriptionLineCount = Math.floor(abilityInfo.descriptionText.displayHeight / 14.83);
-
-          // Animates the description text moving upwards
-          if (abilityDescriptionLineCount > 2) {
-            abilityInfo.descriptionText.setY(69);
-            this.descriptionScrollTween = globalScene.tweens.add({
-              targets: abilityInfo.descriptionText,
-              delay: fixedInt(2000),
-              loop: -1,
-              hold: fixedInt(2000),
-              duration: fixedInt((abilityDescriptionLineCount - 2) * 2000),
-              y: `-=${14.83 * (abilityDescriptionLineCount - 2)}`,
-            });
-          }
-        });
+        allAbilityInfo.forEach(abilityInfo => this.showAbilityInfo(profileContainer, abilityInfo));
         // Turn off visibility of passive info by default
         this.passiveContainer?.labelImage.setVisible(false);
         this.passiveContainer?.nameText?.setVisible(false);
         this.passiveContainer?.descriptionText?.setVisible(false);
 
-        const profileContainerMemoTitle = globalScene.add.image(
-          7,
-          107,
-          getLocalizedSpriteKey("summary_profile_memo_title"), // Pixel text 'TRAINER MEMO'
-        );
-        profileContainerMemoTitle.setOrigin(0, 0.5);
-        profileContainer.add(profileContainerMemoTitle);
-
-        const memoText = addBBCodeTextObject(7, 113, String("TEMP MEMO STRING"), TextStyle.WINDOW_ALT);
-        memoText.setOrigin(0, 0);
-        profileContainer.add(memoText);
+        this.showBioInfo(profileContainer, 107);
         break;
       }
       case Page.STATS: {
@@ -1096,6 +1046,72 @@ export class SummaryUiHandler extends UiHandler {
     }
   }
 
+  showBioInfo(profileContainer: Container, titleYPos: number) {
+    const memoTitleImage = getLocalizedSpriteKey("summary_profile_memo_title"); // Pixel text 'TRAINER MEMO'
+    const profileContainerMemoTitle = globalScene.add.image(7, titleYPos, memoTitleImage);
+    profileContainerMemoTitle.setOrigin(0, 0.5);
+    profileContainer.add(profileContainerMemoTitle);
+
+    const bio = this.pokemon?.characterId ? getBio(this.pokemon.characterId) : "";
+    const memoText = addTextObject(7, 114, String(bio), TextStyle.WINDOW_ALT, { wordWrap: { width: 1224 } });
+    memoText.setOrigin(0, 0);
+    profileContainer.add(memoText);
+    this.enableScrolling(memoText, 114, 138, 41, 3);
+  }
+
+  showAbilityInfo(profileContainer: Container, abilityInfo: AbilityContainer) {
+    abilityInfo.labelImage.setPosition(17, 47);
+    abilityInfo.labelImage.setVisible(true);
+    abilityInfo.labelImage.setOrigin(0, 0.5);
+    profileContainer.add(abilityInfo.labelImage);
+
+    abilityInfo.nameText = addTextObject(7, 68, abilityInfo.ability?.name!, TextStyle.SUMMARY_ALT); // TODO: is this bang correct?
+    abilityInfo.nameText.setOrigin(0, 1);
+    profileContainer.add(abilityInfo.nameText);
+
+    abilityInfo.descriptionText = addTextObject(7, 71, abilityInfo.ability?.description!, TextStyle.WINDOW_ALT, {
+      wordWrap: { width: 1224 },
+    }); // TODO: is this bang correct?
+    abilityInfo.descriptionText.setOrigin(0, 0);
+    profileContainer.add(abilityInfo.descriptionText);
+    const scrollTarget = abilityInfo.descriptionText;
+    this.enableScrolling(scrollTarget, 69, 90, 31, 2);
+  }
+
+  private enableScrolling(scrollTarget: Text, y: number, maskY: number, height: number, maxLines: number) {
+    scrollTarget.setMask(this.createTextMask(maskY, height).createGeometryMask());
+
+    const abilityDescriptionLineCount = Math.floor(scrollTarget.displayHeight / 14.83);
+
+    // Animates the description text moving upwards
+    if (abilityDescriptionLineCount > maxLines) {
+      scrollTarget.setY(y);
+      this.descriptionScrollTween = globalScene.tweens.add(this.scrollTween(scrollTarget));
+    }
+  }
+
+  // Sets up the mask that hides the description text to give an illusion of scrolling
+  private createTextMask(yPos: number, height: number): Graphics {
+    const mask = globalScene.make.graphics({});
+    mask.setScale(6);
+    mask.fillStyle(0xffffff);
+    mask.beginPath();
+    mask.fillRect(110, yPos, 206, height);
+    return mask;
+  }
+
+  private scrollTween(scrollTarget: Text) {
+    const lineCount = scrollTarget.displayHeight / 14.83;
+    return {
+      targets: scrollTarget,
+      delay: fixedInt(2000),
+      loop: -1,
+      hold: fixedInt(2000),
+      duration: fixedInt((lineCount - 2) * 2000),
+      y: `-=${14.83 * (lineCount - 2)}`,
+    };
+  }
+
   showStatus(instant?: boolean) {
     if (this.statusVisible) {
       return;
@@ -1143,6 +1159,7 @@ export class SummaryUiHandler extends UiHandler {
     this.setCursor(this.summaryUiMode === SummaryUiMode.LEARN_MOVE ? 4 : 0);
     this.showMoveEffect();
   }
+
   hideMoveSelect() {
     if (this.summaryUiMode === SummaryUiMode.LEARN_MOVE) {
       this.moveSelectFunction?.(4);

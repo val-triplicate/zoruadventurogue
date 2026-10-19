@@ -1,7 +1,7 @@
-import { getAbility } from "#data/characters/character-balance";
 import { getFormIndex, getGender, getName, isShiny } from "#data/characters/character-identities";
 import { getDefaultActiveMoves, getDefaultReserveMoves } from "#data/characters/character-move-pools";
 import type { Character } from "#data/characters/constant-data/character-data-objects";
+import { getBalance } from "#data/characters/data-maps/character-maps-objects";
 import type { CharacterInput } from "#data/characters/utils/character-input";
 import { Gender } from "#data/gender";
 import type { MoveSet } from "#data/moveset";
@@ -28,7 +28,7 @@ export class CharacterState {
 
   constructor(char: Character) {
     const defaults = getDefaultIconProps(char);
-    this.ability = getAbility(char);
+    this.ability = getBalance(char).ability;
     this.passive = false;
     this.favorite = false;
     this.gender = Gender.GENDERLESS;

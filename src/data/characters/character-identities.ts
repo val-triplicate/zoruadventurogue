@@ -51,14 +51,14 @@ export function initIdentities() {
 }
 
 export function getSpeciesId(input: CharacterInput): SpeciesId {
-  return getIdentity(input).speciesId;
+  return getIdentityFromMap(input).speciesId;
 }
 
 export function getSpecies(input: CharacterInput): PokemonSpecies {
   return speciesRegistry.getSpecies(getSpeciesId(input));
 }
 
-export function getIdentity(input: CharacterInput): CharacterIdentity {
+export function getIdentityFromMap(input: CharacterInput): CharacterIdentity {
   try {
     return fromCIdUnsafely(input, id => IDENTITIES.get(id));
   } catch (e) {
@@ -76,17 +76,17 @@ export function getIdentitySafely(id: CharacterId): CharacterIdentity {
 }
 
 export function getName(input: CharacterInput): string {
-  return getIdentity(input).name || speciesRegistry.getSpecies(getSpeciesId(input)).name;
+  return getIdentityFromMap(input).name || speciesRegistry.getSpecies(getSpeciesId(input)).name;
 }
 
 export function getFormIndex(input: CharacterInput): number {
-  return getIdentity(input).formIndex || 0;
+  return getIdentityFromMap(input).formIndex || 0;
 }
 
 export function getGender(input: CharacterInput): Gender {
-  return getIdentity(input).gender || Gender.GENDERLESS;
+  return getIdentityFromMap(input).gender || Gender.GENDERLESS;
 }
 
 export function isShiny(input: CharacterInput): boolean {
-  return getIdentity(input).isShiny || false;
+  return getIdentityFromMap(input).isShiny || false;
 }

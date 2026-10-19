@@ -1,11 +1,8 @@
-import { getOriginIdFromTeam, TEAM_MEMBERS } from "#data/characters/data-maps/character-maps-enums";
-import {
-  getBalance,
-  getIdentity,
-  getMovePool,
-  initEnumMaps,
-  initObjectMaps,
-} from "#data/characters/data-maps/character-maps-objects";
+import { getBalanceFromMap } from "#data/characters/character-balance";
+import { getIdentityFromMap } from "#data/characters/character-identities";
+import { getMovePoolFromMap } from "#data/characters/character-move-pools";
+import { getStoryIdFromTeam, TEAM_MEMBERS } from "#data/characters/data-maps/character-maps-enums";
+import { initEnumMaps, initObjectMaps } from "#data/characters/data-maps/character-maps-objects";
 import { type CharacterId, TeamId } from "#data/characters/types/character-types-enums";
 import type {
   CharacterDataMap,
@@ -31,13 +28,13 @@ function createTeam(
   const follower = createCharacter(charMap, followerId);
   createCharacterState(charStateMap, leader);
   createCharacterState(charStateMap, follower);
-  return (teamMap[teamId] = new Team(teamId, getOriginIdFromTeam(teamId), leader, follower));
+  return (teamMap[teamId] = new Team(teamId, getStoryIdFromTeam(teamId), leader, follower));
 }
 
 function createCharacter(characterMap: CharacterDataMap, id: CharacterId): Character {
-  const identity = getIdentity(id);
-  const balance = getBalance(id);
-  const movePool = getMovePool(id);
+  const identity = getIdentityFromMap(id);
+  const balance = getBalanceFromMap(id);
+  const movePool = getMovePoolFromMap(id);
   if (identity && balance && movePool) {
     return (characterMap[id] = new Character(id, identity, balance, movePool));
   }

@@ -1,7 +1,7 @@
 import { globalScene } from "#app/global-scene";
 import { speciesRegistry } from "#app/global-species-data-registry";
-import { getAbility, getNature, getPassive, getTeraType } from "#data/characters/character-balance";
 import { getFormIndex, getGender, getName, getSpeciesId, isShiny } from "#data/characters/character-identities";
+import { getBalance } from "#data/characters/data-maps/character-maps-objects";
 import { customRegistry } from "#data/characters/live-data/custom-registry";
 import type { CharacterId } from "#data/characters/types/character-types-enums";
 import type { BaseStats } from "#data/characters/types/character-types-objects";
@@ -505,7 +505,7 @@ export class CharacterSummary extends Phaser.GameObjects.Container {
     const species = speciesRegistry.getSpecies(getSpeciesId(char));
     const shiny = isShiny(char);
     const gender = getGender(char);
-    const teraType = getTeraType(char);
+    const teraType = getBalance(char).teraType;
 
     this.pokemonSprite.setVisible(false);
     this.teraIcon.setVisible(false);
@@ -531,7 +531,7 @@ export class CharacterSummary extends Phaser.GameObjects.Container {
         .setShadowColor(getGenderColor(gender, true));
     }
 
-    const ability = allAbilities[getAbility(char)];
+    const ability = allAbilities[getBalance(char).ability];
 
     this.pokemonAbilityText
       .setText(ability.name)
@@ -559,7 +559,7 @@ export class CharacterSummary extends Phaser.GameObjects.Container {
     this.updateReserveMoves(characterState.reserveMoves);
     this.updatePassiveDisplay(char);
 
-    this.pokemonNatureText.setText(getNatureName(getNature(char), true, true, false));
+    this.pokemonNatureText.setText(getNatureName(getBalance(char).nature, true, true, false));
 
     const speciesForm = speciesRegistry.getPokemonSpeciesForm(char.identity.speciesId, 0);
     this.setTypeIcons(speciesForm.type1, speciesForm.type2);
@@ -582,7 +582,7 @@ export class CharacterSummary extends Phaser.GameObjects.Container {
 
     const saveData = customRegistry.getTeamSaveFromCharacter(id);
 
-    const passiveAbility = allAbilities[getPassive(char)];
+    const passiveAbility = allAbilities[getBalance(char).passive];
 
     if (!passiveAbility) {
       if (this.activeTooltip === "PASSIVE") {

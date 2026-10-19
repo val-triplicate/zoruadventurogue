@@ -1,4 +1,3 @@
-import { getSpecies } from "#data/characters/character-identities";
 import { BALANCES } from "#data/characters/data-maps/character-maps-objects";
 import { CharacterId } from "#data/characters/types/character-types-enums";
 import { CharacterBalance } from "#data/characters/types/character-types-objects";
@@ -42,22 +41,6 @@ export function initBalances() {
   );
 }
 
-export function getBalance(input: CharacterInput): CharacterBalance {
+export function getBalanceFromMap(input: CharacterInput): CharacterBalance {
   return fromCIdSafely(input, id => BALANCES.get(id), new CharacterBalance());
-}
-
-export function getAbility(input: CharacterInput): AbilityId {
-  return getBalance(input).ability ?? getSpecies(input).ability1;
-}
-
-export function getPassive(input: CharacterInput): AbilityId {
-  return getBalance(input).passive ?? getSpecies(input).getPassiveAbility(0);
-}
-
-export function getTeraType(input: CharacterInput): PokemonType {
-  return getBalance(input).teraType ?? getSpecies(input).type1;
-}
-
-export function getNature(input: CharacterInput): Nature {
-  return getBalance(input).nature ?? Nature.DOCILE;
 }

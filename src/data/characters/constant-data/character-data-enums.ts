@@ -1,5 +1,11 @@
-import { AUTHOR_OVERRIDES, AUTHORS, ORIGINS, TEAM_MEMBERS } from "#data/characters/data-maps/character-maps-enums";
-import { AuthorId, CharacterId, OriginId, TeamId } from "#data/characters/types/character-types-enums";
+import {
+  AUTHOR_OVERRIDES,
+  STORIES,
+  STORY_AUTHORS,
+  TEAM_MEMBERS,
+} from "#data/characters/data-maps/character-maps-enums";
+import { AUTHORS } from "#data/characters/data-maps/character-maps-objects";
+import { AuthorId, CharacterId, StoryId, TeamId } from "#data/characters/types/character-types-enums";
 
 export function initTeamMembers() {
   setTeamMembers(TeamId.VAPOREON_MAWILE, CharacterId.VM_VAPOREON, CharacterId.VM_MAWILE);
@@ -7,24 +13,32 @@ export function initTeamMembers() {
   setTeamMembers(TeamId.DIA_SILVER, CharacterId.DS_DIA, CharacterId.DS_SILVER);
 }
 
-export function initOrigins() {
-  ORIGINS.set(TeamId.VAPOREON_MAWILE, OriginId.THE_VAPOREON_CYCLE);
-  ORIGINS.set(TeamId.ESPEON_SPIDOPS, OriginId.THE_VAPOREON_CYCLE);
-  ORIGINS.set(TeamId.DIA_SILVER, OriginId.BLIND_PI);
+export function initStories() {
+  STORIES.set(TeamId.VAPOREON_MAWILE, StoryId.THE_VAPOREON_CYCLE);
+  STORIES.set(TeamId.ESPEON_SPIDOPS, StoryId.THE_VAPOREON_CYCLE);
+  STORIES.set(TeamId.DIA_SILVER, StoryId.BLIND_PI);
 }
 
-export function initAuthors() {
-  AUTHORS.set(OriginId.BLIND_PI, AuthorId.ANGEL);
-  AUTHORS.set(OriginId.MANY_MOONS, AuthorId.GENE);
-  AUTHORS.set(OriginId.MISCELLANEOUS, AuthorId.SHARED);
-  AUTHORS.set(OriginId.RISING_ASHES, AuthorId.REMY);
-  AUTHORS.set(OriginId.THE_VAPOREON_CYCLE, AuthorId.VAL);
-  AUTHORS.set(OriginId.VILLAIN_VENUS, AuthorId.REMY);
-  AUTHORS.set(OriginId.ZORUADVENTURE, AuthorId.ANGEL);
+export function initStoryAuthors() {
+  STORY_AUTHORS.set(StoryId.BLIND_PI, AuthorId.ANGEL);
+  STORY_AUTHORS.set(StoryId.MANY_MOONS, AuthorId.GENE);
+  STORY_AUTHORS.set(StoryId.MISCELLANEOUS, AuthorId.SHARED);
+  STORY_AUTHORS.set(StoryId.RISING_ASHES, AuthorId.REMY);
+  STORY_AUTHORS.set(StoryId.THE_VAPOREON_CYCLE, AuthorId.VAL);
+  STORY_AUTHORS.set(StoryId.VILLAIN_VENUS, AuthorId.REMY);
+  STORY_AUTHORS.set(StoryId.ZORUADVENTURE, AuthorId.ANGEL);
 }
 
 export function initAuthorOverrides() {
   AUTHOR_OVERRIDES.set(CharacterId.VM_VAPOREON, AuthorId.ANGEL);
+}
+
+export function initAuthors() {
+  AUTHORS.set(AuthorId.SHARED, "Multiple Authors");
+  AUTHORS.set(AuthorId.ANGEL, "TraumaFox44");
+  AUTHORS.set(AuthorId.GENE, "CactusGenome");
+  AUTHORS.set(AuthorId.REMY, "Rusty-Eevee");
+  AUTHORS.set(AuthorId.VAL, "val-triplicate");
 }
 
 function setTeamMembers(teamId: TeamId, charIdA: CharacterId, charIdB: CharacterId): void {

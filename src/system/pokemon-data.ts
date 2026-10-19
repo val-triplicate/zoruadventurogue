@@ -1,6 +1,6 @@
 import { globalScene } from "#app/global-scene";
 import { speciesRegistry } from "#app/global-species-data-registry";
-import { getAbility } from "#data/characters/character-balance";
+import { getBalance } from "#data/characters/data-maps/character-maps-objects";
 import type { CharacterId } from "#data/characters/types/character-types-enums";
 import type { Gender } from "#data/gender";
 import { CustomPokemonData, PokemonBattleData, PokemonSummonData } from "#data/pokemon-data";
@@ -74,7 +74,7 @@ export class PokemonData {
       0,
     );
     this.abilityIndex = source.abilityIndex;
-    this.ability = sourcePokemon?.isPlayer() ? getAbility(this.characterId) : AbilityId.NONE;
+    this.ability = sourcePokemon?.isPlayer() ? getBalance(this.characterId).ability : AbilityId.NONE;
     this.passive = source.passive;
     this.shiny = source.shiny;
     this.variant = source.variant;

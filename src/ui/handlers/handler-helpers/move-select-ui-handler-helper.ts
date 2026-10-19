@@ -1,5 +1,5 @@
 import { globalScene } from "#app/global-scene";
-import { getMovePool } from "#data/characters/character-move-pools";
+import { getMovePool } from "#data/characters/data-maps/character-maps-objects";
 import { customRegistry } from "#data/characters/live-data/custom-registry";
 import { allMoves } from "#data/data-lists";
 import type { MoveId } from "#enums/move-id";
