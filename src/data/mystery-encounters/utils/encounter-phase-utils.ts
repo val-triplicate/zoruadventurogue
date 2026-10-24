@@ -1,10 +1,7 @@
 import type { Battle } from "#app/battle";
 import { audioManager } from "#app/global-audio-manager";
-import { timedEventManager } from "#app/global-event-manager";
 import { globalScene } from "#app/global-scene";
-import { speciesRegistry } from "#app/global-species-data-registry";
 import { getPokemonNameWithAffix } from "#app/messages";
-import { BASE_HIDDEN_ABILITY_RATE, BASE_SHINY_CHANCE } from "#balance/rates";
 import { initMoveAnim, loadMoveAnimAssets } from "#data/battle-anims";
 import { modifierTypes } from "#data/data-lists";
 import type { Gender } from "#data/gender";
@@ -29,15 +26,9 @@ import type { TrainerType } from "#enums/trainer-type";
 import { TrainerVariant } from "#enums/trainer-variant";
 import { UiMode } from "#enums/ui-mode";
 import type { PlayerPokemon, Pokemon } from "#field/pokemon";
-import { EnemyPokemon } from "#field/pokemon";
 import { Trainer } from "#field/trainer";
 import type { CustomModifierSettings, ModifierType } from "#modifiers/modifier-type";
-import {
-  getPartyLuckValue,
-  ModifierTypeGenerator,
-  ModifierTypeOption,
-  regenerateModifierPoolThresholds,
-} from "#modifiers/modifier-type";
+import { ModifierTypeGenerator, ModifierTypeOption, regenerateModifierPoolThresholds } from "#modifiers/modifier-type";
 import { PokemonMove } from "#moves/pokemon-move";
 import { showEncounterText } from "#mystery-encounters/encounter-dialogue-utils";
 import type { MysteryEncounter } from "#mystery-encounters/mystery-encounter";
@@ -47,11 +38,10 @@ import type { PokemonData } from "#system/pokemon-data";
 import type { TrainerConfig } from "#trainers/trainer-config";
 import { trainerConfigs } from "#trainers/trainer-config";
 import type { HeldModifierConfig } from "#types/held-modifier-config";
-import type { RandomEncounterParams } from "#types/pokemon-common";
 import type { OptionSelectItem, OptionSelectModeConfig } from "#types/ui-types";
 import type { PartyOption, PokemonSelectFilter } from "#ui/party-ui-handler";
 import { coerceArray } from "#utils/array";
-import { BooleanHolder, randSeedInt, randSeedItem } from "#utils/common";
+import { randSeedInt } from "#utils/common";
 import i18next from "i18next";
 
 /**
@@ -937,82 +927,4 @@ export function handleMysteryEncounterTurnStartEffects(): boolean {
   }
 
   return false;
-}
-
-/**
- * Helper function for encounters such as {@linkcode UncommonBreedEncounter} which call for a random species including event encounters.
- * If the mon is from the event encounter list, it may do an extra shiny or HA roll.
- * @param params - The {@linkcode RandomEncounterParams} used to configure the encounter
- * @returns The generated {@linkcode EnemyPokemon} for the requested encounter
- */
-export function getRandomEncounterPokemon(params: RandomEncounterParams): EnemyPokemon {
-  let {
-    level,
-    speciesFunction,
-    isBoss = false,
-    includeSubLegendary = true,
-    includeLegendary = true,
-    includeMythical = true,
-    eventChance = 50,
-    hiddenRerolls = 0,
-    shinyRerolls = 0,
-    eventHiddenRerolls = 0,
-    eventShinyRerolls = 0,
-    hiddenAbilityChance = BASE_HIDDEN_ABILITY_RATE,
-    shinyChance = BASE_SHINY_CHANCE,
-    maxShinyChance = 0,
-    speciesFilter = () => true,
-    isEventEncounter = new BooleanHolder(false),
-  } = params;
-  let bossSpecies: PokemonSpecies;
-  const eventEncounters = timedEventManager.getAllValidEventEncounters(
-    includeSubLegendary,
-    includeLegendary,
-    includeMythical,
-    speciesFilter,
-  );
-  let formIndex: number | undefined;
-
-  if (eventChance && eventEncounters.length > 0 && (eventChance === 100 || randSeedInt(100) < eventChance)) {
-    const eventEncounter = randSeedItem(eventEncounters);
-    const levelSpecies = speciesRegistry
-      .getSpecies(eventEncounter.species)
-      .getWildSpeciesForLevel(level, !eventEncounter.blockEvolution, isBoss);
-    if (params.isEventEncounter) {
-      params.isEventEncounter.value = true;
-    }
-    bossSpecies = speciesRegistry.getSpecies(levelSpecies);
-    formIndex = eventEncounter.formIndex;
-  } else if (speciesFunction) {
-    bossSpecies = speciesFunction();
-  } else {
-    bossSpecies = globalScene.arena.randomSpecies(
-      globalScene.currentBattle.waveIndex,
-      level,
-      0,
-      getPartyLuckValue(globalScene.getPlayerParty()),
-      isBoss,
-    );
-  }
-  const ret = new EnemyPokemon(bossSpecies.speciesId, level, TrainerSlot.NONE, isBoss);
-  if (formIndex) {
-    ret.formIndex = formIndex;
-  }
-
-  if (isEventEncounter.value) {
-    hiddenRerolls += eventHiddenRerolls;
-    shinyRerolls += eventShinyRerolls;
-  }
-
-  while (shinyRerolls > 0) {
-    ret.trySetShinySeed(shinyChance, true, maxShinyChance);
-    shinyRerolls--;
-  }
-
-  while (hiddenRerolls > 0 && ret.abilityIndex !== 2) {
-    ret.tryRerollHiddenAbilitySeed(hiddenAbilityChance);
-    hiddenRerolls--;
-  }
-
-  return ret;
 }

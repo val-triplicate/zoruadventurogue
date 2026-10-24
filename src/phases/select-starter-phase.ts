@@ -2,8 +2,8 @@ import { audioManager } from "#app/global-audio-manager";
 import { globalScene } from "#app/global-scene";
 import { Phase } from "#app/phase";
 import { getSpeciesId } from "#data/characters/character-identities";
-import type { Character } from "#data/characters/constant-data/character-data-objects";
-import { customRegistry } from "#data/characters/live-data/custom-registry";
+import { getCharacterState } from "#data/characters/constant-data/character-data-arrays";
+import type { Character } from "#data/characters/types/character-types-objects";
 import { blankMoveSet } from "#data/moveset";
 import { UiMode } from "#enums/ui-mode";
 import { overrideHeldItems, overrideModifiers } from "#modifiers/modifier";
@@ -36,11 +36,11 @@ export class SelectStarterPhase extends Phase {
     const party = globalScene.getPlayerParty();
     const loadPokemonAssets: Promise<void>[] = [];
     globalScene.getCharacters().forEach((char: Character) => {
-      const characterState = customRegistry.getCharacterState(char);
+      const characterState = getCharacterState(char.id);
 
       const starterPokemon = globalScene.addPlayerPokemon(
         char.id,
-        getSpeciesId(char),
+        getSpeciesId(char.id),
         globalScene.gameMode.getStartingLevel(),
         characterState.ability,
         characterState.formIndex,

@@ -1,8 +1,7 @@
 import type { Ability } from "#abilities/ability";
 import { globalScene } from "#app/global-scene";
 import { settings } from "#app/global-settings-manager";
-import { getAuthorIdFromCharacter } from "#data/characters/data-maps/character-maps-enums";
-import { AUTHORS, getBio } from "#data/characters/data-maps/character-maps-objects";
+import { getAuthorIdFromCharacterId } from "#data/characters/data-maps/character-maps-enums";
 import { getLevelRelExp, getLevelTotalExp } from "#data/exp";
 import { getGenderColor, getGenderSymbol } from "#data/gender";
 import { getNatureStatMultiplier } from "#data/nature";
@@ -32,6 +31,9 @@ import i18next from "i18next";
 import Container = Phaser.GameObjects.Container;
 import Text = Phaser.GameObjects.Text;
 import Graphics = Phaser.GameObjects.Graphics;
+
+import { getAuthor, getBio } from "#data/characters/constant-data/character-data-arrays";
+import { getTeamFromCharacterId } from "#data/characters/data-maps/character-maps-objects";
 
 enum Page {
   PROFILE,
@@ -682,9 +684,7 @@ export class SummaryUiHandler extends UiHandler {
         pageContainer.add(profileContainer);
         const otColor = settings.isPlayerFemale ? TextStyle.SUMMARY_PINK : TextStyle.SUMMARY_BLUE;
         const charId = this.pokemon?.characterId;
-
-        let author = charId ? AUTHORS.get(getAuthorIdFromCharacter(charId)) : undefined;
-        author = author ?? "Anonymous";
+        const author = charId ? getAuthor(getAuthorIdFromCharacterId(charId)).name : "Anonymous";
 
         const profileContainerProfileTitle = globalScene.add //
           .image(7, 4, getLocalizedSpriteKey("summary_profile_profile_title")) // Pixel text 'PROFILE'
@@ -700,11 +700,10 @@ export class SummaryUiHandler extends UiHandler {
         ).setOrigin(0);
         profileContainer.add(trainerText);
 
-        const idToDisplay = settings.display.hideUsername ? "*****" : globalScene.gameData.trainerId.toString();
         const trainerIdText = addTextObject(
           141,
           10,
-          i18next.t("pokemonSummary:idNo", { idNo: idToDisplay }),
+          "From: " + (charId ? getTeamFromCharacterId(charId).story : " nowhere...?"),
           TextStyle.SUMMARY_ALT,
         ).setOrigin(0);
         profileContainer.add(trainerIdText);

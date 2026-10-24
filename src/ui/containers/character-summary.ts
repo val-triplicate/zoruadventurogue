@@ -1,11 +1,15 @@
 import { globalScene } from "#app/global-scene";
 import { speciesRegistry } from "#app/global-species-data-registry";
 import { getFormIndex, getGender, getName, getSpeciesId, isShiny } from "#data/characters/character-identities";
-import { getBalance } from "#data/characters/data-maps/character-maps-objects";
-import { customRegistry } from "#data/characters/live-data/custom-registry";
+import {
+  getBalance,
+  getCharacter,
+  getCharacterState,
+  getIdentity,
+  getTeamSaveFromCharacterId,
+} from "#data/characters/constant-data/character-data-arrays";
 import type { CharacterId } from "#data/characters/types/character-types-enums";
-import type { BaseStats } from "#data/characters/types/character-types-objects";
-import { type CharacterInput, unfoldC } from "#data/characters/utils/character-input";
+import type { BaseStats, Character } from "#data/characters/types/character-types-objects";
 import { allAbilities, allMoves } from "#data/data-lists";
 import { GrowthRate, getGrowthRateColor } from "#data/exp";
 import { Gender, getGenderColor, getGenderSymbol } from "#data/gender";
@@ -26,7 +30,6 @@ import { toCamelCase, toTitleCase } from "#utils/strings";
 import i18next from "i18next";
 import type { GameObjects } from "phaser";
 import type BBCodeText from "phaser3-rex-plugins/plugins/bbcodetext";
-import type { Character } from "../../data/characters/constant-data/character-data-objects";
 
 export class CharacterSummary extends Phaser.GameObjects.Container {
   private readonly pokemonSprite: Phaser.GameObjects.Sprite;
@@ -352,9 +355,9 @@ export class CharacterSummary extends Phaser.GameObjects.Container {
     this.pokemonPassiveText.setVisible(true);
   }
 
-  private setNameAndNumber(char: Character): void {
-    this.pokemonNumberText.setText(padInt(getSpeciesId(char), 4));
-    this.pokemonNameText.setText(getName(char));
+  private setNameAndNumber(id: CharacterId): void {
+    this.pokemonNumberText.setText(padInt(getSpeciesId(id), 4));
+    this.pokemonNameText.setText(getName(getCharacter(id)));
   }
 
   protected setTypeIcons(type1: PokemonType, type2: PokemonType | null): void {
@@ -419,11 +422,12 @@ export class CharacterSummary extends Phaser.GameObjects.Container {
     this.cleanStarterSprite();
   }
 
-  public setCharacter(input: CharacterInput): void {
-    [this.charId, this.char] = unfoldC(input);
-    const teamSave = customRegistry.getTeamSaveFromCharacter(this.char);
-    const characterState = customRegistry.getCharacterState(this.char);
-    this.speciesId = getSpeciesId(this.char);
+  public setCharacter(id: CharacterId): void {
+    this.charId = id;
+    this.char = getCharacter(id);
+    const teamSave = getTeamSaveFromCharacterId(id);
+    const characterState = getCharacterState(id);
+    this.speciesId = getSpeciesId(id);
     const species = speciesRegistry.getSpecies(this.speciesId);
 
     this.pokemonAbilityText.off("pointerover");
@@ -435,7 +439,7 @@ export class CharacterSummary extends Phaser.GameObjects.Container {
     }
 
     if (teamSave && teamSave.isTeamUnlocked) {
-      this.setNameAndNumber(this.char);
+      this.setNameAndNumber(id);
       this.characterLockedText.setVisible(false);
       this.pokemonPermanentInfoContainer.setVisible(true);
       this.pokemonStatisticsContainer.setVisible(true);
@@ -460,7 +464,7 @@ export class CharacterSummary extends Phaser.GameObjects.Container {
 
     this.cleanStarterSprite(this.char, teamSave && teamSave.isTeamUnlocked);
 
-    const { gender, formIndex, shiny, variant } = getIconProps(this.char);
+    const { gender, formIndex, shiny, variant } = getIconProps(this.char.id);
 
     this.updateSprite(species, gender, formIndex, shiny, variant);
     this.pokemonSprite //
@@ -470,7 +474,7 @@ export class CharacterSummary extends Phaser.GameObjects.Container {
 
   private cleanStarterSprite(char?: Character, isUnlocked = false): void {
     if (isUnlocked && char) {
-      this.setNameAndNumber(char);
+      this.setNameAndNumber(char.id);
     } else {
       this.pokemonNumberText.setText(padInt(0, 4));
       this.pokemonNameText.setText(char ? "???" : "");
@@ -500,12 +504,11 @@ export class CharacterSummary extends Phaser.GameObjects.Container {
     this.reserveMovesContainer.setVisible(false);
   }
 
-  public setStarterDetails(input: CharacterInput): void {
-    const [id, char] = unfoldC(input);
-    const species = speciesRegistry.getSpecies(getSpeciesId(char));
-    const shiny = isShiny(char);
-    const gender = getGender(char);
-    const teraType = getBalance(char).teraType;
+  public setStarterDetails(id: CharacterId): void {
+    const species = speciesRegistry.getSpecies(getSpeciesId(id));
+    const shiny = isShiny(id);
+    const gender = getGender(id);
+    const teraType = getBalance(id).teraType;
 
     this.pokemonSprite.setVisible(false);
     this.teraIcon.setVisible(false);
@@ -520,7 +523,7 @@ export class CharacterSummary extends Phaser.GameObjects.Container {
 
     this.setShinyIcon(shiny);
 
-    this.updateSprite(species, getGender(char), getFormIndex(char), shiny, 0);
+    this.updateSprite(species, getGender(id), getFormIndex(id), shiny, 0);
 
     if (gender === Gender.GENDERLESS) {
       this.pokemonGenderText.setText("");
@@ -531,7 +534,7 @@ export class CharacterSummary extends Phaser.GameObjects.Container {
         .setShadowColor(getGenderColor(gender, true));
     }
 
-    const ability = allAbilities[getBalance(char).ability];
+    const ability = allAbilities[getBalance(id).ability];
 
     this.pokemonAbilityText
       .setText(ability.name)
@@ -553,15 +556,15 @@ export class CharacterSummary extends Phaser.GameObjects.Container {
       });
     }
 
-    const characterState = customRegistry.getCharacterState(char);
+    const characterState = getCharacterState(id);
 
     this.updateMoveset(characterState.activeMoves);
     this.updateReserveMoves(characterState.reserveMoves);
-    this.updatePassiveDisplay(char);
+    this.updatePassiveDisplay(id);
 
-    this.pokemonNatureText.setText(getNatureName(getBalance(char).nature, true, true, false));
+    this.pokemonNatureText.setText(getNatureName(getBalance(id).nature, true, true, false));
 
-    const speciesForm = speciesRegistry.getPokemonSpeciesForm(char.identity.speciesId, 0);
+    const speciesForm = speciesRegistry.getPokemonSpeciesForm(getIdentity(id).speciesId, 0);
     this.setTypeIcons(speciesForm.type1, speciesForm.type2);
 
     let newTeraType = teraType;
@@ -572,17 +575,15 @@ export class CharacterSummary extends Phaser.GameObjects.Container {
     this.teraIcon.setVisible(!this.statsMode);
   }
 
-  private updatePassiveDisplay(input: CharacterInput): void {
-    const [id, char] = unfoldC(input);
-
+  private updatePassiveDisplay(id: CharacterId): void {
     this.pokemonPassiveLabelText.setVisible(false);
     this.pokemonPassiveText.setVisible(false);
     this.pokemonPassiveDisabledIcon.setVisible(false);
     this.pokemonPassiveLockedIcon.setVisible(false);
 
-    const saveData = customRegistry.getTeamSaveFromCharacter(id);
+    const saveData = getTeamSaveFromCharacterId(id);
 
-    const passiveAbility = allAbilities[getBalance(char).passive];
+    const passiveAbility = allAbilities[getBalance(id).passive];
 
     if (!passiveAbility) {
       if (this.activeTooltip === "PASSIVE") {

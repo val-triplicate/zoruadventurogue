@@ -1,46 +1,60 @@
-import { BALANCES } from "#data/characters/data-maps/character-maps-objects";
 import { CharacterId } from "#data/characters/types/character-types-enums";
-import { CharacterBalance } from "#data/characters/types/character-types-objects";
-import { type CharacterInput, fromCIdSafely } from "#data/characters/utils/character-input";
+import { type BaseStats, CharacterBalance } from "#data/characters/types/character-types-objects";
 import { AbilityId } from "#enums/ability-id";
 import { Nature } from "#enums/nature";
 import { PokemonType } from "#enums/pokemon-type";
 
-export function initBalances() {
-  BALANCES.set(
+export function initBalances(): CharacterBalance[] {
+  const balances: CharacterBalance[] = [];
+  addBalance(
+    balances,
     CharacterId.VM_VAPOREON,
-    new CharacterBalance(
-      [115, 90, 50, 150, 60, 100],
-      AbilityId.WATER_ABSORB,
-      AbilityId.BERSERK,
-      Nature.RASH,
-      PokemonType.ICE,
-    ),
+    [115, 90, 50, 150, 60, 100],
+    AbilityId.WATER_ABSORB,
+    AbilityId.BERSERK,
+    Nature.RASH,
+    PokemonType.ICE,
   );
-  BALANCES.set(
+  addBalance(
+    balances,
     CharacterId.VM_MAWILE,
-    new CharacterBalance(undefined, AbilityId.INTIMIDATE, AbilityId.FULL_METAL_BODY, Nature.CAREFUL, PokemonType.STEEL),
+    undefined,
+    AbilityId.INTIMIDATE,
+    AbilityId.FULL_METAL_BODY,
+    Nature.CAREFUL,
+    PokemonType.STEEL,
   );
-
-  BALANCES.set(CharacterId.ES_ESPEON, new CharacterBalance());
-  BALANCES.set(CharacterId.ES_SPIDOPS, new CharacterBalance());
-
-  BALANCES.set(
+  addBalance(balances, CharacterId.ES_ESPEON);
+  addBalance(balances, CharacterId.ES_SPIDOPS);
+  addBalance(
+    balances,
     CharacterId.DS_DIA,
-    new CharacterBalance(
-      [1, 200, 1, 1, 200, 1],
-      AbilityId.MAGIC_BOUNCE,
-      AbilityId.FILTER,
-      Nature.QUIET,
-      PokemonType.GHOST,
-    ),
+    [1, 200, 1, 1, 200, 1],
+    AbilityId.MAGIC_BOUNCE,
+    AbilityId.FILTER,
+    Nature.QUIET,
+    PokemonType.GHOST,
   );
-  BALANCES.set(
+  addBalance(
+    balances,
     CharacterId.DS_SILVER,
-    new CharacterBalance(undefined, AbilityId.INNER_FOCUS, AbilityId.ANALYTIC, Nature.LONELY, PokemonType.GHOST),
+    undefined,
+    AbilityId.INNER_FOCUS,
+    AbilityId.ANALYTIC,
+    Nature.LONELY,
+    PokemonType.GHOST,
   );
+  return balances;
 }
 
-export function getBalanceFromMap(input: CharacterInput): CharacterBalance {
-  return fromCIdSafely(input, id => BALANCES.get(id), new CharacterBalance());
+function addBalance(
+  array: CharacterBalance[],
+  id: CharacterId,
+  stats?: BaseStats,
+  ability?: AbilityId,
+  passive?: AbilityId,
+  nature?: Nature,
+  teraType?: PokemonType,
+): void {
+  array[id] = new CharacterBalance(stats, ability, passive, nature, teraType);
 }

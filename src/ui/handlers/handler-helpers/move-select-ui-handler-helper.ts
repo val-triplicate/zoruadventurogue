@@ -1,12 +1,11 @@
 import { globalScene } from "#app/global-scene";
-import { getMovePool } from "#data/characters/data-maps/character-maps-objects";
-import { customRegistry } from "#data/characters/live-data/custom-registry";
+import { getCharacterState, getMovePool } from "#data/characters/constant-data/character-data-arrays";
 import { allMoves } from "#data/data-lists";
 import type { MoveId } from "#enums/move-id";
 import { UiMode } from "#enums/ui-mode";
 import type { OptionSelectItem, OptionSelectModeConfig } from "#types/ui-types";
 import { UiHandlerHelper } from "#ui/handler-helpers/ui-handler-helper";
-import type { StarterSelectUiHandler } from "#ui/starter-select-ui-handler";
+import type StarterSelectUiHandler from "#ui/starter-select-ui-handler";
 
 export class MoveSelectUiHandlerHelper extends UiHandlerHelper<StarterSelectUiHandler> {
   /**
@@ -153,7 +152,7 @@ export class MoveSelectUiHandlerHelper extends UiHandlerHelper<StarterSelectUiHa
     // Put the new move where it's supposed to go.
     activeMoves[targetIndex] = newMove;
     // Update the saved preferences.
-    const characterState = customRegistry.getCharacterState(this.owner.lastCharId);
+    const characterState = getCharacterState(this.owner.lastCharId);
     characterState.activeMoves = activeMoves;
     characterState.reserveMoves = reserveMoves;
 

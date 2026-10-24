@@ -7,7 +7,7 @@ export enum AuthorId {
 }
 
 export enum CharacterId {
-  VM_VAPOREON = 1,
+  VM_VAPOREON = 0,
   VM_MAWILE,
   ES_ESPEON,
   ES_SPIDOPS,
@@ -26,7 +26,7 @@ export enum StoryId {
 }
 
 export enum TeamId {
-  VAPOREON_MAWILE = 1,
+  VAPOREON_MAWILE = 0,
   ESPEON_SPIDOPS,
   DIA_SILVER,
 }

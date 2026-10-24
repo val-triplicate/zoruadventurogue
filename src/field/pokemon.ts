@@ -34,7 +34,7 @@ import {
   TarShotTag,
   TrappedTag,
 } from "#data/battler-tags";
-import { getBalance } from "#data/characters/data-maps/character-maps-objects";
+import { getBalance } from "#data/characters/constant-data/character-data-arrays";
 import type { CharacterId } from "#data/characters/types/character-types-enums";
 import { allAbilities, allMoves } from "#data/data-lists";
 import { getLevelTotalExp } from "#data/exp";

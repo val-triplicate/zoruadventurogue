@@ -1,12 +1,12 @@
-import { MOVE_POOLS } from "#data/characters/data-maps/character-maps-objects";
+import { getMovePool } from "#data/characters/constant-data/character-data-arrays";
 import { CharacterId } from "#data/characters/types/character-types-enums";
 import type { MovePool } from "#data/characters/types/character-types-objects";
-import { type CharacterInput, fromCIdSafely } from "#data/characters/utils/character-input";
 import { blankMovePool, type MoveSet, toMoveSet } from "#data/moveset";
 import { MoveId } from "#enums/move-id";
 
-export function initMovePools() {
-  MOVE_POOLS.set(CharacterId.VM_VAPOREON, [
+export function initMovePools(): MovePool[] {
+  const movePools: MovePool[] = [];
+  movePools[CharacterId.VM_VAPOREON] = [
     MoveId.ICE_BEAM,
     MoveId.HYPER_BEAM,
     MoveId.HYDRO_PUMP,
@@ -15,8 +15,8 @@ export function initMovePools() {
     MoveId.TAUNT,
     MoveId.HAIL,
     MoveId.FLIP_TURN,
-  ]);
-  MOVE_POOLS.set(CharacterId.VM_MAWILE, [
+  ];
+  movePools[CharacterId.VM_MAWILE] = [
     MoveId.IRON_DEFENSE,
     MoveId.BATON_PASS,
     MoveId.PROTECT,
@@ -25,12 +25,12 @@ export function initMovePools() {
     MoveId.STEALTH_ROCK,
     MoveId.SUBSTITUTE,
     MoveId.CRUNCH,
-  ]);
+  ];
 
-  MOVE_POOLS.set(CharacterId.ES_ESPEON, blankMovePool);
-  MOVE_POOLS.set(CharacterId.ES_SPIDOPS, blankMovePool);
+  movePools[CharacterId.ES_ESPEON] = blankMovePool;
+  movePools[CharacterId.ES_SPIDOPS] = blankMovePool;
 
-  MOVE_POOLS.set(CharacterId.DS_DIA, [
+  movePools[CharacterId.DS_DIA] = [
     MoveId.REFLECT,
     MoveId.LIGHT_SCREEN,
     MoveId.PSYCHIC,
@@ -39,8 +39,8 @@ export function initMovePools() {
     MoveId.NASTY_PLOT,
     MoveId.SUBSTITUTE,
     MoveId.MORNING_SUN,
-  ]);
-  MOVE_POOLS.set(CharacterId.DS_SILVER, [
+  ];
+  movePools[CharacterId.DS_SILVER] = [
     MoveId.CRUNCH,
     MoveId.TAKE_DOWN,
     MoveId.PARTING_SHOT,
@@ -49,17 +49,15 @@ export function initMovePools() {
     MoveId.STEALTH_ROCK,
     MoveId.SUBSTITUTE,
     MoveId.MOONLIGHT,
-  ]);
+  ];
+
+  return movePools;
 }
 
-export function getMovePoolFromMap(input: CharacterInput): MovePool {
-  return fromCIdSafely(input, id => MOVE_POOLS.get(id), blankMovePool);
+export function getDefaultActiveMoves(id: CharacterId): MoveSet {
+  return toMoveSet(getMovePool(id).slice(0, 4));
 }
 
-export function getDefaultActiveMoves(input: CharacterInput): MoveSet {
-  return toMoveSet(getMovePoolFromMap(input).slice(0, 4));
-}
-
-export function getDefaultReserveMoves(input: CharacterInput): MoveSet {
-  return toMoveSet(getMovePoolFromMap(input).slice(4, 8));
+export function getDefaultReserveMoves(id: CharacterId): MoveSet {
+  return toMoveSet(getMovePool(id).slice(4, 8));
 }

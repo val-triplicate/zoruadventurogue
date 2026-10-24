@@ -29,6 +29,7 @@ import { UiInputs } from "#app/ui-inputs";
 import { STARTING_WAVE } from "#balance/misc";
 import { initCommonAnims, initMoveAnim, loadCommonAnimAssets, loadMoveAnimAssets } from "#data/battle-anims";
 import type { CharacterId } from "#data/characters/types/character-types-enums";
+import type { Character } from "#data/characters/types/character-types-objects";
 import { allMoves, biomeDepths, modifierTypes } from "#data/data-lists";
 import { classicFinalBossDialogue } from "#data/dialogue";
 import { Gender } from "#data/gender";
@@ -145,7 +146,6 @@ import { decodeNickname } from "#utils/pokemon-utils";
 import { capitalizeFirstLetterOnly } from "#utils/strings";
 import i18next from "i18next";
 import Phaser from "phaser";
-import type { Character } from "./data/characters/constant-data/character-data-objects";
 
 export interface InfoToggle {
   toggleInfo(force?: boolean): void;

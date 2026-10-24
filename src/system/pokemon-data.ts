@@ -1,6 +1,6 @@
 import { globalScene } from "#app/global-scene";
 import { speciesRegistry } from "#app/global-species-data-registry";
-import { getBalance } from "#data/characters/data-maps/character-maps-objects";
+import { getBalance } from "#data/characters/constant-data/character-data-arrays";
 import type { CharacterId } from "#data/characters/types/character-types-enums";
 import type { Gender } from "#data/gender";
 import { CustomPokemonData, PokemonBattleData, PokemonSummonData } from "#data/pokemon-data";

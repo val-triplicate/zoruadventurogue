@@ -37,7 +37,7 @@ import { RunHistoryUiHandler } from "#ui/run-history-ui-handler";
 import { RunInfoUiHandler } from "#ui/run-info-ui-handler";
 import { SaveSlotSelectUiHandler } from "#ui/save-slot-select-ui-handler";
 import { SavingIconContainer } from "#ui/saving-icon-handler";
-import { StarterSelectUiHandler } from "#ui/starter-select-ui-handler";
+import StarterSelectUiHandler from "#ui/starter-select-ui-handler";
 import { SummaryUiHandler } from "#ui/summary-ui-handler";
 import { TargetSelectUiHandler } from "#ui/target-select-ui-handler";
 import { TestDialogueUiHandler } from "#ui/test-dialogue-ui-handler";

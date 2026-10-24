@@ -14,7 +14,7 @@ import { GeneralSettingsUiHandler } from "#ui/general-settings-ui-handler";
 import { SettingsKeyboardUiHandler } from "#ui/keyboard-settings-ui-handler";
 import type { MessageUiHandler } from "#ui/message-ui-handler";
 import { RunInfoUiHandler } from "#ui/run-info-ui-handler";
-import { StarterSelectUiHandler } from "#ui/starter-select-ui-handler";
+import StarterSelectUiHandler from "#ui/starter-select-ui-handler";
 import type Phaser from "phaser";
 
 type ActionKeys = Record<Button, () => void>;
