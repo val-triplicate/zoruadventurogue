@@ -477,12 +477,7 @@ export class PokedexUiHandler extends MessageUiHandler {
         SortCriteria.SPECIES_ID,
         new DropDownLabel(i18next.t("filterBar:sortByNumber"), undefined, DropDownState.ON),
       ),
-      new DropDownOption(SortCriteria.COST, new DropDownLabel(i18next.t("filterBar:sortByCost"))),
-      new DropDownOption(SortCriteria.CANDY, new DropDownLabel(i18next.t("filterBar:sortByCandies"))),
-      new DropDownOption(SortCriteria.IV, new DropDownLabel(i18next.t("filterBar:sortByIVs"))),
       new DropDownOption(SortCriteria.SPECIES_NAME, new DropDownLabel(i18next.t("filterBar:sortByName"))),
-      new DropDownOption(SortCriteria.CAUGHT, new DropDownLabel(i18next.t("filterBar:sortByNumCaught"))),
-      new DropDownOption(SortCriteria.HATCHED, new DropDownLabel(i18next.t("filterBar:sortByNumHatched"))),
     ];
     this.filterBar.addFilter(
       DropDownColumn.SORT,
@@ -1721,36 +1716,8 @@ export class PokedexUiHandler extends MessageUiHandler {
       switch (sort.val) {
         case SortCriteria.SPECIES_ID:
           return (a.species.speciesId - b.species.speciesId) * -sort.dir;
-        case SortCriteria.COST:
-          return (a.cost - b.cost) * -sort.dir;
-        case SortCriteria.CANDY: {
-          const candyCountA = this.gameData.starterData[speciesDataRegistry.getStarter(a.species.speciesId)].candyCount;
-          const candyCountB = this.gameData.starterData[speciesDataRegistry.getStarter(b.species.speciesId)].candyCount;
-          return (candyCountA - candyCountB) * -sort.dir;
-        }
-        case SortCriteria.IV: {
-          const avgIVsA =
-            this.gameData.dexData[a.species.speciesId].ivs.reduce((a, b) => a + b, 0)
-            / this.gameData.dexData[a.species.speciesId].ivs.length;
-          const avgIVsB =
-            this.gameData.dexData[b.species.speciesId].ivs.reduce((a, b) => a + b, 0)
-            / this.gameData.dexData[b.species.speciesId].ivs.length;
-          return (avgIVsA - avgIVsB) * -sort.dir;
-        }
         case SortCriteria.SPECIES_NAME:
           return a.species.name.localeCompare(b.species.name) * -sort.dir;
-        case SortCriteria.CAUGHT:
-          return (
-            (this.gameData.dexData[a.species.speciesId].caughtCount
-              - this.gameData.dexData[b.species.speciesId].caughtCount)
-            * -sort.dir
-          );
-        case SortCriteria.HATCHED:
-          return (
-            (this.gameData.dexData[speciesDataRegistry.getStarter(a.species.speciesId)].hatchedCount
-              - this.gameData.dexData[speciesDataRegistry.getStarter(b.species.speciesId)].hatchedCount)
-            * -sort.dir
-          );
         default:
           break;
       }

@@ -402,15 +402,12 @@ export class StarterSelectUiHandler extends MessageUiHandler {
     // sort filter
     const sortOptions = [
       new DropDownOption(
-        SortCriteria.SPECIES_ID,
-        new DropDownLabel(i18next.t("filterBar:sortByNumber"), undefined, DropDownState.ON),
+        SortCriteria.CHARACTER_ID,
+        new DropDownLabel(i18next.t("filterBar:sortByCharacterId"), undefined, DropDownState.ON),
       ),
-      new DropDownOption(SortCriteria.COST, new DropDownLabel(i18next.t("filterBar:sortByCost"))),
-      new DropDownOption(SortCriteria.CANDY, new DropDownLabel(i18next.t("filterBar:sortByCandies"))),
-      new DropDownOption(SortCriteria.IV, new DropDownLabel(i18next.t("filterBar:sortByIVs"))),
-      new DropDownOption(SortCriteria.SPECIES_NAME, new DropDownLabel(i18next.t("filterBar:sortByName"))),
-      new DropDownOption(SortCriteria.CAUGHT, new DropDownLabel(i18next.t("filterBar:sortByNumCaught"))),
-      new DropDownOption(SortCriteria.HATCHED, new DropDownLabel(i18next.t("filterBar:sortByNumHatched"))),
+      new DropDownOption(SortCriteria.CHARACTER_NAME, new DropDownLabel(i18next.t("filterBar:sortByCharacterName"))),
+      new DropDownOption(SortCriteria.SPECIES_ID, new DropDownLabel(i18next.t("filterBar:sortBySpeciesId"))),
+      new DropDownOption(SortCriteria.SPECIES_NAME, new DropDownLabel(i18next.t("filterBar:sortBySpeciesName"))),
     ];
     filterBar.addFilter(
       DropDownColumn.SORT,

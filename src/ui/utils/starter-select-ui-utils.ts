@@ -1,8 +1,7 @@
 import { VALUE_REDUCTION_MAX } from "#app/constants";
 import { globalScene } from "#app/global-scene";
 import { speciesDataRegistry } from "#app/global-species-data-registry";
-import { getSpeciesId } from "#balance/characters/character-identities";
-import { getIdentity } from "#balance/characters/constant-data/character-data-arrays";
+import { getName, getSpeciesId } from "#balance/characters/character-identities";
 import type { CharacterId } from "#balance/characters/types/character-types-enums";
 import { speciesEggMoves } from "#balance/egg-moves";
 import { getPassiveCandyCount, getSameSpeciesEggCandyCounts, getValueReductionCandyCounts } from "#balance/starters";
@@ -237,24 +236,31 @@ export function getPartyValue(party: CharacterId[]): number {
 /**
  * Sort an array of {@linkcode CharacterId} based on a given criteria and direction.
  * @param charIds - An array of character IDs to be sorted
- * @param sort - The criteria by which the species hould be sorted
+ * @param sort - The criteria by which the species should be sorted
  * @param dir - The direction in which the species should be sorted
  */
 export function sortCharacters(charIds: CharacterId[], sort: SortCriteria, dir: SortDirection): void {
   charIds.sort((a, b): number => {
     const idSort = (a - b) * -dir;
-    const speciesIdSort = getSpeciesId(a) - getSpeciesId(b) * -dir;
-    const nameSort = getIdentity(a).name.localeCompare(getIdentity(b).name) * -dir;
-    const speciesNameSort = getSpeciesId(a).toString().localeCompare(getSpeciesId(b).toString()) * -dir;
+    const speciesA = speciesDataRegistry.getBaseSpecies(a);
+    const speciesB = speciesDataRegistry.getBaseSpecies(b);
+
+    const nameA = getName(a);
+    const nameB = getName(b);
+
+    const speciesIdSort = (getSpeciesId(a) - getSpeciesId(b)) * -dir;
+    const nameSort = getName(a).localeCompare(getName(b)) * -dir;
+    const speciesNameSort = speciesA.name.localeCompare(speciesB.name) * -dir;
+    const both = nameA + " " + nameB + " (" + nameSort + ")";
     switch (sort) {
       case SortCriteria.CHARACTER_ID:
         return idSort;
       case SortCriteria.CHARACTER_NAME:
-        return nameSort || idSort;
+        return nameSort || speciesNameSort || idSort;
       case SortCriteria.SPECIES_ID:
         return speciesIdSort || idSort;
       case SortCriteria.SPECIES_NAME:
-        return speciesNameSort || idSort;
+        return speciesNameSort || nameSort || idSort;
       default: // to make Biome happy
         return 0;
     }

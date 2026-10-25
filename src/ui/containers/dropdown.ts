@@ -27,15 +27,10 @@ export enum SortDirection {
 }
 
 export enum SortCriteria {
-  SPECIES_ID = 0,
-  COST = 1,
-  CANDY = 2,
-  IV = 3,
-  SPECIES_NAME = 4,
-  CAUGHT = 5,
-  HATCHED = 6,
-  CHARACTER_ID = 7,
-  CHARACTER_NAME = 7,
+  CHARACTER_ID = 0,
+  CHARACTER_NAME = 1,
+  SPECIES_ID = 2,
+  SPECIES_NAME = 3,
 }
 
 export class DropDownLabel {
