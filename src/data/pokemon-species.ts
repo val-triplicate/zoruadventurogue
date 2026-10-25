@@ -6,6 +6,9 @@ import { globalScene } from "#app/global-scene";
 import { settings } from "#app/global-settings-manager";
 import { speciesDataRegistry } from "#app/global-species-data-registry";
 import type { AnySound } from "#audio/audio-manager";
+import { getFormIndex, getGender, getVariant, isShiny } from "#balance/characters/character-identities";
+import { IDENTITIES } from "#balance/characters/constant-data/character-data-arrays";
+import type { CharacterId } from "#balance/characters/types/character-types-enums";
 import { speciesEggMoves } from "#balance/egg-moves";
 import type { GrowthRate } from "#data/exp";
 import { Gender } from "#data/gender";
@@ -29,11 +32,9 @@ import type { Localizable } from "#types/locales";
 import type { StarterMoveset } from "#types/save-data";
 import type { EvolutionLevel, EvolutionLevelWithThreshold } from "#types/species-gen-types";
 import { applyChallenges } from "#utils/challenge-utils";
-import { argbFromRgba, rgbaFromArgb } from "#utils/color-utils";
 import { randSeedFloat } from "#utils/common";
 import { toCamelCase, toPascalCase } from "#utils/strings";
 import { ValueHolder } from "#utils/value-holder";
-import { QuantizerCelebi } from "@material/material-color-utilities";
 import i18next from "i18next";
 import type { If, IsNumericLiteral } from "type-fest";
 
@@ -423,6 +424,16 @@ export abstract class PokemonSpeciesForm {
     return `pkmn__${this.getSpriteId(female, formIndex, shiny, variant, back)}`;
   }
 
+  getSpriteKeyFromCharacterId(charId: CharacterId, back?: boolean): string {
+    return this.getSpriteKey(
+      getGender(charId).useFemale(),
+      getFormIndex(charId),
+      isShiny(charId),
+      getVariant(charId),
+      back,
+    );
+  }
+
   abstract getFormSpriteKey(formIndex?: number): string;
 
   /**
@@ -463,6 +474,14 @@ export abstract class PokemonSpeciesForm {
     const generation = replacementSpecies
       ? speciesDataRegistry.getPokemonSpeciesForm(replacementSpecies.speciesId, replacementSpecies.formIndex).generation
       : this.generation;
+    return `pokemon_icons_${generation}${isVariant ? "v" : ""}`;
+  }
+
+  getIconAtlasKeyFromCharacterId(charId: CharacterId): string {
+    const variants = variantData[this.getVariantDataIndex(getFormIndex(charId))];
+    const variantIndex = getVariant(charId);
+    const isVariant = isShiny(charId) && variants && variantIndex !== undefined && variants[variantIndex];
+    const generation = this.generation;
     return `pokemon_icons_${generation}${isVariant ? "v" : ""}`;
   }
 
@@ -543,6 +562,10 @@ export abstract class PokemonSpeciesForm {
     }
 
     return ret;
+  }
+
+  getIconIdFromCharacterId(charId: CharacterId): string {
+    return this.getIconId(getGender(charId).useFemale(), getFormIndex(charId), isShiny(charId), getVariant(charId));
   }
 
   getCryKey(formIndex?: number): string {
@@ -702,6 +725,11 @@ export abstract class PokemonSpeciesForm {
     );
   }
 
+  async loadAssetsFromCharacterId(charId: CharacterId, startLoad = false, back = false) {
+    const female = IDENTITIES[charId].gender.useFemale();
+    return this.loadAssets(female, 0, false, 0, startLoad, back);
+  }
+
   async loadAssets(
     female: boolean,
     formIndex?: number,
@@ -770,70 +798,6 @@ export abstract class PokemonSpeciesForm {
       cry.stop();
     }
     return cry;
-  }
-
-  generateCandyColors(): number[][] {
-    const sourceTexture = globalScene.textures.get(this.getSpriteKey(false));
-
-    const sourceFrame = sourceTexture.frames[sourceTexture.firstFrame];
-    const sourceImage = sourceTexture.getSourceImage() as HTMLImageElement;
-
-    const canvas = document.createElement("canvas");
-
-    const spriteColors: number[][] = [];
-
-    const context = canvas.getContext("2d");
-    const frame = sourceFrame;
-    canvas.width = frame.width;
-    canvas.height = frame.height;
-    context?.drawImage(sourceImage, frame.cutX, frame.cutY, frame.width, frame.height, 0, 0, frame.width, frame.height);
-    const imageData = context?.getImageData(frame.cutX, frame.cutY, frame.width, frame.height);
-    const pixelData = imageData?.data;
-    const pixelColors: number[] = [];
-
-    if (pixelData?.length !== undefined) {
-      for (let i = 0; i < pixelData.length; i += 4) {
-        if (pixelData[i + 3]) {
-          const pixel = pixelData.slice(i, i + 4);
-          const [r, g, b, a] = pixel;
-          if (!spriteColors.find(c => c[0] === r && c[1] === g && c[2] === b)) {
-            spriteColors.push([r, g, b, a]);
-          }
-        }
-      }
-
-      for (let i = 0; i < pixelData.length; i += 4) {
-        const total = pixelData.slice(i, i + 3).reduce((total: number, value: number) => total + value, 0);
-        if (!total) {
-          continue;
-        }
-        pixelColors.push(
-          argbFromRgba({
-            r: pixelData[i],
-            g: pixelData[i + 1],
-            b: pixelData[i + 2],
-            a: pixelData[i + 3],
-          }),
-        );
-      }
-    }
-
-    let paletteColors: Map<number, number> = new Map();
-
-    const originalRandom = Math.random;
-    Math.random = randSeedFloat;
-
-    globalScene.executeWithSeedOffset(
-      () => {
-        paletteColors = QuantizerCelebi.quantize(pixelColors, 2);
-      },
-      0,
-      "This result should not vary",
-    );
-
-    Math.random = originalRandom;
-
-    return Array.from(paletteColors.keys()).map(c => Object.values(rgbaFromArgb(c)) as number[]);
   }
 }
 
@@ -1242,6 +1206,15 @@ export class PokemonSpecies extends PokemonSpeciesForm implements Localizable {
         : DexAttr.DEFAULT_FORM;
 
     return caughtAttr;
+  }
+}
+
+export class CharacterSpecies extends PokemonSpecies {
+  characterSpeciesId: SpeciesId;
+
+  constructor(characterSpeciesId: SpeciesId, data: PokemonSpeciesConstructor) {
+    super(data);
+    this.characterSpeciesId = characterSpeciesId;
   }
 }
 

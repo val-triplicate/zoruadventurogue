@@ -1,3 +1,4 @@
+import { TeamId } from "#balance/characters/types/character-types-enums";
 import { SpeciesId } from "#enums/species-id";
 import type { StarterSpeciesId } from "#types/starter-species-id";
 
@@ -20,6 +21,11 @@ export const CHALLENGE_MODE_MYSTERY_ENCOUNTER_WAVES: [number, number] = [10, 180
 
 /** The raw percentage power boost for type boost items*/
 export const TYPE_BOOST_ITEM_BOOST_PERCENT = 20;
+
+/**
+ * The default teams that a new player can choose from
+ */
+export const defaultTeams: readonly TeamId[] = [TeamId.VAPOREON_MAWILE, TeamId.DIA_SILVER];
 
 /**
  * The default species that a new player can choose from

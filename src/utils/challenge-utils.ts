@@ -1,6 +1,8 @@
 import type { FixedBattleConfig } from "#app/battle";
 import { globalScene } from "#app/global-scene";
 import { speciesDataRegistry } from "#app/global-species-data-registry";
+import { getFormIndex, getSpeciesId } from "#balance/characters/character-identities";
+import type { CharacterId } from "#balance/characters/types/character-types-enums";
 import type { SpeciesFormEvolution } from "#balance/pokemon-evolutions";
 import type { PokemonSpecies, PokemonSpeciesForm } from "#data/pokemon-species";
 import type { AbilityId } from "#enums/ability-id";
@@ -14,8 +16,7 @@ import type { ModifierTypeOption } from "#modifiers/modifier-type";
 import { RibbonData, type RibbonFlag } from "#system/ribbon-data";
 import type { DexEntry } from "#types/dex-data";
 import type { LevelMoves } from "#types/level-moves";
-import type { DexAttrProps, StarterDataEntry } from "#types/save-data";
-import type { StarterSpeciesId } from "#types/starter-species-id";
+import type { StarterDataEntry } from "#types/save-data";
 import { BooleanHolder, type NumberHolder } from "#utils/common";
 import type { ValueHolder } from "#utils/value-holder";
 
@@ -24,14 +25,12 @@ import type { ValueHolder } from "#utils/value-holder";
  * @param pokemon - The {@linkcode PokemonSpecies} to check the validity of
  * @param valid - A {@linkcode BooleanHolder} holding the checked species' validity;
  * will be set to `false` if the species is disallowed
- * @param dexAttr - The {@linkcode DexAttrProps | Dex attributes} of the species
  * @returns `true` if any challenge was successfully applied
  */
 export function applyChallenges(
   challengeType: ChallengeType.STARTER_CHOICE,
   pokemon: PokemonSpecies,
   valid: BooleanHolder,
-  dexAttr: DexAttrProps,
 ): boolean;
 /**
  * Apply all challenges that modify available total starter points.
@@ -592,31 +591,32 @@ export function applyChallenges(challengeType: ChallengeType, ...args: any[]): b
 /**
  * Apply all challenges to the given starter (and form) to check its validity.
  * Differs from {@linkcode checkSpeciesValidForChallenge} which only checks form changes.
- * @param starterId - The {@linkcode StarterSpeciesId} of the Pokemon to check the validity of.
- * @param dexAttr - The {@linkcode DexAttrProps | dex attributes} of the species, including its form index.
+ * @param charId - The {@linkcode CharacterId} of the Pokemon to check the validity of.
  * @param soft - If `true`, allow it if it could become valid through evolution or form change.
  * @returns `true` if the species is considered valid.
  */
-export function checkStarterValidForChallenge(starterId: StarterSpeciesId, props: DexAttrProps, soft: boolean) {
-  const species = speciesDataRegistry.getSpecies(starterId);
+export function checkStarterValidForChallenge(charId: CharacterId, soft: boolean) {
+  const speciesId = getSpeciesId(charId);
+  const formIndex = getFormIndex(charId);
+  const species = speciesDataRegistry.getSpecies(speciesId);
   if (!soft) {
     const isValidForChallenge = new BooleanHolder(true);
-    applyChallenges(ChallengeType.STARTER_CHOICE, species, isValidForChallenge, props);
+    applyChallenges(ChallengeType.STARTER_CHOICE, species, isValidForChallenge);
     return isValidForChallenge.value;
   }
   // We check the validity of every evolution and form change, and require that at least one is valid
-  const speciesToCheck: SpeciesId[] = [starterId];
+  const speciesToCheck: SpeciesId[] = [speciesId];
   while (speciesToCheck.length > 0) {
     const checking = speciesToCheck.pop()!;
     const checkingSpecies = speciesDataRegistry.getSpecies(checking);
-    if (checkSpeciesValidForChallenge(checkingSpecies, props, true)) {
+    if (checkSpeciesValidForChallenge(checkingSpecies, true)) {
       return true;
     }
     if (checking && speciesDataRegistry.hasEvolutions(checking)) {
       speciesDataRegistry.getEvolutions(checking).forEach(e => {
         // Form check to deal with cases such as Basculin -> Basculegion
         // TODO: does this miss anything if checking forms of a stage 2 Pokémon?
-        if (!e?.preFormKey || e.preFormKey === species.forms[props.formIndex].formKey) {
+        if (!e?.preFormKey || e.preFormKey === species.forms[formIndex].formKey) {
           speciesToCheck.push(e.speciesId);
         }
       });
@@ -633,9 +633,9 @@ export function checkStarterValidForChallenge(starterId: StarterSpeciesId, props
  * @param soft - If `true`, allow it if it could become valid through a form change.
  * @returns `true` if the species is considered valid.
  */
-export function checkSpeciesValidForChallenge(species: PokemonSpecies, props: DexAttrProps, soft: boolean) {
+export function checkSpeciesValidForChallenge(species: PokemonSpecies, soft: boolean) {
   const isValidForChallenge = new BooleanHolder(true);
-  applyChallenges(ChallengeType.STARTER_CHOICE, species, isValidForChallenge, props);
+  applyChallenges(ChallengeType.STARTER_CHOICE, species, isValidForChallenge);
   if (!soft || !speciesDataRegistry.hasFormChanges(species.speciesId)) {
     return isValidForChallenge.value;
   }
@@ -650,11 +650,10 @@ export function checkSpeciesValidForChallenge(species: PokemonSpecies, props: De
       return false;
     }
 
-    return species.forms.some((f2, formIndex) => {
+    return species.forms.some(f2 => {
       if (f1.formKey === f2.formKey) {
-        const formProps = { ...props, formIndex };
         const isFormValidForChallenge = new BooleanHolder(true);
-        applyChallenges(ChallengeType.STARTER_CHOICE, species, isFormValidForChallenge, formProps);
+        applyChallenges(ChallengeType.STARTER_CHOICE, species, isFormValidForChallenge);
         return isFormValidForChallenge.value;
       }
       return false;

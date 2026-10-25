@@ -1,32 +1,17 @@
 import { VALUE_REDUCTION_MAX } from "#app/constants";
 import { globalScene } from "#app/global-scene";
-import { settings } from "#app/global-settings-manager";
 import { speciesDataRegistry } from "#app/global-species-data-registry";
+import { getSpeciesId } from "#balance/characters/character-identities";
+import { getIdentity } from "#balance/characters/constant-data/character-data-arrays";
+import type { CharacterId } from "#balance/characters/types/character-types-enums";
 import { speciesEggMoves } from "#balance/egg-moves";
-import {
-  getPassiveCandyCount,
-  getSameSpeciesEggCandyCounts,
-  getStarterValueFriendshipCap,
-  getValueReductionCandyCounts,
-} from "#balance/starters";
-import { AbilityAttr } from "#enums/ability-attr";
-import { CandyUpgradeDisplayMode } from "#enums/candy-upgrade-display-mode";
-import { CandyUpgradeNotificationMode } from "#enums/candy-upgrade-notification-mode";
+import { getPassiveCandyCount, getSameSpeciesEggCandyCounts, getValueReductionCandyCounts } from "#balance/starters";
 import { ChallengeType } from "#enums/challenge-type";
-import { Challenges } from "#enums/challenges";
-import { DexAttr } from "#enums/dex-attr";
 import { GameModes } from "#enums/game-modes";
 import type { MoveId } from "#enums/move-id";
-import { Nature } from "#enums/nature";
 import { Passive } from "#enums/passive";
-import { RibbonData } from "#system/ribbon-data";
-import type { DexEntry } from "#types/dex-data";
-import type { DexAttrProps, StarterDataEntry, StarterPreferences } from "#types/save-data";
-import type { DefinedSpeciesDetails, SpeciesDetails } from "#types/starter-select-types";
-import type { StarterSpeciesId } from "#types/starter-species-id";
 import { SortCriteria, type SortDirection } from "#ui/dropdown";
 import { applyChallenges, checkStarterValidForChallenge } from "#utils/challenge-utils";
-import { deepCopy } from "#utils/data";
 import { ValueHolder } from "#utils/value-holder";
 import i18next from "i18next";
 
@@ -79,56 +64,12 @@ export function isSameSpeciesEggAvailable(speciesId: number, gameData = globalSc
 }
 
 /**
- * Determines if a starter is valid for challenges.
- * @param starterId - The ID of the starter species to check
- * @returns whether the starter is valid for challenges
+ * Determines if a character is valid for challenges.
+ * @param charId - The ID of the character to check
+ * @returns whether the character is valid for challenges
  */
-export function isStarterValidForChallenge(starterId: StarterSpeciesId): boolean {
-  const species = speciesDataRegistry.getSpecies(starterId);
-
-  let isStarterValid = false;
-  if (species.forms?.length > 0) {
-    for (let i = 0; i < species.forms.length; i++) {
-      // Here we are making a fake form index dex props for challenges.
-      // Since some pokemon rely on forms to be valid (i.e. blaze tauros for fire challenges),
-      // we make a fake form and dex props to use in the challenge
-      if (!species.forms[i].isStarterSelectable) {
-        continue;
-      }
-      const tempFormProps = BigInt(Math.pow(2, i)) * DexAttr.DEFAULT_FORM;
-      const isValidForChallenge = checkStarterValidForChallenge(
-        starterId,
-        globalScene.gameData.getDexAttrProps(tempFormProps),
-        true,
-      );
-      isStarterValid ||= isValidForChallenge;
-    }
-  } else {
-    const isValidForChallenge = checkStarterValidForChallenge(
-      starterId,
-      globalScene.gameData.getSpeciesDefaultDexAttrProps(species.speciesId),
-      true,
-    );
-    isStarterValid = isValidForChallenge;
-  }
-
-  return isStarterValid;
-}
-
-/** @returns Whether upgrade notifications are enabled and set to display as an icon */
-export function isUpgradeIconEnabled(): boolean {
-  return (
-    settings.display.candyUpgradeNotificationMode !== CandyUpgradeNotificationMode.OFF
-    && settings.display.candyUpgradeDisplayMode === CandyUpgradeDisplayMode.ICON
-  );
-}
-
-/** @returns Whether upgrade notifications are enabled and set to display as an animation */
-export function isUpgradeAnimationEnabled(): boolean {
-  return (
-    settings.display.candyUpgradeNotificationMode !== CandyUpgradeNotificationMode.OFF
-    && settings.display.candyUpgradeDisplayMode === CandyUpgradeDisplayMode.ANIMATION
-  );
+export function isCharacterValidForChallenge(charId: CharacterId): boolean {
+  return checkStarterValidForChallenge(charId, true);
 }
 
 interface StarterSelectLanguageSetting {
@@ -266,173 +207,6 @@ export function getStarterSelectTextSettings(): StarterSelectLanguageSetting {
   return textSettings;
 }
 
-/**
- * Return a copy of the dex data and starter data for a given species,
- * modifying it by applying any challenges that restrict which options should be available.
- *
- * @param speciesId - The species id to get data for
- * @param applyChallenge - (Default `true`) Whether the current challenges should be taken into account
- * @returns A copy of the starter's {@linkcode DexEntry} and {@linkcode StarterDataEntry}
- */
-export function getStarterData(
-  starterId: StarterSpeciesId,
-  applyChallenge = true,
-): { dexEntry: DexEntry; starterDataEntry: StarterDataEntry } {
-  const originalDexEntry = globalScene.gameData.dexData[starterId];
-  const dexEntry: DexEntry = { ...originalDexEntry };
-  dexEntry.ivs = [...originalDexEntry.ivs];
-  dexEntry.ribbons = new RibbonData(originalDexEntry.ribbons.getRibbons());
-  const starterDataEntry: StarterDataEntry = deepCopy(globalScene.gameData.starterData[starterId]);
-
-  if (applyChallenge) {
-    applyChallenges(ChallengeType.STARTER_SELECT_MODIFY, starterId, dexEntry, starterDataEntry);
-  }
-
-  return { dexEntry, starterDataEntry };
-}
-
-/**
- * Get the current friendship and friendship cap for a given species.
- * @param speciesId - The id of the species to get friendship for
- * @returns An object containing the current friendship and friendship cap for the species
- */
-export function getFriendship(speciesId: StarterSpeciesId): { currentFriendship: number; friendshipCap: number } {
-  const currentFriendship = globalScene.gameData.starterData[speciesId].friendship;
-
-  const friendshipCap = getStarterValueFriendshipCap(speciesDataRegistry.getStarterCost(speciesId));
-
-  return { currentFriendship, friendshipCap };
-}
-
-/**
- * Creates a temporary dex attr props that will be used to check whether a pokemon is valid for a challenge
- * and to display the correct shiny, variant, and form based on the starter preferences
- *
- * @param speciesId - The id of the species to get props for
- * @param starterPreferences - (Optional) The {@linkcode StarterPreferences} of the starter
- * @returns the dex props as a `bigint`
- */
-export function getDexAttrFromPreferences(
-  speciesId: StarterSpeciesId,
-  starterPreferences: StarterPreferences = {},
-): bigint {
-  let props = 0n;
-  const { dexEntry } = getStarterData(speciesId);
-  const caughtAttr = dexEntry.caughtAttr;
-
-  /*
-   * This checks the gender of the pokemon by checking:
-   * - That the starter preferences for the species exist, and if so, if it's female.
-   *   If so, it'll add `DexAttr.FEMALE` to our temp props
-   * - If the `caughtAttr` for the pokemon is female and NOT male - this means that the ONLY gender we've gotten is female,
-   *   and we need to add `DexAttr.FEMALE` to our temp props
-   *
-   * If neither of these pass, we add `DexAttr.MALE` to our temp props
-   */
-  if (starterPreferences.female || ((caughtAttr & DexAttr.FEMALE) > 0n && (caughtAttr & DexAttr.MALE) === 0n)) {
-    props += DexAttr.FEMALE;
-  } else {
-    props += DexAttr.MALE;
-  }
-
-  // This part is very similar to above, but instead of for gender, it checks for shiny within starter preferences.
-  // If they're not there, it enables shiny state by default if any shiny was caught
-  if (starterPreferences.shiny || ((caughtAttr & DexAttr.SHINY) > 0n && starterPreferences?.shiny !== false)) {
-    props += DexAttr.SHINY;
-    if (starterPreferences.variant !== undefined) {
-      props += BigInt(Math.pow(2, starterPreferences.variant)) * DexAttr.DEFAULT_VARIANT;
-    } else if ((caughtAttr & DexAttr.VARIANT_3) > 0) {
-      props += DexAttr.VARIANT_3;
-    } else if ((caughtAttr & DexAttr.VARIANT_2) > 0) {
-      props += DexAttr.VARIANT_2;
-    } else {
-      props += DexAttr.DEFAULT_VARIANT;
-    }
-  } else {
-    props += DexAttr.NON_SHINY;
-    // we add the default variant here because non shiny versions are listed as default variant
-    props += DexAttr.DEFAULT_VARIANT;
-  }
-
-  if (starterPreferences.formIndex) {
-    props += BigInt(Math.pow(2, starterPreferences.formIndex)) * DexAttr.DEFAULT_FORM;
-  } else {
-    // Get the first unlocked form
-    props += globalScene.gameData.getFormAttr(globalScene.gameData.getFormIndex(caughtAttr));
-  }
-
-  return props;
-}
-
-/**
- * Convert starter preferences to dex props, which are used as an input by various functions.
- *
- * If any preferences are undefined, the default value for the species is given, based on its caught data.
- * @param starterId - The {@linkcode StarterSpeciesId | starter} to get dex props for
- * @param starterPreferences - (Optional) The {@linkcode StarterPreferences} for the species
- * @returns The {@linkcode DexAttrProps} for the starter
- */
-export function getStarterDexAttrPropsFromPreferences(
-  starterId: StarterSpeciesId,
-  starterPreferences: StarterPreferences = {},
-): DexAttrProps {
-  // Shiny is always default, except in fresh start
-  const isShinyDefault = !globalScene.gameMode.hasChallenge(Challenges.FRESH_START);
-  const defaults = globalScene.gameData.getSpeciesDefaultDexAttrProps(starterId, isShinyDefault);
-
-  return {
-    shiny: starterPreferences.shiny ?? defaults.shiny,
-    variant: starterPreferences.variant ?? defaults.variant,
-    female: starterPreferences.female ?? defaults.female,
-    formIndex: starterPreferences.formIndex ?? defaults.formIndex,
-  };
-}
-
-function getStarterDefaultAbilityIndex(starterId: StarterSpeciesId): number {
-  const { starterDataEntry: starterData } = getStarterData(starterId);
-  const abilityAttr = starterData.abilityAttr;
-  const species = speciesDataRegistry.getSpecies(starterId);
-
-  if (abilityAttr & AbilityAttr.ABILITY_1) {
-    return 0;
-  }
-  if (!species.ability2 || abilityAttr & AbilityAttr.ABILITY_2) {
-    return 1;
-  }
-  return 2;
-}
-
-function getStarterDefaultNature(starterId: StarterSpeciesId): Nature {
-  const { dexEntry } = getStarterData(starterId);
-  for (let n = 0; n < 25; n++) {
-    if (dexEntry.natureAttr & (1 << (n + 1))) {
-      return n as Nature;
-    }
-  }
-  return Nature.HARDY;
-}
-
-/**
- * Convert starter preferences to {@linkcode SpeciesDetails} format.
- *
- * If any preferences are undefined, the default value for the species is given, based on its caught data.
- * @param starterId - The {@linkcode StarterSpeciesId | starter} to get dex props for
- * @param starterPreferences - (Optional) The {@linkcode StarterPreferences} for the species
- * @returns The data in `SpeciesDetails` format
- */
-export function getStarterDetailsFromPreferences(
-  starterId: StarterSpeciesId,
-  starterPreferences: StarterPreferences = {},
-) {
-  const { female, formIndex, shiny, variant } = getStarterDexAttrPropsFromPreferences(starterId, starterPreferences);
-  const species = speciesDataRegistry.getSpecies(starterId);
-  const abilityIndex = starterPreferences.abilityIndex ?? getStarterDefaultAbilityIndex(starterId);
-  const natureIndex = starterPreferences.nature ?? getStarterDefaultNature(starterId);
-  const teraType = starterPreferences.tera ?? species.type1;
-
-  return { shiny, formIndex, female, variant, abilityIndex, natureIndex, teraType } satisfies DefinedSpeciesDetails;
-}
-
 /** @returns The limit on starter points available for the current run, taking challenges into account */
 export function getRunValueLimit(): number {
   const valueLimit = new ValueHolder(0);
@@ -450,56 +224,38 @@ export function getRunValueLimit(): number {
   return valueLimit.value;
 }
 
+// noinspection JSUnusedLocalSymbols
 /**
  * Calculate the total value of a given party.
  * @param party - An array of species IDs representing the player's starter party
  * @returns The total value of the party
  */
-export function getPartyValue(party: StarterSpeciesId[]): number {
-  return party.reduce(
-    (total: number, starterId: StarterSpeciesId) => total + globalScene.gameData.getSpeciesStarterValue(starterId),
-    0,
-  );
+export function getPartyValue(party: CharacterId[]): number {
+  return 0;
 }
 
 /**
- * Sort an array of {@linkcode StarterSpeciesId} based on a given criteria and direction.
- * @param speciesIds - An array of species IDs to be sorted
+ * Sort an array of {@linkcode CharacterId} based on a given criteria and direction.
+ * @param charIds - An array of character IDs to be sorted
  * @param sort - The criteria by which the species hould be sorted
  * @param dir - The direction in which the species should be sorted
  */
-export function sortStarterSpecies(speciesIds: StarterSpeciesId[], sort: SortCriteria, dir: SortDirection): void {
-  speciesIds.sort((a, b) => {
-    const { gameData } = globalScene;
-    const { dexData, starterData } = gameData;
-
+export function sortCharacters(charIds: CharacterId[], sort: SortCriteria, dir: SortDirection): void {
+  charIds.sort((a, b): number => {
+    const idSort = (a - b) * -dir;
+    const speciesIdSort = getSpeciesId(a) - getSpeciesId(b) * -dir;
+    const nameSort = getIdentity(a).name.localeCompare(getIdentity(b).name) * -dir;
+    const speciesNameSort = getSpeciesId(a).toString().localeCompare(getSpeciesId(b).toString()) * -dir;
     switch (sort) {
-      case SortCriteria.NUMBER:
-        return (a - b) * -dir;
-      case SortCriteria.COST:
-        return (gameData.getSpeciesStarterValue(a) - gameData.getSpeciesStarterValue(b)) * -dir;
-      case SortCriteria.CANDY: {
-        const candyCountA = starterData[a].candyCount;
-        const candyCountB = starterData[b].candyCount;
-        return (candyCountA - candyCountB) * -dir;
-      }
-      case SortCriteria.IV: {
-        const ivsA = dexData[a].ivs;
-        const avgIVsA = ivsA.reduce((total, cur) => total + cur, 0) / ivsA.length;
-
-        const ivsB = dexData[b].ivs;
-        const avgIVsB = ivsB.reduce((total, cur) => total + cur, 0) / ivsB.length;
-
-        return (avgIVsA - avgIVsB) * -dir;
-      }
-      case SortCriteria.NAME:
-        return speciesDataRegistry.getSpecies(a).name.localeCompare(speciesDataRegistry.getSpecies(b).name) * -dir;
-      case SortCriteria.CAUGHT:
-        return (dexData[a].caughtCount - dexData[b].caughtCount) * -dir;
-      case SortCriteria.HATCHED:
-        return (dexData[a].hatchedCount - dexData[b].hatchedCount) * -dir;
+      case SortCriteria.CHARACTER_ID:
+        return idSort;
+      case SortCriteria.CHARACTER_NAME:
+        return nameSort || idSort;
+      case SortCriteria.SPECIES_ID:
+        return speciesIdSort || idSort;
+      case SortCriteria.SPECIES_NAME:
+        return speciesNameSort || idSort;
       default: // to make Biome happy
-        sort satisfies never;
         return 0;
     }
   });
@@ -507,27 +263,24 @@ export function sortStarterSpecies(speciesIds: StarterSpeciesId[], sort: SortCri
 
 /**
  * Get the moves that a starter can have.
- * @param starterId - The id of the starter species to get moves for
- * @param formIndex - The form index of the starter to get moves for
+ * @param charId - The id of the character to get moves for
  * @returns An array of move IDs
  */
-export function getStarterMoves(starterId: StarterSpeciesId, formIndex: number): MoveId[] {
+export function getCharacterMoves(charId: CharacterId): MoveId[] {
   const starterMoves: MoveId[] = [];
-  const { starterDataEntry } = getStarterData(starterId);
+  const speciesId = getSpeciesId(charId);
 
-  const levelMoves = speciesDataRegistry.getLevelMoves(starterId, formIndex);
-  applyChallenges(ChallengeType.LEVEL_UP_MOVESET, speciesDataRegistry.getSpecies(starterId), levelMoves);
+  const levelMoves = speciesDataRegistry.getLevelMoves(speciesId, 0);
+  applyChallenges(ChallengeType.LEVEL_UP_MOVESET, speciesDataRegistry.getSpecies(speciesId), levelMoves);
   for (const [level, moveId] of levelMoves) {
     if (level > 0 && level <= 5) {
       starterMoves.push(moveId);
     }
   }
 
-  if (Object.hasOwn(speciesEggMoves, starterId)) {
+  if (Object.hasOwn(speciesEggMoves, speciesId)) {
     for (let em = 0; em < 4; em++) {
-      if (starterDataEntry.eggMoves & (1 << em)) {
-        starterMoves.push(speciesEggMoves[starterId][em]);
-      }
+      starterMoves.push(speciesEggMoves[speciesId][em]);
     }
   }
 

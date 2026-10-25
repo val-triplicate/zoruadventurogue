@@ -192,49 +192,7 @@ export class GameData {
       console.error("Starter data missing!");
       return false;
     }
-
-    let dataValidated = true;
-
-    for (const speciesId of speciesDataRegistry.getAllStarters()) {
-      if (defaultStarterSpecies.includes(speciesId)) {
-        continue;
-      }
-
-      const starterEntry = data.starterData[speciesId];
-      const dexEntry = data.dexData[speciesId];
-
-      const species = SpeciesId[speciesId];
-
-      if (starterEntry == null) {
-        console.error("Missing starter data for %s (%d)!", species, speciesId);
-        dataValidated = false;
-        continue;
-      }
-      if (dexEntry == null) {
-        console.error("Missing dex data for %s (%d)!", species, speciesId);
-        dataValidated = false;
-        continue;
-      }
-
-      const hasStarterData =
-        starterEntry.abilityAttr > 0
-        || starterEntry.eggMoves > 0
-        || starterEntry.moveset != null
-        || starterEntry.passiveAttr > 0
-        || starterEntry.valueReduction > 0;
-
-      const noDexData = dexEntry.caughtCount === 0 && dexEntry.hatchedCount === 0 && dexEntry.caughtAttr === 0n;
-
-      if (hasStarterData && noDexData) {
-        console.error("Corrupt save data detected!");
-        console.warn("Species: %s (%d)", species, speciesId);
-        console.warn(starterEntry);
-        console.warn(dexEntry);
-        dataValidated = false;
-      }
-    }
-
-    return dataValidated;
+    return true;
   }
 
   private async showInvalidSaveModal<const T>(

@@ -1,5 +1,7 @@
 import { defaultStarterSpecies } from "#app/constants";
 import { setSpeciesDataRegistry } from "#app/global-species-data-registry";
+import { getFormIndex, getSpeciesId } from "#balance/characters/character-identities";
+import type { CharacterId } from "#balance/characters/types/character-types-enums";
 import { initGenerationOne } from "#balance/generation-01";
 import { initGenerationTwo } from "#balance/generation-02";
 import { initGenerationThree } from "#balance/generation-03";
@@ -136,6 +138,10 @@ export class SpeciesDataRegistry {
     return this.getSpeciesData(speciesId).species;
   }
 
+  public getBaseSpecies(charId: CharacterId): PokemonSpecies {
+    return this.getSpeciesData(getSpeciesId(charId)).species;
+  }
+
   /**
    * Get all pokemon species in the registry.
    * @returns An array of all {@linkcode PokemonSpecies}
@@ -155,6 +161,11 @@ export class SpeciesDataRegistry {
     const formIndex = this.getFormIndex(speciesId, form);
 
     return species.forms[formIndex] ?? species;
+  }
+
+  public getPokemonSpeciesFormFromCharacterId(charId: CharacterId): PokemonSpeciesForm {
+    const species: PokemonSpecies = this.getBaseSpecies(charId);
+    return species.forms[getFormIndex(charId)] ?? species;
   }
 
   /**
@@ -374,7 +385,6 @@ export class SpeciesDataRegistry {
   /**
    * Get the prevolution of a given species.
    * @param speciesId - The {@linkcode SpeciesId} of the species to get the prevolution for
-   * @param getSpecies - (Default `false`) Whether to return the {@linkcode PokemonSpecies} instead of a {@linkcode SpeciesId}
    * @returns The prevolution {@linkcode SpeciesId} or {@linkcode PokemonSpecies}
    */
   public getPrevolution(speciesId: SpeciesId): SpeciesId | null;

@@ -474,13 +474,13 @@ export class PokedexUiHandler extends MessageUiHandler {
     // sort filter
     const sortOptions = [
       new DropDownOption(
-        SortCriteria.NUMBER,
+        SortCriteria.SPECIES_ID,
         new DropDownLabel(i18next.t("filterBar:sortByNumber"), undefined, DropDownState.ON),
       ),
       new DropDownOption(SortCriteria.COST, new DropDownLabel(i18next.t("filterBar:sortByCost"))),
       new DropDownOption(SortCriteria.CANDY, new DropDownLabel(i18next.t("filterBar:sortByCandies"))),
       new DropDownOption(SortCriteria.IV, new DropDownLabel(i18next.t("filterBar:sortByIVs"))),
-      new DropDownOption(SortCriteria.NAME, new DropDownLabel(i18next.t("filterBar:sortByName"))),
+      new DropDownOption(SortCriteria.SPECIES_NAME, new DropDownLabel(i18next.t("filterBar:sortByName"))),
       new DropDownOption(SortCriteria.CAUGHT, new DropDownLabel(i18next.t("filterBar:sortByNumCaught"))),
       new DropDownOption(SortCriteria.HATCHED, new DropDownLabel(i18next.t("filterBar:sortByNumHatched"))),
     ];
@@ -1719,7 +1719,7 @@ export class PokedexUiHandler extends MessageUiHandler {
     const sort = this.filterBar.getVals(DropDownColumn.SORT)[0];
     this.filteredPokemonData.sort((a, b) => {
       switch (sort.val) {
-        case SortCriteria.NUMBER:
+        case SortCriteria.SPECIES_ID:
           return (a.species.speciesId - b.species.speciesId) * -sort.dir;
         case SortCriteria.COST:
           return (a.cost - b.cost) * -sort.dir;
@@ -1737,7 +1737,7 @@ export class PokedexUiHandler extends MessageUiHandler {
             / this.gameData.dexData[b.species.speciesId].ivs.length;
           return (avgIVsA - avgIVsB) * -sort.dir;
         }
-        case SortCriteria.NAME:
+        case SortCriteria.SPECIES_NAME:
           return a.species.name.localeCompare(b.species.name) * -sort.dir;
         case SortCriteria.CAUGHT:
           return (

@@ -1,4 +1,5 @@
 import { speciesDataRegistry } from "#app/global-species-data-registry";
+import { getSpeciesId } from "#balance/characters/character-identities";
 import { Gender } from "#data/gender";
 import { AbilityId } from "#enums/ability-id";
 import { Button } from "#enums/buttons";
@@ -565,11 +566,11 @@ describe.todo("UI - Starter select", () => {
       });
     });
 
-    expect(starterSelectUiHandler?.partyStarterIds.length).toBe(1);
-    const starterId = starterSelectUiHandler?.partyStarterIds[0];
-    const starterSpecies = speciesDataRegistry.getSpecies(starterId!);
-    expect(starterSpecies.generation).toBe(1);
-    expect(starterSpecies.speciesId).toBe(32);
+    expect(starterSelectUiHandler?.partyCharacterIds.length).toBe(1);
+    const charId = starterSelectUiHandler?.partyCharacterIds[0];
+    const species = speciesDataRegistry.getSpecies(getSpeciesId(charId!));
+    expect(species.generation).toBe(1);
+    expect(species.speciesId).toBe(32);
     expect(starterSelectUiHandler?.cursorObj.x).toBe(53);
     expect(starterSelectUiHandler?.cursorObj.y).toBe(31);
 
