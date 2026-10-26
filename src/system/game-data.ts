@@ -1488,16 +1488,6 @@ export class GameData {
       "default",
     );
 
-    for (let ds = 0; ds < defaultStarterSpecies.length; ds++) {
-      const entry = data[defaultStarterSpecies[ds]] as DexEntry;
-      entry.seenAttr = defaultStarterAttr;
-      entry.caughtAttr = defaultStarterAttr;
-      entry.natureAttr = 1 << (defaultStarterNatures[ds] + 1);
-      for (const i in entry.ivs) {
-        entry.ivs[i] = 15;
-      }
-    }
-
     this.defaultDexData = { ...data };
     this.dexData = data;
   }

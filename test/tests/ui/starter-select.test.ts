@@ -62,7 +62,7 @@ describe.todo("UI - Starter select", () => {
       });
     });
     expect(options.some(option => option.label === i18next.t("starterSelectUiHandler:addToParty"))).toBe(true);
-    expect(options.some(option => option.label === i18next.t("starterSelectUiHandler:toggleIVs"))).toBe(true);
+    expect(options.some(option => option.label === i18next.t("starterSelectUiHandler:toggleStats"))).toBe(true);
     expect(options.some(option => option.label === i18next.t("starterSelectUiHandler:manageMoves"))).toBe(true);
     expect(options.some(option => option.label === i18next.t("starterSelectUiHandler:useCandies"))).toBe(true);
     expect(options.some(option => option.label === i18next.t("menu:cancel"))).toBe(true);
@@ -122,7 +122,7 @@ describe.todo("UI - Starter select", () => {
       });
     });
     expect(options.some(option => option.label === i18next.t("starterSelectUiHandler:addToParty"))).toBe(true);
-    expect(options.some(option => option.label === i18next.t("starterSelectUiHandler:toggleIVs"))).toBe(true);
+    expect(options.some(option => option.label === i18next.t("starterSelectUiHandler:toggleStats"))).toBe(true);
     expect(options.some(option => option.label === i18next.t("starterSelectUiHandler:manageMoves"))).toBe(true);
     expect(options.some(option => option.label === i18next.t("starterSelectUiHandler:useCandies"))).toBe(true);
     expect(options.some(option => option.label === i18next.t("menu:cancel"))).toBe(true);
@@ -185,7 +185,7 @@ describe.todo("UI - Starter select", () => {
       });
     });
     expect(options.some(option => option.label === i18next.t("starterSelectUiHandler:addToParty"))).toBe(true);
-    expect(options.some(option => option.label === i18next.t("starterSelectUiHandler:toggleIVs"))).toBe(true);
+    expect(options.some(option => option.label === i18next.t("starterSelectUiHandler:toggleStats"))).toBe(true);
     expect(options.some(option => option.label === i18next.t("starterSelectUiHandler:manageMoves"))).toBe(true);
     expect(options.some(option => option.label === i18next.t("starterSelectUiHandler:useCandies"))).toBe(true);
     expect(options.some(option => option.label === i18next.t("menu:cancel"))).toBe(true);
@@ -247,7 +247,7 @@ describe.todo("UI - Starter select", () => {
       });
     });
     expect(options.some(option => option.label === i18next.t("starterSelectUiHandler:addToParty"))).toBe(true);
-    expect(options.some(option => option.label === i18next.t("starterSelectUiHandler:toggleIVs"))).toBe(true);
+    expect(options.some(option => option.label === i18next.t("starterSelectUiHandler:toggleStats"))).toBe(true);
     expect(options.some(option => option.label === i18next.t("starterSelectUiHandler:manageMoves"))).toBe(true);
     expect(options.some(option => option.label === i18next.t("starterSelectUiHandler:useCandies"))).toBe(true);
     expect(options.some(option => option.label === i18next.t("menu:cancel"))).toBe(true);
@@ -307,7 +307,7 @@ describe.todo("UI - Starter select", () => {
       });
     });
     expect(options.some(option => option.label === i18next.t("starterSelectUiHandler:addToParty"))).toBe(true);
-    expect(options.some(option => option.label === i18next.t("starterSelectUiHandler:toggleIVs"))).toBe(true);
+    expect(options.some(option => option.label === i18next.t("starterSelectUiHandler:toggleStats"))).toBe(true);
     expect(options.some(option => option.label === i18next.t("starterSelectUiHandler:manageMoves"))).toBe(true);
     expect(options.some(option => option.label === i18next.t("starterSelectUiHandler:useCandies"))).toBe(true);
     expect(options.some(option => option.label === i18next.t("menu:cancel"))).toBe(true);
@@ -368,7 +368,7 @@ describe.todo("UI - Starter select", () => {
       });
     });
     expect(options.some(option => option.label === i18next.t("starterSelectUiHandler:addToParty"))).toBe(true);
-    expect(options.some(option => option.label === i18next.t("starterSelectUiHandler:toggleIVs"))).toBe(true);
+    expect(options.some(option => option.label === i18next.t("starterSelectUiHandler:toggleStats"))).toBe(true);
     expect(options.some(option => option.label === i18next.t("starterSelectUiHandler:manageMoves"))).toBe(true);
     expect(options.some(option => option.label === i18next.t("starterSelectUiHandler:useCandies"))).toBe(true);
     expect(options.some(option => option.label === i18next.t("menu:cancel"))).toBe(true);
@@ -428,7 +428,7 @@ describe.todo("UI - Starter select", () => {
       });
     });
     expect(options.some(option => option.label === i18next.t("starterSelectUiHandler:addToParty"))).toBe(true);
-    expect(options.some(option => option.label === i18next.t("starterSelectUiHandler:toggleIVs"))).toBe(true);
+    expect(options.some(option => option.label === i18next.t("starterSelectUiHandler:toggleStats"))).toBe(true);
     expect(options.some(option => option.label === i18next.t("starterSelectUiHandler:manageMoves"))).toBe(true);
     expect(options.some(option => option.label === i18next.t("starterSelectUiHandler:useCandies"))).toBe(true);
     expect(options.some(option => option.label === i18next.t("menu:cancel"))).toBe(true);
@@ -487,7 +487,7 @@ describe.todo("UI - Starter select", () => {
       });
     });
     expect(options.some(option => option.label === i18next.t("starterSelectUiHandler:addToParty"))).toBe(true);
-    expect(options.some(option => option.label === i18next.t("starterSelectUiHandler:toggleIVs"))).toBe(true);
+    expect(options.some(option => option.label === i18next.t("starterSelectUiHandler:toggleStats"))).toBe(true);
     expect(options.some(option => option.label === i18next.t("starterSelectUiHandler:manageMoves"))).toBe(true);
     expect(options.some(option => option.label === i18next.t("starterSelectUiHandler:useCandies"))).toBe(true);
     expect(options.some(option => option.label === i18next.t("menu:cancel"))).toBe(true);
@@ -551,7 +551,7 @@ describe.todo("UI - Starter select", () => {
       });
     });
     expect(options.some(option => option.label === i18next.t("starterSelectUiHandler:addToParty"))).toBe(true);
-    expect(options.some(option => option.label === i18next.t("starterSelectUiHandler:toggleIVs"))).toBe(true);
+    expect(options.some(option => option.label === i18next.t("starterSelectUiHandler:toggleStats"))).toBe(true);
     expect(options.some(option => option.label === i18next.t("starterSelectUiHandler:manageMoves"))).toBe(true);
     expect(options.some(option => option.label === i18next.t("starterSelectUiHandler:useCandies"))).toBe(true);
     expect(options.some(option => option.label === i18next.t("menu:cancel"))).toBe(true);

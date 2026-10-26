@@ -22,6 +22,7 @@ export async function generateSpeciesData(): Promise<void> {
 
   for (const speciesData of Object.values(speciesDataRegistry.data)) {
     const species = speciesData.species;
+    const categories = speciesData.categories;
     const passives = speciesData.passives;
     const normalizedSpriteKey = normalizeSpriteKey(species.getSpriteKey(false));
     const eggMoves = speciesEggMoves[speciesData.starter] as [MoveId, MoveId, MoveId, MoveId];
@@ -40,7 +41,7 @@ export async function generateSpeciesData(): Promise<void> {
       spriteKey: normalizedSpriteKey,
       formKey: null,
       hasVariants: variantMasterlist[normalizedSpriteKey] != null,
-      category: species.category,
+      category: typeof categories === "string" ? categories : categories[0],
       type1: PokemonType[species.type1],
       type2: species.type2 == null ? null : PokemonType[species.type2],
       ability1: AbilityId[species.ability1],
@@ -99,6 +100,7 @@ export async function generateSpeciesData(): Promise<void> {
         ability1: AbilityId[form.ability1],
         ability2: AbilityId[form.ability2],
         hiddenAbility: AbilityId[form.abilityHidden],
+        category: typeof species.category === "string" ? species.category : species.category[Number(1)],
         passive: typeof passives === "number" ? AbilityId[passives] : AbilityId[passives[Number(index)]],
         bst: form.baseTotal,
         hp: form.baseStats[0],

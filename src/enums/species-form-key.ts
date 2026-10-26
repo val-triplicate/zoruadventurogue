@@ -15,4 +15,5 @@ export enum SpeciesFormKey {
   GIGANTAMAX_SINGLE = "gigantamax-single",
   GIGANTAMAX_RAPID = "gigantamax-rapid",
   ETERNAMAX = "eternamax",
+  CHARACTER = "character",
 }

@@ -78,6 +78,7 @@ export const normalForm: SpeciesId[] = [
 export type PokemonSpeciesFilter = (species: PokemonSpecies) => boolean;
 
 interface PokemonSpeciesFormConstructor {
+  charId?: CharacterId | undefined;
   type1: RegularPokemonType;
   type2: RegularPokemonType | null;
   height: number;
@@ -110,6 +111,7 @@ const CUSTOM_FORM_NAMES: Partial<Record<SpeciesId, string>> = {
 };
 
 export abstract class PokemonSpeciesForm {
+  public charId?: CharacterId | undefined;
   public speciesId: SpeciesId;
   protected _formIndex: number;
   protected _generation: number;
@@ -131,6 +133,7 @@ export abstract class PokemonSpeciesForm {
   readonly isStarterSelectable: boolean;
 
   constructor(data: PokemonSpeciesFormConstructor) {
+    this.charId = data.charId;
     this.type1 = data.type1;
     this.type2 = data.type2;
     this.height = data.height;
@@ -801,13 +804,21 @@ export abstract class PokemonSpeciesForm {
   }
 }
 
+/**
+ * Mapping of formIndex to category for species with multiple categories.
+ */
+interface PokemonSpeciesCategories {
+  [key: number]: string;
+}
+
 interface PokemonSpeciesConstructor {
+  charId?: CharacterId;
   id: SpeciesId;
   generation: number;
   subLegendary?: boolean;
   legendary?: boolean;
   mythical?: boolean;
-  category: string;
+  category: string | PokemonSpeciesCategories;
   type1: RegularPokemonType;
   type2: RegularPokemonType | null;
   height: number;
@@ -831,13 +842,12 @@ interface PokemonSpeciesConstructor {
   canChangeForm?: boolean;
   forms?: PokemonForm[];
 }
-
 export class PokemonSpecies extends PokemonSpeciesForm implements Localizable {
   public name: string;
   readonly subLegendary: boolean;
   readonly legendary: boolean;
   readonly mythical: boolean;
-  public category: string;
+  private category: string | PokemonSpeciesCategories;
   readonly growthRate: GrowthRate;
   /** The chance (as a decimal) for this Species to be male, or `null` for genderless species */
   readonly malePercent: number | null;
@@ -847,6 +857,7 @@ export class PokemonSpecies extends PokemonSpeciesForm implements Localizable {
 
   constructor(data: PokemonSpeciesConstructor) {
     super({
+      charId: data.charId,
       type1: data.type1,
       type2: data.type2,
       height: data.height,
@@ -919,6 +930,10 @@ export class PokemonSpecies extends PokemonSpeciesForm implements Localizable {
       }
     }
     return this.name;
+  }
+
+  public getCharacterForms(): PokemonForm[] {
+    return this.forms.filter(f => f.formKey === SpeciesFormKey.CHARACTER);
   }
 
   /**
@@ -1027,9 +1042,12 @@ export class PokemonSpecies extends PokemonSpeciesForm implements Localizable {
       : ret;
   }
 
+  public getCategory(formIndex = 0): string {
+    return typeof this.category === "string" ? this.category : this.category[formIndex];
+  }
+
   localize(): void {
     this.name = i18next.t(`pokemon:${toCamelCase(SpeciesId[this.speciesId])}`);
-    this.category = i18next.t(`pokemonCategory:${toCamelCase(SpeciesId[this.speciesId])}Category`);
   }
 
   getWildSpeciesForLevel(level: number, allowEvolving: boolean, isBoss: boolean, gameMode: GameMode): SpeciesId {
@@ -1219,6 +1237,7 @@ export class CharacterSpecies extends PokemonSpecies {
 }
 
 interface PokemonFormConstructor {
+  charId?: CharacterId;
   formName: string;
   formKey: string;
   type1: RegularPokemonType;
@@ -1267,6 +1286,7 @@ export class PokemonForm extends PokemonSpeciesForm {
 
   constructor(data: PokemonFormConstructor) {
     super({
+      charId: data.charId,
       type1: data.type1,
       type2: data.type2,
       height: data.height,
@@ -1294,6 +1314,9 @@ export class PokemonForm extends PokemonSpeciesForm {
   }
 
   getFormSpriteKey(_formIndex?: number) {
+    if (this.formKey === "character") {
+      return "";
+    }
     return this.formSpriteKey === null ? this.formKey : this.formSpriteKey;
   }
 

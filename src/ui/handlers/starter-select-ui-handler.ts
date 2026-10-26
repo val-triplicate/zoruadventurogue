@@ -18,7 +18,6 @@ import { speciesEggMoves } from "#balance/egg-moves";
 import { POKERUS_STARTER_COUNT } from "#balance/starters";
 import { allMoves } from "#data/data-lists";
 import { Button } from "#enums/buttons";
-import { Challenges } from "#enums/challenges";
 import { DexAttr } from "#enums/dex-attr";
 import { DropDownColumn } from "#enums/drop-down-column";
 import { GameModes } from "#enums/game-modes";
@@ -1162,7 +1161,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
     }
 
     options.push({
-      label: i18next.t("starterSelectUiHandler:toggleIVs"),
+      label: i18next.t("starterSelectUiHandler:toggleStats"),
       handler: () => {
         this.toggleShowIvsMode();
         ui.setMode(UiMode.STARTER_SELECT);
@@ -1334,10 +1333,7 @@ export class StarterSelectUiHandler extends MessageUiHandler {
           ui.setOverlayMode(UiMode.POKEDEX_PAGE, species, attributes, null, null, () => {
             if (species) {
               characterContainer = this.characterContainers[this.cursor];
-              const persistentStarterData = globalScene.gameData.starterData[this.lastCharId];
-              characterContainer.starterPassiveBgs.setVisible(
-                !!persistentStarterData.passiveAttr && !globalScene.gameMode.hasChallenge(Challenges.FRESH_START),
-              );
+              characterContainer.starterPassiveBgs.setVisible(false);
               this.setCharacter(this.lastCharId);
             }
           });

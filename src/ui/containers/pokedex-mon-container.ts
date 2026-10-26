@@ -13,8 +13,6 @@ export class PokedexMonContainer extends Phaser.GameObjects.Container {
   public hiddenAbilityIcon: Phaser.GameObjects.Image;
   public favoriteIcon: Phaser.GameObjects.Image;
   public classicWinIcon: Phaser.GameObjects.Image;
-  public candyUpgradeIcon: Phaser.GameObjects.Image;
-  public candyUpgradeOverlayIcon: Phaser.GameObjects.Image;
   public eggMove1Icon: Phaser.GameObjects.Image;
   public tmMove1Icon: Phaser.GameObjects.Image;
   public eggMove2Icon: Phaser.GameObjects.Image;
@@ -81,22 +79,6 @@ export class PokedexMonContainer extends Phaser.GameObjects.Container {
     classicWinIcon.setVisible(false);
     this.add(classicWinIcon);
     this.classicWinIcon = classicWinIcon;
-
-    // candy upgrade icon
-    const candyUpgradeIcon = globalScene.add.image(12, 12, "candy");
-    candyUpgradeIcon.setOrigin(0, 0);
-    candyUpgradeIcon.setScale(0.25);
-    candyUpgradeIcon.setVisible(false);
-    this.add(candyUpgradeIcon);
-    this.candyUpgradeIcon = candyUpgradeIcon;
-
-    // candy upgrade overlay icon
-    const candyUpgradeOverlayIcon = globalScene.add.image(12, 12, "candy_overlay");
-    candyUpgradeOverlayIcon.setOrigin(0, 0);
-    candyUpgradeOverlayIcon.setScale(0.25);
-    candyUpgradeOverlayIcon.setVisible(false);
-    this.add(candyUpgradeOverlayIcon);
-    this.candyUpgradeOverlayIcon = candyUpgradeOverlayIcon;
 
     // move icons
     const eggMove1Icon = globalScene.add.image(0, 12, "common_egg");
@@ -204,8 +186,6 @@ export class PokedexMonContainer extends Phaser.GameObjects.Container {
       this.hiddenAbilityIcon,
       this.favoriteIcon,
       this.classicWinIcon,
-      this.candyUpgradeIcon,
-      this.candyUpgradeOverlayIcon,
       this.eggMove1Icon,
       this.tmMove1Icon,
       this.eggMove2Icon,

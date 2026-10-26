@@ -1,6 +1,8 @@
 import { globalScene } from "#app/global-scene";
 import { settings } from "#app/global-settings-manager";
 import { speciesDataRegistry } from "#app/global-species-data-registry";
+import { getTeamSaveFromCharacterId } from "#balance/characters/constant-data/character-data-arrays";
+import { getCharactersFromSpeciesId } from "#balance/characters/data-maps/character-maps-objects";
 import { speciesEggMoves } from "#balance/egg-moves";
 import { getStarterValueFriendshipCap, POKERUS_STARTER_COUNT } from "#balance/starters";
 import { allAbilities, allMoves, catchableSpecies } from "#data/data-lists";
@@ -20,9 +22,8 @@ import { PokemonType } from "#enums/pokemon-type";
 import type { SpeciesId } from "#enums/species-id";
 import { TextStyle } from "#enums/text-style";
 import { UiMode } from "#enums/ui-mode";
-import { getVariantIcon, getVariantTint } from "#sprites/variant";
+import { getVariantTint } from "#sprites/variant";
 import type { GameData } from "#system/game-data";
-import { SettingKeyboard } from "#system/settings-keyboard";
 import type { DexEntry } from "#types/dex-data";
 import type { AllStarterPreferences, DexAttrProps, StarterPreferences } from "#types/save-data";
 import type { SpeciesDetails } from "#types/starter-select-types";
@@ -37,11 +38,10 @@ import { ScrollBar } from "#ui/scroll-bar";
 import { isPassiveAvailable, isSameSpeciesEggAvailable, isValueReductionAvailable } from "#ui/starter-select-ui-utils";
 import { addTextObject, getTextColor } from "#ui/text";
 import { addWindow } from "#ui/ui-theme";
-import { argbFromRgba, rgbHexToRgba } from "#utils/color-utils";
 import { BooleanHolder, fixedInt, getLocalizedSpriteKey, padInt, randIntRange } from "#utils/common";
 import { loadStarterPreferences } from "#utils/data";
 import { enumValueToKey } from "#utils/enums";
-import { getDexNumber, getPokerusStarters, getStarterColors } from "#utils/pokemon-utils";
+import { getDexNumber, getPokerusStarters } from "#utils/pokemon-utils";
 import { toCamelCase } from "#utils/strings";
 import i18next from "i18next";
 
@@ -231,7 +231,6 @@ export class PokedexUiHandler extends MessageUiHandler {
 
   protected blockInput = false;
 
-  protected optionSelectText: Phaser.GameObjects.Text;
   protected scale = 0.1666666667;
 
   private filterTextContainer: Phaser.GameObjects.Container;
@@ -357,58 +356,14 @@ export class PokedexUiHandler extends MessageUiHandler {
     const biomeDropDown: DropDown = new DropDown(0, 0, biomeOptions, this.updateStarters, DropDownType.HYBRID);
     this.filterBar.addFilter(DropDownColumn.BIOME, i18next.t("filterBar:biomeFilter"), biomeDropDown);
 
-    // caught filter
-    const shiny1Sprite = globalScene.add.sprite(0, 0, "shiny_icons");
-    shiny1Sprite.setOrigin(0.15, 0.2);
-    shiny1Sprite.setScale(0.6);
-    shiny1Sprite.setFrame(getVariantIcon(0));
-    shiny1Sprite.setTint(getVariantTint(0));
-    const shiny2Sprite = globalScene.add.sprite(0, 0, "shiny_icons");
-    shiny2Sprite.setOrigin(0.15, 0.2);
-    shiny2Sprite.setScale(0.6);
-    shiny2Sprite.setFrame(getVariantIcon(1));
-    shiny2Sprite.setTint(getVariantTint(1));
-    const shiny3Sprite = globalScene.add.sprite(0, 0, "shiny_icons");
-    shiny3Sprite.setOrigin(0.15, 0.2);
-    shiny3Sprite.setScale(0.6);
-    shiny3Sprite.setFrame(getVariantIcon(2));
-    shiny3Sprite.setTint(getVariantTint(2));
-
-    const caughtOptions = [
-      new DropDownOption("SHINY3", new DropDownLabel("", shiny3Sprite)),
-      new DropDownOption("SHINY2", new DropDownLabel("", shiny2Sprite)),
-      new DropDownOption("SHINY", new DropDownLabel("", shiny1Sprite)),
-      new DropDownOption("NORMAL", new DropDownLabel(i18next.t("filterBar:normal"))),
-      new DropDownOption("UNCAUGHT", new DropDownLabel(i18next.t("filterBar:uncaught"))),
-    ];
-
-    this.filterBar.addFilter(
-      DropDownColumn.CAUGHT,
-      i18next.t("filterBar:caughtFilter"),
-      new DropDown(0, 0, caughtOptions, this.updateStarters, DropDownType.HYBRID),
-    );
-
     // unlocks filter
     const passiveLabels = [
       new DropDownLabel(i18next.t("filterBar:passive"), undefined, DropDownState.OFF),
       new DropDownLabel(i18next.t("filterBar:passiveUnlocked"), undefined, DropDownState.ON),
-      new DropDownLabel(i18next.t("filterBar:passiveUnlockable"), undefined, DropDownState.UNLOCKABLE),
       new DropDownLabel(i18next.t("filterBar:passiveLocked"), undefined, DropDownState.EXCLUDE),
     ];
 
-    const costReductionLabels = [
-      new DropDownLabel(i18next.t("filterBar:costReduction"), undefined, DropDownState.OFF),
-      new DropDownLabel(i18next.t("filterBar:costReductionUnlocked"), undefined, DropDownState.ON),
-      new DropDownLabel(i18next.t("filterBar:costReductionUnlockedOne"), undefined, DropDownState.ONE),
-      new DropDownLabel(i18next.t("filterBar:costReductionUnlockedTwo"), undefined, DropDownState.TWO),
-      new DropDownLabel(i18next.t("filterBar:costReductionUnlockable"), undefined, DropDownState.UNLOCKABLE),
-      new DropDownLabel(i18next.t("filterBar:costReductionLocked"), undefined, DropDownState.EXCLUDE),
-    ];
-
-    const unlocksOptions = [
-      new DropDownOption("PASSIVE", passiveLabels),
-      new DropDownOption("COST_REDUCTION", costReductionLabels),
-    ];
+    const unlocksOptions = [new DropDownOption("PASSIVE", passiveLabels)];
 
     this.filterBar.addFilter(
       DropDownColumn.UNLOCKS,
@@ -848,16 +803,6 @@ export class PokedexUiHandler extends MessageUiHandler {
   }
 
   /**
-   * Determines if 'Icon' based upgrade notifications should be shown
-   * @returns true if upgrade notifications are enabled and set to display an 'Icon'
-   */
-  isUpgradeIconEnabled(): boolean {
-    return (
-      settings.display.candyUpgradeNotificationMode !== CandyUpgradeNotificationMode.OFF
-      && settings.display.candyUpgradeDisplayMode === CandyUpgradeDisplayMode.ICON
-    );
-  }
-  /**
    * Determines if 'Animation' based upgrade notifications should be shown
    * @returns true if upgrade notifications are enabled and set to display an 'Animation'
    */
@@ -921,51 +866,6 @@ export class PokedexUiHandler extends MessageUiHandler {
       if (!startPaused) {
         chain.play();
       }
-    }
-  }
-
-  /**
-   * Sets the visibility of a Candy Upgrade Icon
-   */
-  setUpgradeIcon(starter: PokedexMonContainer): void {
-    const species = starter.species;
-    const slotVisible = !!species?.speciesId;
-
-    if (
-      !species
-      || settings.display.candyUpgradeNotificationMode === CandyUpgradeNotificationMode.OFF
-      || species.speciesId !== species.getRootSpeciesId(false)
-    ) {
-      starter.candyUpgradeIcon.setVisible(false);
-      starter.candyUpgradeOverlayIcon.setVisible(false);
-      return;
-    }
-
-    const passiveAvailable = isPassiveAvailable(species.speciesId, this.gameData);
-    const valueReductionAvailable = isValueReductionAvailable(species.speciesId, this.gameData);
-    const sameSpeciesEggAvailable = isSameSpeciesEggAvailable(species.speciesId, this.gameData);
-
-    if (settings.display.candyUpgradeNotificationMode === CandyUpgradeNotificationMode.PASSIVES_ONLY) {
-      starter.candyUpgradeIcon.setVisible(slotVisible && passiveAvailable);
-      starter.candyUpgradeOverlayIcon.setVisible(slotVisible && starter.candyUpgradeIcon.visible);
-    } else if (settings.display.candyUpgradeNotificationMode === CandyUpgradeNotificationMode.ON) {
-      starter.candyUpgradeIcon.setVisible(
-        slotVisible && (passiveAvailable || valueReductionAvailable || sameSpeciesEggAvailable),
-      );
-      starter.candyUpgradeOverlayIcon.setVisible(slotVisible && starter.candyUpgradeIcon.visible);
-    }
-  }
-
-  /**
-   * Update the display of candy upgrade icons or animations for the given PokedexMonContainer
-   * @param pokemonContainer the container for the Pokemon to update
-   */
-  updateCandyUpgradeDisplay(pokemonContainer: PokedexMonContainer) {
-    if (this.isUpgradeIconEnabled()) {
-      this.setUpgradeIcon(pokemonContainer);
-    }
-    if (this.isUpgradeAnimationEnabled()) {
-      this.setUpgradeAnimation(pokemonContainer.icon, this.lastSpecies, true);
     }
   }
 
@@ -1280,50 +1180,6 @@ export class PokedexUiHandler extends MessageUiHandler {
     return success || error;
   }
 
-  updateButtonIcon(iconSetting, gamepadType, iconElement, controlLabel): void {
-    // biome-ignore lint/suspicious/noEvolvingTypes: TODO
-    let iconPath;
-    // touch controls cannot be rebound as is, and are just emulating a keyboard event.
-    // Additionally, since keyboard controls can be rebound (and will be displayed when they are), we need to have special handling for the touch controls
-    if (gamepadType === "touch") {
-      gamepadType = "keyboard";
-      switch (iconSetting) {
-        case SettingKeyboard.BUTTON_CYCLE_SHINY:
-          iconPath = "R.png";
-          break;
-        case SettingKeyboard.BUTTON_CYCLE_FORM:
-          iconPath = "F.png";
-          break;
-        case SettingKeyboard.BUTTON_STATS:
-          iconPath = "C.png";
-          break;
-        default:
-          break;
-      }
-    } else {
-      iconPath = globalScene.inputController?.getIconForLatestInputRecorded(iconSetting);
-    }
-    iconElement.setTexture(gamepadType, iconPath);
-    iconElement.setVisible(true);
-    controlLabel.setVisible(true);
-  }
-
-  updateFilterButtonIcon(iconSetting, gamepadType, iconElement, controlLabel): void {
-    // biome-ignore lint/suspicious/noEvolvingTypes: TODO
-    let iconPath;
-    // touch controls cannot be rebound as is, and are just emulating a keyboard event.
-    // Additionally, since keyboard controls can be rebound (and will be displayed when they are), we need to have special handling for the touch controls
-    if (gamepadType === "touch") {
-      gamepadType = "keyboard";
-      iconPath = "C.png";
-    } else {
-      iconPath = globalScene.inputController?.getIconForLatestInputRecorded(iconSetting);
-    }
-    iconElement.setTexture(gamepadType, iconPath);
-    iconElement.setVisible(true);
-    controlLabel.setVisible(true);
-  }
-
   getSanitizedProps(props: DexAttrProps): DexAttrProps {
     const sanitizedProps: DexAttrProps = {
       shiny: false,
@@ -1363,12 +1219,6 @@ export class PokedexUiHandler extends MessageUiHandler {
         props,
       };
 
-      // First, ensure you have the caught attributes for the species else default to bigint 0
-      // TODO: This might be removed depending on how accessible we want the pokedex function to be
-      const caughtAttr =
-        (this.gameData.dexData[species.speciesId]?.caughtAttr || BigInt(0))
-        & (this.gameData.dexData[speciesDataRegistry.getStarter(species.speciesId)]?.caughtAttr || BigInt(0))
-        & species.getFullUnlocksData();
       const starterData = this.gameData.starterData[starterId];
       const isStarterProgressable = Object.hasOwn(speciesEggMoves, starterId);
 
@@ -1500,34 +1350,8 @@ export class PokedexUiHandler extends MessageUiHandler {
           .getVals(DropDownColumn.BIOME)
           .some(item => indexToBiome.has(item) && biomes.has(indexToBiome.get(item)!)) || showNoBiome;
 
-      // Caught / Shiny filter
-      const isNonShinyCaught = !!(caughtAttr & DexAttr.NON_SHINY);
-      const isShinyCaught = !!(caughtAttr & DexAttr.SHINY);
-      const isVariant1Caught = isShinyCaught && !!(caughtAttr & DexAttr.DEFAULT_VARIANT);
-      const isVariant2Caught = isShinyCaught && !!(caughtAttr & DexAttr.VARIANT_2);
-      const isVariant3Caught = isShinyCaught && !!(caughtAttr & DexAttr.VARIANT_3);
-      const isUncaught = !isNonShinyCaught && !isVariant1Caught && !isVariant2Caught && !isVariant3Caught;
-      const fitsCaught = this.filterBar.getVals(DropDownColumn.CAUGHT).some(caught => {
-        if (caught === "SHINY3") {
-          return isVariant3Caught;
-        }
-        if (caught === "SHINY2") {
-          return isVariant2Caught && !isVariant3Caught;
-        }
-        if (caught === "SHINY") {
-          return isVariant1Caught && !isVariant2Caught && !isVariant3Caught;
-        }
-        if (caught === "NORMAL") {
-          return isNonShinyCaught && !isVariant1Caught && !isVariant2Caught && !isVariant3Caught;
-        }
-        if (caught === "UNCAUGHT") {
-          return isUncaught;
-        }
-      });
-
       // Passive Filter
       const isPassiveUnlocked = starterData.passiveAttr > 0;
-      const isPassiveUnlockable = isPassiveAvailable(species.speciesId, this.gameData) && !isPassiveUnlocked;
       const fitsPassive = this.filterBar.getVals(DropDownColumn.UNLOCKS).some(unlocks => {
         if (unlocks.val === "PASSIVE" && unlocks.state === DropDownState.ON) {
           return isPassiveUnlocked;
@@ -1535,35 +1359,7 @@ export class PokedexUiHandler extends MessageUiHandler {
         if (unlocks.val === "PASSIVE" && unlocks.state === DropDownState.EXCLUDE) {
           return isStarterProgressable && !isPassiveUnlocked;
         }
-        if (unlocks.val === "PASSIVE" && unlocks.state === DropDownState.UNLOCKABLE) {
-          return isPassiveUnlockable;
-        }
         if (unlocks.val === "PASSIVE" && unlocks.state === DropDownState.OFF) {
-          return true;
-        }
-      });
-
-      // Cost Reduction Filter
-      const isCostReducedByOne = starterData.valueReduction === 1;
-      const isCostReducedByTwo = starterData.valueReduction === 2;
-      const isCostReductionUnlockable = isValueReductionAvailable(species.speciesId, this.gameData);
-      const fitsCostReduction = this.filterBar.getVals(DropDownColumn.UNLOCKS).some(unlocks => {
-        if (unlocks.val === "COST_REDUCTION" && unlocks.state === DropDownState.ON) {
-          return isCostReducedByOne || isCostReducedByTwo;
-        }
-        if (unlocks.val === "COST_REDUCTION" && unlocks.state === DropDownState.ONE) {
-          return isCostReducedByOne;
-        }
-        if (unlocks.val === "COST_REDUCTION" && unlocks.state === DropDownState.TWO) {
-          return isCostReducedByTwo;
-        }
-        if (unlocks.val === "COST_REDUCTION" && unlocks.state === DropDownState.EXCLUDE) {
-          return isStarterProgressable && !(isCostReducedByOne || isCostReducedByTwo);
-        }
-        if (unlocks.val === "COST_REDUCTION" && unlocks.state === DropDownState.UNLOCKABLE) {
-          return isCostReductionUnlockable;
-        }
-        if (unlocks.val === "COST_REDUCTION" && unlocks.state === DropDownState.OFF) {
           return true;
         }
       });
@@ -1657,33 +1453,6 @@ export class PokedexUiHandler extends MessageUiHandler {
         }
       });
 
-      // Egg Purchasable Filter
-      const isEggPurchasable = isSameSpeciesEggAvailable(species.speciesId, this.gameData);
-      const fitsEgg = this.filterBar.getVals(DropDownColumn.MISC).some(misc => {
-        if (misc.val === "EGG" && misc.state === DropDownState.ON) {
-          return isEggPurchasable;
-        }
-        if (misc.val === "EGG" && misc.state === DropDownState.EXCLUDE) {
-          return isStarterProgressable && !isEggPurchasable;
-        }
-        if (misc.val === "EGG" && misc.state === DropDownState.OFF) {
-          return true;
-        }
-      });
-
-      // Pokerus Filter
-      const fitsPokerus = this.filterBar.getVals(DropDownColumn.MISC).some(misc => {
-        if (misc.val === "POKERUS" && misc.state === DropDownState.ON) {
-          return this.pokerusSpecies.includes(species.speciesId);
-        }
-        if (misc.val === "POKERUS" && misc.state === DropDownState.EXCLUDE) {
-          return !this.pokerusSpecies.includes(species.speciesId);
-        }
-        if (misc.val === "POKERUS" && misc.state === DropDownState.OFF) {
-          return true;
-        }
-      });
-
       if (
         fitsName
         && fitsAbilities
@@ -1691,17 +1460,13 @@ export class PokedexUiHandler extends MessageUiHandler {
         && fitsGen
         && fitsBiome
         && fitsType
-        && fitsCaught
         && fitsPassive
-        && fitsCostReduction
         && fitsStarter
         && fitsFavorite
         && fitsWin
         && fitsHA
         && fitsSeen
         && fitsEncountered
-        && fitsEgg
-        && fitsPokerus
       ) {
         this.filteredPokemonData.push(data);
       }
@@ -1759,18 +1524,19 @@ export class PokedexUiHandler extends MessageUiHandler {
         container.checkIconId(props.female, props.formIndex, props.shiny, props.variant);
 
         const speciesId = data.species.speciesId;
+        const chars = getCharactersFromSpeciesId(speciesId);
         const dexEntry = this.gameData.dexData[speciesId];
         const caughtAttr =
           dexEntry.caughtAttr
           & this.gameData.dexData[speciesDataRegistry.getStarter(speciesId)].caughtAttr
           & data.species.getFullUnlocksData();
 
-        if (caughtAttr & data.species.getFullUnlocksData() || settings.general.dexForDevs) {
-          container.icon.clearTint();
-        } else if (this.isSeen(data.species, dexEntry)) {
+        if (chars.length === 0) {
           container.icon.setTint(0x808080);
+        } else if (chars.filter(c => getTeamSaveFromCharacterId(c.id).isTeamUnlocked).length === 0) {
+          container.icon.setTint(0xc0c0c0);
         } else {
-          container.icon.setTint(0);
+          container.icon.clearTint();
         }
 
         const pairs: [boolean | undefined, Phaser.GameObjects.Image][] = [
@@ -1830,20 +1596,6 @@ export class PokedexUiHandler extends MessageUiHandler {
             this.gameData.starterData[speciesDataRegistry.getStarter(speciesId)].classicWinCount > 0,
           );
           container.favoriteIcon.setVisible(this.starterPreferences[speciesId]?.favorite ?? false);
-
-          // 'Candy Icon' mode
-          if (settings.display.candyUpgradeDisplayMode === CandyUpgradeDisplayMode.ICON) {
-            // Set the candy colors
-            container.candyUpgradeIcon.setTint(
-              argbFromRgba(rgbHexToRgba(getStarterColors(speciesDataRegistry.getStarter(speciesId))[0])),
-            );
-            container.candyUpgradeOverlayIcon.setTint(
-              argbFromRgba(rgbHexToRgba(getStarterColors(speciesDataRegistry.getStarter(speciesId))[1])),
-            );
-          } else if (settings.display.candyUpgradeDisplayMode === CandyUpgradeDisplayMode.ANIMATION) {
-            container.candyUpgradeIcon.setVisible(false);
-            container.candyUpgradeOverlayIcon.setVisible(false);
-          }
         } else {
           container.label.setVisible(false);
           for (let v = 0; v < 3; v++) {
@@ -1853,9 +1605,6 @@ export class PokedexUiHandler extends MessageUiHandler {
           container.hiddenAbilityIcon.setVisible(false);
           container.classicWinIcon.setVisible(false);
           container.favoriteIcon.setVisible(false);
-
-          container.candyUpgradeIcon.setVisible(false);
-          container.candyUpgradeOverlayIcon.setVisible(false);
         }
       }
     });
@@ -1948,16 +1697,11 @@ export class PokedexUiHandler extends MessageUiHandler {
     this.formTrayContainer.setX((goLeft ? boxPos.x - 18 * (this.trayColumns - spaceRight) : boxPos.x) - 3);
     this.formTrayContainer.setY(goUp ? boxPos.y - this.trayBg.height : boxPos.y + 17);
 
-    const dexEntry = this.gameData.dexData[species.speciesId];
     const dexAttr = this.getCurrentDexProps(species.speciesId);
     const props = this.getSanitizedProps(this.gameData.getDexAttrProps(dexAttr));
 
     this.trayContainers = [];
-    const isFormSeen = this.isSeen(species, dexEntry);
     this.trayForms.map((f, index) => {
-      const isFormCaught = dexEntry
-        ? (dexEntry.caughtAttr & species.getFullUnlocksData() & this.gameData.getFormAttr(f.formIndex ?? 0)) > 0n
-        : false;
       const formContainer = new PokedexMonContainer(species, {
         formIndex: f.formIndex,
         female: props.female,
@@ -1966,12 +1710,12 @@ export class PokedexUiHandler extends MessageUiHandler {
       });
       this.iconAnimHandler.addOrUpdate(formContainer.icon, PokemonIconAnimMode.NONE);
       // Setting tint, for all saves some caught forms may only show up as seen
-      if (isFormCaught || settings.general.dexForDevs) {
-        formContainer.icon.clearTint();
-      } else if (isFormSeen) {
+      if (f.charId === undefined) {
         formContainer.icon.setTint(0x808080);
+      } else if (getTeamSaveFromCharacterId(f.charId).isTeamUnlocked) {
+        formContainer.icon.clearTint();
       } else {
-        formContainer.icon.setTint(0);
+        formContainer.icon.setTint(0xc0c0c0);
       }
       formContainer.setPosition(5 + (index % 9) * 18, 4 + Math.floor(index / 9) * 17);
       this.formTrayContainer.add(formContainer);
