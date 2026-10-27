@@ -152,22 +152,17 @@ export class GameOverPhase extends BattlePhase {
       globalScene.disableMenu = true;
       globalScene.time.delayedCall(1000, () => {
         let firstClear = false;
-        if (this.isVictory) {
-          if (globalScene.gameMode.isClassic) {
-            firstClear = globalScene.validateAchv(achvs.CLASSIC_VICTORY);
-            globalScene.validateAchv(achvs.UNEVOLVED_CLASSIC_VICTORY);
-            globalScene.gameData.gameStats.sessionsWon++;
-            for (const pokemon of globalScene.getPlayerParty()) {
-              this.awardFirstClassicCompletion(pokemon);
-              if (pokemon.species.getRootSpeciesId() !== pokemon.species.getRootSpeciesId(true)) {
-                this.awardFirstClassicCompletion(pokemon, true);
-              }
+        if (this.isVictory && globalScene.gameMode.isClassic) {
+          firstClear = globalScene.validateAchv(achvs.CLASSIC_VICTORY);
+          globalScene.validateAchv(achvs.UNEVOLVED_CLASSIC_VICTORY);
+          globalScene.gameData.gameStats.sessionsWon++;
+          for (const pokemon of globalScene.getPlayerParty()) {
+            this.awardFirstClassicCompletion(pokemon);
+            if (pokemon.species.getRootSpeciesId() !== pokemon.species.getRootSpeciesId(true)) {
+              this.awardFirstClassicCompletion(pokemon, true);
             }
-            this.awardRibbons();
-          } else if (globalScene.gameMode.isDaily && newClear) {
-            globalScene.gameData.gameStats.dailyRunSessionsWon++;
-            globalScene.validateAchv(achvs.DAILY_VICTORY);
           }
+          this.awardRibbons();
         }
 
         const fadeDuration = this.isVictory ? 10000 : 5000;
@@ -253,7 +248,7 @@ export class GameOverPhase extends BattlePhase {
           isVictory: this.isVictory,
           clientSessionId,
         })
-        .then(success => doGameOver(!globalScene.gameMode.isDaily || !!success))
+        .then(() => doGameOver(true))
         .catch(_err => {
           globalScene.phaseManager.clearPhaseQueue();
           globalScene.phaseManager.unshiftNew("MessagePhase", i18next.t("menu:serverCommunicationFailed"), 2500);

@@ -18,13 +18,7 @@ import {
   SpeciesCritBoosterModifier,
   TurnStatusEffectModifier,
 } from "#modifiers/modifier";
-import {
-  dailyStarterModifierPool,
-  enemyBuffModifierPool,
-  modifierPool,
-  trainerModifierPool,
-  wildModifierPool,
-} from "#modifiers/modifier-pools";
+import { enemyBuffModifierPool, modifierPool, trainerModifierPool, wildModifierPool } from "#modifiers/modifier-pools";
 import type { initModifierTypes } from "#modifiers/modifier-type";
 import { WeightedModifierType } from "#modifiers/modifier-type";
 import type { WeightedModifierTypeWeightFunc } from "#types/modifier-types";
@@ -79,11 +73,10 @@ function initCommonModifierPool() {
     new WeightedModifierType(
       modifierTypes.SUPER_POTION,
       (party: Pokemon[]) => {
-        const thresholdPartyMemberCount = Math.min(
+        return Math.min(
           party.filter(p => p.getInverseHp() >= 25 && p.getHpRatio() <= 0.75 && !p.isFainted()).length,
           3,
         );
-        return thresholdPartyMemberCount;
       },
       3,
     ),
@@ -109,7 +102,7 @@ function initCommonModifierPool() {
     new WeightedModifierType(
       modifierTypes.MAX_ETHER,
       (party: Pokemon[]) => {
-        const thresholdPartyMemberCount = Math.min(
+        return Math.min(
           party.filter(
             p =>
               p.hp
@@ -121,7 +114,6 @@ function initCommonModifierPool() {
           ).length,
           3,
         );
-        return thresholdPartyMemberCount;
       },
       3,
     ),
@@ -200,11 +192,10 @@ function initGreatModifierPool() {
     new WeightedModifierType(
       modifierTypes.MAX_POTION,
       (party: Pokemon[]) => {
-        const thresholdPartyMemberCount = Math.min(
+        return Math.min(
           party.filter(p => p.getInverseHp() >= 100 && p.getHpRatio() <= 0.5 && !p.isFainted()).length,
           3,
         );
-        return thresholdPartyMemberCount;
       },
       3,
     ),
@@ -225,12 +216,11 @@ function initGreatModifierPool() {
           ).length,
           3,
         );
-        const thresholdPartyMemberCount = Math.floor(
+        return Math.floor(
           (Math.min(party.filter(p => p.getInverseHp() >= 100 && p.getHpRatio() <= 0.5 && !p.isFainted()).length, 3)
             + statusEffectPartyMemberCount)
             / 2,
         );
-        return thresholdPartyMemberCount;
       },
       3,
     ),
@@ -256,7 +246,7 @@ function initGreatModifierPool() {
     new WeightedModifierType(
       modifierTypes.MAX_ELIXIR,
       (party: Pokemon[]) => {
-        const thresholdPartyMemberCount = Math.min(
+        return Math.min(
           party.filter(
             p =>
               p.hp
@@ -268,7 +258,6 @@ function initGreatModifierPool() {
           ).length,
           3,
         );
-        return thresholdPartyMemberCount;
       },
       3,
     ),
@@ -299,7 +288,7 @@ function initGreatModifierPool() {
         }
 
         const { waveIndex } = globalScene.currentBattle;
-        const modeAdjustedWave = globalScene.gameMode.getWaveForDifficulty(waveIndex, true);
+        const modeAdjustedWave = globalScene.gameMode.getWaveForDifficulty(waveIndex);
         return Math.min(1 + Math.floor(modeAdjustedWave / 30), 4);
       },
       4,
@@ -330,8 +319,7 @@ function initGreatModifierPool() {
     ),
     new WeightedModifierType(
       modifierTypes.VOUCHER,
-      (_party: readonly Pokemon[], rerollCount: number) =>
-        globalScene.gameMode.isDaily ? 0 : Math.max(1 - rerollCount, 0),
+      (_party: readonly Pokemon[], rerollCount: number) => Math.max(1 - rerollCount, 0),
       1,
     ),
   ].map(m => {
@@ -363,7 +351,7 @@ function initUltraModifierPool() {
     new WeightedModifierType(modifierTypes.AMULET_COIN, skipInLastClassicWaveOrDefault(3)),
     new WeightedModifierType(modifierTypes.EVIOLITE, (party: Pokemon[]) => {
       const { gameMode, gameData } = globalScene;
-      if (gameMode.isDaily || (!gameMode.isFreshStartChallenge() && gameData.isUnlocked(Unlockables.EVIOLITE))) {
+      if (!gameMode.isFreshStartChallenge() && gameData.isUnlocked(Unlockables.EVIOLITE)) {
         return party.some(p => {
           // Check if Pokemon's species (or fusion species, if applicable) can evolve or if they're G-Max'd
           if (
@@ -601,7 +589,7 @@ function initRogueModifierPool() {
     ),
     new WeightedModifierType(
       modifierTypes.VOUCHER_PLUS,
-      (_party: Pokemon[], rerollCount: number) => (globalScene.gameMode.isDaily ? 0 : Math.max(3 - rerollCount * 1, 0)),
+      (_party: Pokemon[], rerollCount: number) => Math.max(3 - rerollCount, 0),
       3,
     ),
   ].map(m => {
@@ -622,9 +610,7 @@ function initMasterModifierPool() {
     new WeightedModifierType(
       modifierTypes.VOUCHER_PREMIUM,
       (_party: Pokemon[], rerollCount: number) =>
-        !globalScene.gameMode.isDaily && !globalScene.gameMode.isEndless && !globalScene.gameMode.isSplicedOnly
-          ? Math.max(5 - rerollCount * 2, 0)
-          : 0,
+        !globalScene.gameMode.isEndless && !globalScene.gameMode.isSplicedOnly ? Math.max(5 - rerollCount * 2, 0) : 0,
       5,
     ),
     new WeightedModifierType(
@@ -640,9 +626,7 @@ function initMasterModifierPool() {
     new WeightedModifierType(
       modifierTypes.MINI_BLACK_HOLE,
       () =>
-        globalScene.gameMode.isDaily
-        || (!globalScene.gameMode.isFreshStartChallenge()
-          && globalScene.gameData.isUnlocked(Unlockables.MINI_BLACK_HOLE))
+        !globalScene.gameMode.isFreshStartChallenge() && globalScene.gameData.isUnlocked(Unlockables.MINI_BLACK_HOLE)
           ? 1
           : 0,
       1,
@@ -742,51 +726,6 @@ function initEnemyBuffModifierPool() {
 }
 
 /**
- * Initialize the daily starter modifier pool
- */
-function initDailyStarterModifierPool() {
-  dailyStarterModifierPool[ModifierTier.COMMON] = [
-    new WeightedModifierType(modifierTypes.BASE_STAT_BOOSTER, 1),
-    new WeightedModifierType(modifierTypes.BERRY, 3),
-  ].map(m => {
-    m.setTier(ModifierTier.COMMON);
-    return m;
-  });
-  dailyStarterModifierPool[ModifierTier.GREAT] = [new WeightedModifierType(modifierTypes.ATTACK_TYPE_BOOSTER, 5)].map(
-    m => {
-      m.setTier(ModifierTier.GREAT);
-      return m;
-    },
-  );
-  dailyStarterModifierPool[ModifierTier.ULTRA] = [
-    new WeightedModifierType(modifierTypes.REVIVER_SEED, 4),
-    new WeightedModifierType(modifierTypes.SOOTHE_BELL, 1),
-    new WeightedModifierType(modifierTypes.SOUL_DEW, 1),
-    new WeightedModifierType(modifierTypes.GOLDEN_PUNCH, 1),
-  ].map(m => {
-    m.setTier(ModifierTier.ULTRA);
-    return m;
-  });
-  dailyStarterModifierPool[ModifierTier.ROGUE] = [
-    new WeightedModifierType(modifierTypes.GRIP_CLAW, 5),
-    new WeightedModifierType(modifierTypes.BATON, 2),
-    new WeightedModifierType(modifierTypes.FOCUS_BAND, 5),
-    new WeightedModifierType(modifierTypes.QUICK_CLAW, 3),
-    new WeightedModifierType(modifierTypes.KINGS_ROCK, 3),
-  ].map(m => {
-    m.setTier(ModifierTier.ROGUE);
-    return m;
-  });
-  dailyStarterModifierPool[ModifierTier.MASTER] = [
-    new WeightedModifierType(modifierTypes.LEFTOVERS, 1),
-    new WeightedModifierType(modifierTypes.SHELL_BELL, 1),
-  ].map(m => {
-    m.setTier(ModifierTier.MASTER);
-    return m;
-  });
-}
-
-/**
  * Initialize {@linkcode modifierPool} with the initial set of modifier types.
  * {@linkcode initModifierTypes} MUST be called before this function.
  */
@@ -802,7 +741,6 @@ export function initModifierPools() {
   initWildModifierPool();
   initTrainerModifierPool();
   initEnemyBuffModifierPool();
-  initDailyStarterModifierPool();
 }
 
 /**

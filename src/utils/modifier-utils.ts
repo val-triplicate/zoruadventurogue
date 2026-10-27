@@ -1,12 +1,6 @@
 import { modifierTypes } from "#data/data-lists";
 import { ModifierPoolType } from "#enums/modifier-pool-type";
-import {
-  dailyStarterModifierPool,
-  enemyBuffModifierPool,
-  modifierPool,
-  trainerModifierPool,
-  wildModifierPool,
-} from "#modifiers/modifier-pools";
+import { enemyBuffModifierPool, modifierPool, trainerModifierPool, wildModifierPool } from "#modifiers/modifier-pools";
 import type { ModifierType } from "#modifiers/modifier-type";
 import type { ModifierPool, ModifierTypeFunc } from "#types/modifier-types";
 
@@ -20,8 +14,6 @@ export function getModifierPoolForType(poolType: ModifierPoolType): ModifierPool
       return trainerModifierPool;
     case ModifierPoolType.ENEMY_BUFF:
       return enemyBuffModifierPool;
-    case ModifierPoolType.DAILY_STARTER:
-      return dailyStarterModifierPool;
   }
 }
 

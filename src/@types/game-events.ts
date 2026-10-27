@@ -99,5 +99,4 @@ export interface TimedEvent extends EventBanner {
   readonly music?: readonly EventMusicReplacement[];
   readonly sprites?: EventSpriteOptions;
   readonly textReplacements?: readonly EventTextReplacement[];
-  readonly dailyRunStartingItems?: readonly ModifierTypeKeys[];
 }

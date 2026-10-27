@@ -63,12 +63,11 @@
         "../src/ui/utils/*.ts",
         "../src/ui/*.ts"
       ],
-      "#data/*": ["../src/data/daily-seed/*.ts", "../src/data/*.ts"],
+      "#data/*": ["../src/data/*.ts"],
       "#utils/*": ["../src/utils/*.ts"],
 
       // new subpath imports for script folders
       "#script-utils/*": ["./utils/*.ts"],
-      "#daily-seed/*": ["./daily-seed/prompts/*.ts", "./daily-seed/*.ts"],
       "#gen-moveset/*": ["./gen-moveset/*.ts"],
       "#create-test/*": ["./create-test/*.ts"],
       "#parse-egg-moves/*": ["./parse-egg-moves/*.ts"],

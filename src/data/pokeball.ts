@@ -96,17 +96,7 @@ export function getCriticalCaptureChance(modifiedCatchRate: number): number {
   const catchingCharmMultiplier = new NumberHolder(1);
   globalScene.findModifier(m => m.is("CriticalCatchChanceBoosterModifier"))?.apply(catchingCharmMultiplier);
   const dexMultiplier =
-    globalScene.gameMode.isDaily || dexCount > 800
-      ? 2.5
-      : dexCount > 600
-        ? 2
-        : dexCount > 400
-          ? 1.5
-          : dexCount > 200
-            ? 1
-            : dexCount > 100
-              ? 0.5
-              : 0;
+    dexCount > 800 ? 2.5 : dexCount > 600 ? 2 : dexCount > 400 ? 1.5 : dexCount > 200 ? 1 : dexCount > 100 ? 0.5 : 0;
   return Math.floor((catchingCharmMultiplier.value * dexMultiplier * Math.min(255, modifiedCatchRate)) / 6);
 }
 

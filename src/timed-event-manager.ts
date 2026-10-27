@@ -368,10 +368,6 @@ export class TimedEventManager {
     return event.textReplacements != null && event.textReplacements.length > 0;
   }
 
-  public getEventDailyStartingItems(): readonly ModifierTypeKeys[] {
-    return this.activeEvent()?.dailyRunStartingItems ?? [];
-  }
-
   /**
    * Get the biomelinks for a specific biome in the active event.
    * @param biomeId - the biomeId to get the links for

@@ -8,7 +8,6 @@ import { activeOverrides } from "#app/overrides";
 import { EvolutionItem } from "#balance/pokemon-evolutions";
 import { getTmNumber, tmPoolTiers } from "#balance/tm-pool-tiers";
 import { getBerryEffectDescription, getBerryName } from "#data/berry";
-import { getDailyEventSeedLuck } from "#data/daily-run";
 import { allMoves, modifierTypes } from "#data/data-lists";
 import { SpeciesFormChangeItemTrigger } from "#data/form-change-triggers";
 import { getNatureName, getNatureStatMultiplier } from "#data/nature";
@@ -2293,24 +2292,12 @@ const modifierTypeInitObj = Object.freeze({
  */
 export type ModifierTypes = typeof modifierTypeInitObj;
 
-export interface ModifierPool {
-  [tier: string]: WeightedModifierType[];
-}
-
 let modifierPoolThresholds = {};
 let ignoredPoolIndexes = {};
 
-let dailyStarterModifierPoolThresholds = {};
-// biome-ignore lint/correctness/noUnusedVariables: TODO explain why this is marked as OK
-let ignoredDailyStarterPoolIndexes = {};
-
 let enemyModifierPoolThresholds = {};
-// biome-ignore lint/correctness/noUnusedVariables: TODO explain why this is marked as OK
-let enemyIgnoredPoolIndexes = {};
 
 let enemyBuffModifierPoolThresholds = {};
-// biome-ignore lint/correctness/noUnusedVariables: TODO explain why this is marked as OK
-let enemyBuffIgnoredPoolIndexes = {};
 
 const tierWeights = [768 / 1024, 195 / 1024, 48 / 1024, 12 / 1024, 1 / 1024];
 /**
@@ -2408,15 +2395,9 @@ export function regenerateModifierPoolThresholds(
     case ModifierPoolType.WILD:
     case ModifierPoolType.TRAINER:
       enemyModifierPoolThresholds = thresholds;
-      enemyIgnoredPoolIndexes = ignoredIndexes;
       break;
     case ModifierPoolType.ENEMY_BUFF:
       enemyBuffModifierPoolThresholds = thresholds;
-      enemyBuffIgnoredPoolIndexes = ignoredIndexes;
-      break;
-    case ModifierPoolType.DAILY_STARTER:
-      dailyStarterModifierPoolThresholds = thresholds;
-      ignoredDailyStarterPoolIndexes = ignoredIndexes;
       break;
   }
 }
@@ -2689,35 +2670,6 @@ export function getEnemyModifierTypesForWave(
   return ret;
 }
 
-export function getDailyRunStarterModifiers(party: PlayerPokemon[]): PokemonHeldItemModifier[] {
-  const ret: PokemonHeldItemModifier[] = [];
-  for (const p of party) {
-    for (let m = 0; m < 3; m++) {
-      const tierValue = randSeedInt(64);
-
-      let tier: ModifierTier;
-      if (tierValue > 25) {
-        tier = ModifierTier.COMMON;
-      } else if (tierValue > 12) {
-        tier = ModifierTier.GREAT;
-      } else if (tierValue > 4) {
-        tier = ModifierTier.ULTRA;
-      } else if (tierValue) {
-        tier = ModifierTier.ROGUE;
-      } else {
-        tier = ModifierTier.MASTER;
-      }
-
-      const modifier = getNewModifierTypeOption(party, ModifierPoolType.DAILY_STARTER, tier)?.type?.newModifier(
-        p,
-      ) as PokemonHeldItemModifier;
-      ret.push(modifier);
-    }
-  }
-
-  return ret;
-}
-
 /**
  * Generates a ModifierType from the specified pool
  * @param party party of the trainer using the item
@@ -2750,9 +2702,6 @@ function getNewModifierTypeOption(
       break;
     case ModifierPoolType.ENEMY_BUFF:
       thresholds = enemyBuffModifierPoolThresholds;
-      break;
-    case ModifierPoolType.DAILY_STARTER:
-      thresholds = dailyStarterModifierPoolThresholds;
       break;
   }
   if (tier === undefined) {
@@ -2872,24 +2821,6 @@ export class ModifierTypeOption {
  * @returns A number between 0 and 14 based on the party's total luck value, or a random number between 0 and 14 if the player is in Daily Run mode.
  */
 export function getPartyLuckValue(party: readonly Pokemon[]): number {
-  if (globalScene.gameMode.isDaily) {
-    const DailyLuck = new NumberHolder(0);
-    globalScene.executeWithSeedOffset(
-      () => {
-        const eventLuck = getDailyEventSeedLuck();
-        if (eventLuck != null) {
-          DailyLuck.value = eventLuck;
-          return;
-        }
-
-        DailyLuck.value = randSeedInt(15); // Random number between 0 and 14
-      },
-      0,
-      globalScene.seed,
-    );
-    return DailyLuck.value;
-  }
-
   const eventSpecies = timedEventManager.getEventLuckBoostedSpecies();
   const luck = Phaser.Math.Clamp(
     party

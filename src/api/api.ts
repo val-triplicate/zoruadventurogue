@@ -1,7 +1,6 @@
 import { PokerogueAccountApi } from "#api/account-api";
 import { PokerogueAdminApi } from "#api/admin-api";
 import { ApiBase } from "#api/api-base";
-import { PokerogueDailyApi } from "#api/daily-api";
 import { PokerogueSavedataApi } from "#api/savedata-api";
 import { bypassLogin } from "#constants/app-constants";
 import type { TitleStatsResponse } from "#types/api";
@@ -9,7 +8,6 @@ import type { TitleStatsResponse } from "#types/api";
 /** A wrapper for PokéRogue API requests. */
 export class PokerogueApi extends ApiBase {
   public readonly account: PokerogueAccountApi;
-  public readonly daily: PokerogueDailyApi;
   public readonly admin: PokerogueAdminApi;
   public readonly savedata: PokerogueSavedataApi;
 
@@ -17,7 +15,6 @@ export class PokerogueApi extends ApiBase {
     super(base);
 
     this.account = new PokerogueAccountApi(base);
-    this.daily = new PokerogueDailyApi(base);
     this.admin = new PokerogueAdminApi(base);
     this.savedata = new PokerogueSavedataApi(base);
   }

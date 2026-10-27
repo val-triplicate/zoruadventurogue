@@ -1,28 +1,16 @@
-import { pokerogueApi } from "#api/api";
 import { loggedInUser } from "#app/account";
 import { GameMode, getGameMode } from "#app/game-mode";
 import { audioManager } from "#app/global-audio-manager";
-import { timedEventManager } from "#app/global-event-manager";
 import { globalScene } from "#app/global-scene";
-import { speciesDataRegistry } from "#app/global-species-data-registry";
-import { activeOverrides } from "#app/overrides";
 import { Phase } from "#app/phase";
-import { bypassLogin } from "#constants/app-constants";
-import { getDailyRunStarters, startDailyEventChallenges } from "#data/daily-run";
-import { modifierTypes } from "#data/data-lists";
-import { Gender } from "#data/gender";
 import { BattleType } from "#enums/battle-type";
 import { GameModes } from "#enums/game-modes";
-import { ModifierPoolType } from "#enums/modifier-pool-type";
 import { UiMode } from "#enums/ui-mode";
 import { Unlockables } from "#enums/unlockables";
 import { getBiomeKey } from "#field/arena";
-import type { Modifier } from "#modifiers/modifier";
-import { getDailyRunStarterModifiers, regenerateModifierPoolThresholds } from "#modifiers/modifier-type";
 import { vouchers } from "#system/voucher";
 import type { OptionSelectItem, OptionSelectModeConfig } from "#types/ui-types";
 import { SaveSlotUiMode } from "#ui/save-slot-select-ui-handler";
-import { isLocalServerConnected } from "#utils/common";
 import i18next from "i18next";
 
 const NO_SAVE_SLOT = -1;
@@ -109,13 +97,6 @@ export class TitlePhase extends Phase {
             label: GameMode.getModeName(GameModes.CLASSIC),
             handler: () => {
               setModeAndEnd(GameModes.CLASSIC);
-              return true;
-            },
-          });
-          newGameOptions.push({
-            label: i18next.t("menu:dailyRun"),
-            handler: () => {
-              this.initDailyRun();
               return true;
             },
           });
@@ -214,146 +195,11 @@ export class TitlePhase extends Phase {
     }
   }
 
-  initDailyRun(): void {
-    globalScene.ui.clearText();
-    globalScene.ui.setMode(UiMode.SAVE_SLOT, SaveSlotUiMode.SAVE, (slotId: number) => {
-      if (slotId === -1) {
-        globalScene.phaseManager.toTitleScreen();
-        super.end();
-        return;
-      }
-      globalScene.phaseManager.clearPhaseQueue();
-      globalScene.sessionSlotId = slotId;
-
-      const generateDaily = (seed: string) => {
-        globalScene.gameMode = getGameMode(GameModes.DAILY);
-
-        seed = globalScene.gameMode.trySetCustomDailyConfig(seed);
-
-        // Daily runs don't support all challenges yet (starter select restrictions aren't considered)
-        startDailyEventChallenges();
-
-        globalScene.setSeed(seed);
-        globalScene.resetSeed();
-
-        globalScene.money = globalScene.gameMode.getStartingMoney();
-
-        const starters = getDailyRunStarters();
-        const startingLevel = globalScene.gameMode.getStartingLevel();
-
-        // TODO: Dedupe this
-        const party = globalScene.getPlayerParty();
-        const loadPokemonAssets: Promise<void>[] = [];
-        for (const [index, starter] of starters.entries()) {
-          const species = speciesDataRegistry.getSpecies(starter.speciesId);
-          const starterFormIndex = starter.formIndex;
-          const starterGender =
-            species.malePercent === null ? Gender.GENDERLESS : starter.female ? Gender.FEMALE : Gender.MALE;
-          const starterPokemon = globalScene.addPlayerPokemon(
-            species,
-            startingLevel,
-            starter.abilityIndex,
-            starterFormIndex,
-            starterGender,
-            starter.shiny,
-            starter.variant,
-            starter.ivs,
-            starter.nature,
-          );
-          starterPokemon.setVisible(false);
-          if (starter.moveset) {
-            // avoid validating daily run starter movesets which are pre-populated already
-            starterPokemon.tryPopulateMoveset(starter.moveset, true);
-          }
-
-          const customStarterConfig = globalScene.gameMode.dailyConfig?.starters?.[index];
-          if (customStarterConfig?.ability != null) {
-            starterPokemon.customPokemonData.ability = customStarterConfig.ability;
-          }
-          if (customStarterConfig?.passive != null) {
-            starterPokemon.customPokemonData.passive = customStarterConfig.passive;
-          }
-
-          party.push(starterPokemon);
-          loadPokemonAssets.push(starterPokemon.loadAssets());
-        }
-
-        regenerateModifierPoolThresholds(party, ModifierPoolType.DAILY_STARTER);
-
-        const modifiers: Modifier[] = new Array(3)
-          .fill(null)
-          .map(() => modifierTypes.EXP_SHARE().withIdFromFunc(modifierTypes.EXP_SHARE).newModifier())
-          .concat(
-            new Array(3)
-              .fill(null)
-              .map(() => modifierTypes.GOLDEN_EXP_CHARM().withIdFromFunc(modifierTypes.GOLDEN_EXP_CHARM).newModifier()),
-          )
-          .concat([modifierTypes.MAP().withIdFromFunc(modifierTypes.MAP).newModifier()])
-          .concat([modifierTypes.ABILITY_CHARM().withIdFromFunc(modifierTypes.ABILITY_CHARM).newModifier()])
-          .concat([modifierTypes.SHINY_CHARM().withIdFromFunc(modifierTypes.SHINY_CHARM).newModifier()])
-          .concat(getDailyRunStarterModifiers(party))
-          .filter(m => m !== null);
-
-        for (const m of modifiers) {
-          globalScene.addModifier(m, true, false, false, true);
-        }
-        for (const m of timedEventManager.getEventDailyStartingItems()) {
-          globalScene.addModifier(
-            modifierTypes[m]().withIdFromFunc(modifierTypes[m]).newModifier(),
-            true,
-            false,
-            false,
-            true,
-          );
-        }
-        globalScene.updateModifiers(true, true);
-
-        Promise.all(loadPokemonAssets).then(async () => {
-          globalScene.time.delayedCall(500, () => audioManager.playBgm());
-          globalScene.gameData.gameStats.dailyRunSessionsPlayed++;
-          const startingBiome = globalScene.gameMode.getStartingBiome();
-
-          await globalScene.loadBiomeAssets(startingBiome);
-          globalScene.newArena(startingBiome);
-          globalScene.newBattle();
-          globalScene.arena.init();
-          globalScene.sessionPlayTime = 0;
-          globalScene.lastSavePlayTime = 0;
-          this.end();
-        });
-      };
-
-      // If Online, calls seed fetch from db to generate daily run. If Offline, generates a daily run based on current date.
-      if (!bypassLogin || isLocalServerConnected) {
-        pokerogueApi.daily
-          .getSeed()
-          .then(seed => {
-            if (seed) {
-              generateDaily(seed);
-            } else {
-              throw new Error("Daily run seed is null!");
-            }
-          })
-          .catch(err => {
-            console.error("Failed to load daily run:\n", err);
-          });
-      } else {
-        // Grab first 10 chars of ISO date format (YYYY-MM-DD) and convert to base64
-        let seed: string = btoa(new Date().toISOString().slice(0, 10));
-        if (activeOverrides.DAILY_RUN_SEED_OVERRIDE != null) {
-          seed =
-            typeof activeOverrides.DAILY_RUN_SEED_OVERRIDE === "string"
-              ? activeOverrides.DAILY_RUN_SEED_OVERRIDE
-              : JSON.stringify(activeOverrides.DAILY_RUN_SEED_OVERRIDE);
-        }
-        generateDaily(seed);
-      }
-    });
-  }
-
   // TODO: Refactor this
   end(): void {
-    if (!this.loaded && !globalScene.gameMode.isDaily) {
+    if (this.loaded) {
+      audioManager.playBgm();
+    } else {
       globalScene.gameMode = getGameMode(this.gameMode);
       if (this.gameMode === GameModes.CHALLENGE) {
         globalScene.phaseManager.pushNew("SelectChallengePhase");
@@ -361,8 +207,6 @@ export class TitlePhase extends Phase {
         globalScene.phaseManager.pushNew("SelectStarterPhase");
       }
       globalScene.newArena(globalScene.gameMode.getStartingBiome());
-    } else {
-      audioManager.playBgm();
     }
 
     globalScene.phaseManager.pushNew("EncounterPhase", this.loaded);
@@ -375,10 +219,7 @@ export class TitlePhase extends Phase {
         globalScene.phaseManager.pushNew("SummonPhase", 1, true, true);
       }
 
-      if (
-        globalScene.currentBattle.battleType !== BattleType.TRAINER
-        && (globalScene.currentBattle.waveIndex > 1 || !globalScene.gameMode.isDaily)
-      ) {
+      if (globalScene.currentBattle.battleType !== BattleType.TRAINER) {
         const minPartySize = globalScene.currentBattle.double ? 2 : 1;
         if (availablePartyMembers > minPartySize) {
           globalScene.phaseManager.pushNew("CheckSwitchPhase", 0, globalScene.currentBattle.double);

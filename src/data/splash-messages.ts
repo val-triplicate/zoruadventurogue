@@ -119,7 +119,6 @@ const commonSplashMessages = [
   "shinyOddsHigherThanYouThink",
   "noFalseTrades",
   "notForProfit",
-  "timeForYourDailyRun",
   "moreEggsThanADaycare",
   "disclaimerHarshSunDoesNotGiveVitaminD",
   "whoNeedsAMap",

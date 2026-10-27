@@ -303,7 +303,6 @@ export const achvs = {
   HATCH_MYTHICAL: new Achv("hatchMythical", "manaphy_egg", 50).setSecret(),
   HATCH_LEGENDARY: new Achv("hatchLegendary", "legendary_egg", 100).setSecret(),
   HATCH_SHINY: new Achv("hatchShiny", "rogue_egg", 100).setSecret(),
-  DAILY_VICTORY: new Achv("dailyVictory", "calendar", 100),
   FRESH_START: new ChallengeAchv(
     "freshStart",
     "fresh_start_ribbon",

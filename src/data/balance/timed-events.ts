@@ -102,7 +102,6 @@ export const timedEvents: readonly TimedEvent[] = [
       { wave: 115, type: "MEGA_BRACELET" },
       { wave: 115, type: "DYNAMAX_BAND" },
     ],
-    dailyRunStartingItems: ["ABILITY_CHARM", "SHINY_CHARM", "CANDY_JAR"],
   },
   {
     name: "Item Update waiting room",
@@ -185,7 +184,6 @@ export const timedEvents: readonly TimedEvent[] = [
       { wave: 95, type: "MEGA_BRACELET" },
       { wave: 95, type: "DYNAMAX_BAND" },
     ],
-    dailyRunStartingItems: ["ABILITY_CHARM", "SHINY_CHARM", "MEGA_BRACELET", "DYNAMAX_BAND"],
   },
   {
     name: "April Fools 2026",
@@ -425,7 +423,6 @@ export const timedEvents: readonly TimedEvent[] = [
       { wave: 8, type: "CATCHING_CHARM" },
       { wave: 25, type: "SHINY_CHARM" },
     ],
-    dailyRunStartingItems: ["ABILITY_CHARM", "SHINY_CHARM"],
   },
   {
     name: "Hearts and Horses",
@@ -469,7 +466,6 @@ export const timedEvents: readonly TimedEvent[] = [
       { wave: 8, type: "CATCHING_CHARM" },
       { wave: 25, type: "SHINY_CHARM" },
     ],
-    dailyRunStartingItems: ["ABILITY_CHARM", "SHINY_CHARM"],
   },
   {
     name: "Winter 25",
@@ -522,7 +518,6 @@ export const timedEvents: readonly TimedEvent[] = [
         disable: true,
       },
     ],
-    dailyRunStartingItems: ["ABILITY_CHARM", "SHINY_CHARM"],
   },
   {
     name: "Winter Holiday Update",
@@ -756,13 +751,6 @@ export const timedEvents: readonly TimedEvent[] = [
       ["title", "title_afd"],
       ["battle_rival_3", "battle_rival_3_afd"],
     ],
-    // This has been moved to custom seeds. Keeping this here to keep track of what the event did.
-    // dailyRunChallenges: [
-    //   {
-    //     challenge: Challenges.INVERSE_BATTLE,
-    //     value: 1,
-    //   },
-    // ],
   },
   {
     name: "Shining Spring",
@@ -834,7 +822,6 @@ export const timedEvents: readonly TimedEvent[] = [
       { wave: 8, type: "CATCHING_CHARM" },
       { wave: 25, type: "SHINY_CHARM" },
     ],
-    dailyRunStartingItems: ["SHINY_CHARM", "ABILITY_CHARM"],
   },
   {
     name: "Halloween 25",
@@ -877,6 +864,5 @@ export const timedEvents: readonly TimedEvent[] = [
       { wave: 25, type: "SHINY_CHARM" },
       { wave: 25, type: "CANDY_JAR" },
     ],
-    dailyRunStartingItems: ["ABILITY_CHARM", "SHINY_CHARM", "CANDY_JAR"],
   },
 ];

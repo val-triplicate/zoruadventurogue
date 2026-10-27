@@ -14,7 +14,6 @@ import { speciesEggMoves } from "#balance/egg-moves";
 import { bypassLogin, isBeta, isDev, systemSaveShortKeyMap } from "#constants/app-constants";
 import { MAX_STARTER_CANDY_COUNT } from "#constants/game-constants";
 import { EntryHazardTag } from "#data/arena-tag";
-import { getSerializedDailyRunConfig, parseDailySeed } from "#data/daily-seed-utils";
 import { allMoves } from "#data/data-lists";
 import type { Egg } from "#data/egg";
 import type { PokemonSpecies } from "#data/pokemon-species";
@@ -26,7 +25,7 @@ import type { Device } from "#enums/devices";
 import { DexAttr } from "#enums/dex-attr";
 import { GameDataType } from "#enums/game-data-type";
 import { GameModes } from "#enums/game-modes";
-import { Nature } from "#enums/nature";
+import type { Nature } from "#enums/nature";
 import { PlayerGender } from "#enums/player-gender";
 import { SpeciesId } from "#enums/species-id";
 import { StatusEffect } from "#enums/status-effect";
@@ -71,7 +70,7 @@ import type { StarterSpeciesId } from "#types/starter-species-id";
 import type { ConfirmModeConfig } from "#types/ui-types";
 import { RUN_HISTORY_LIMIT } from "#ui/run-history-ui-handler";
 import { applyChallenges } from "#utils/challenge-utils";
-import { fixedInt, randInt, randSeedItem } from "#utils/common";
+import { fixedInt, randInt } from "#utils/common";
 import { decrypt, encrypt, getDataTypeKey, isValidJSON } from "#utils/data";
 import { getEnumKeys } from "#utils/enums";
 import { compareVersions } from "#utils/migrator-utils";
@@ -425,8 +424,7 @@ export class GameData {
     if (lsItem) {
       const cachedResponse = lsItem;
       if (cachedResponse) {
-        const runHistory: RunHistoryData = JSON.parse(decrypt(cachedResponse, bypassLogin));
-        return runHistory;
+        return JSON.parse(decrypt(cachedResponse, bypassLogin));
       }
       return {};
     }
@@ -434,13 +432,13 @@ export class GameData {
     return {};
   }
 
+  // TODO: save run history data to server?
   /**
    * Saves a new entry to Run History
-   * @param runEntry: most recent SessionSaveData of the run
-   * @param isVictory: result of the run
+   * runEntry: most recent SessionSaveData of the run
+   * isVictory: result of the run
    * Arbitrary limit of 25 runs per player - Will delete runs, starting with the oldest one, if needed
    */
-  // TODO: save run history data to server?
   async saveRunHistory(runEntry: SessionSaveData, isVictory: boolean): Promise<boolean> {
     const runHistoryData = await this.getRunHistoryData();
     // runHistoryData should always return run history or {} empty object
@@ -719,7 +717,6 @@ export class GameData {
       seed: globalScene.seed,
       playTime: globalScene.sessionPlayTime,
       gameMode: globalScene.gameMode.modeId,
-      dailyConfig: getSerializedDailyRunConfig(),
       party: globalScene.getPlayerParty().map(p => new PokemonData(p)),
       enemyParty: globalScene.getEnemyParty().map(p => new PokemonData(p)),
       modifiers: globalScene.findModifiers(() => true).map(m => new PersistentModifierData(m, true)),
@@ -849,8 +846,6 @@ export class GameData {
     globalScene.resetSeed();
 
     console.log("Seed:", globalScene.seed);
-
-    globalScene.gameMode.trySetCustomDailyConfig(JSON.stringify(fromSession.dailyConfig));
 
     globalScene.sessionPlayTime = fromSession.playTime || 0;
     globalScene.lastSavePlayTime = 0;
@@ -1004,23 +999,6 @@ export class GameData {
    */
   // TODO: Explain what this boolean return is supposed to signify inside game-over-phase.ts
   async offlineNewClear(): Promise<boolean> {
-    const sessionData = this.getSessionSaveData();
-    const { seed, gameMode } = sessionData;
-    if (gameMode !== GameModes.DAILY) {
-      return true;
-    }
-
-    const prevDailies = localStorage.getItem("daily");
-    if (!prevDailies) {
-      localStorage.setItem("daily", btoa(JSON.stringify([seed])));
-      return true;
-    }
-    const clearedDailies = JSON.parse(atob(prevDailies)) as string[];
-    if (clearedDailies.includes(seed)) {
-      return false;
-    }
-    clearedDailies.push(seed);
-    localStorage.setItem("daily", btoa(JSON.stringify(clearedDailies)));
     return true;
   }
 
@@ -1124,10 +1102,6 @@ export class GameData {
 
         case "mysteryEncounterSaveData":
           rawData[k] = new MysteryEncounterSaveData(v);
-          continue;
-        case "dailyConfig":
-          // make sure the config is valid
-          rawData[k] = parseDailySeed(JSON.stringify(v));
           continue;
       }
     }
@@ -1472,22 +1446,6 @@ export class GameData {
       };
     }
 
-    const defaultStarterAttr =
-      DexAttr.NON_SHINY | DexAttr.MALE | DexAttr.FEMALE | DexAttr.DEFAULT_VARIANT | DexAttr.DEFAULT_FORM;
-
-    const defaultStarterNatures: Nature[] = [];
-
-    globalScene.executeWithSeedOffset(
-      () => {
-        const neutralNatures = [Nature.HARDY, Nature.DOCILE, Nature.SERIOUS, Nature.BASHFUL, Nature.QUIRKY];
-        for (const _ of defaultStarterSpecies) {
-          defaultStarterNatures.push(randSeedItem(neutralNatures));
-        }
-      },
-      0,
-      "default",
-    );
-
     this.defaultDexData = { ...data };
     this.dexData = data;
   }
@@ -1635,7 +1593,6 @@ export class GameData {
     const prevolution = speciesDataRegistry.getPrevolution(species.speciesId);
     const hasPrevolution = prevolution != null;
     const newCatch = !caughtAttr;
-    const hasNewAttr = (caughtAttr & dexAttr) !== dexAttr;
 
     if (incrementCount) {
       if (fromEgg) {
@@ -1666,7 +1623,7 @@ export class GameData {
         }
       }
 
-      if (!hasPrevolution && (!globalScene.gameMode.isDaily || hasNewAttr || fromEgg)) {
+      if (!hasPrevolution) {
         // TODO: remove `?? 0`, `pokemon.variant` shouldn't be able to be nullish
         const shinyBonus = pokemon.isShiny() ? 5 * Math.pow(2, pokemon.variant ?? 0) : 1;
         const eggOrBossBonus = fromEgg || pokemon.isBoss() ? 2 : 1;

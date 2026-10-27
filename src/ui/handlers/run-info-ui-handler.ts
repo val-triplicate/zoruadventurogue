@@ -563,9 +563,6 @@ export class RunInfoUiHandler extends UiHandler {
     modeText.setPosition(7, 5);
     modeText.appendText(i18next.t("runHistory:mode") + ": ", false);
     switch (this.runInfo.gameMode) {
-      case GameModes.DAILY:
-        modeText.appendText(`${i18next.t("gameMode:dailyRun")}`, false);
-        break;
       case GameModes.SPLICED_ENDLESS:
         modeText.appendText(`${i18next.t("gameMode:endlessSpliced")}`, false);
         break;

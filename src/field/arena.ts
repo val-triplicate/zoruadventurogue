@@ -7,7 +7,6 @@ import { NIGHT_TIME } from "#constants/game-constants";
 import type { ArenaTag, ArenaTagTypeMap } from "#data/arena-tag";
 import { getArenaTag } from "#data/arena-tag";
 import { biomeBgmLoopPoints } from "#data/biome-bgm-loop-points";
-import { getDailyForcedWaveBiomePoolTier } from "#data/daily-run";
 import { allBiomes } from "#data/data-lists";
 import { SpeciesFormChangeRevertWeatherFormTrigger, SpeciesFormChangeWeatherTrigger } from "#data/form-change-triggers";
 import type { PokemonSpecies } from "#data/pokemon-species";
@@ -571,11 +570,6 @@ export class Arena {
   // TODO: The only place that doesn't pass an explicit `luckValue` parameter is Illusion's enemy overrides;
   // remove parameter & replace with `globalScene.getLuckValue` in a future refactor
   public randomSpecies(waveIndex: number, level: number, attempt = 0, luckValue = 0, isBoss?: boolean): PokemonSpecies {
-    const overrideSpecies = globalScene.gameMode.getOverrideSpecies(waveIndex);
-    if (overrideSpecies) {
-      return overrideSpecies;
-    }
-
     // Boss pool is 0-63, non Boss pool is 0-512
     const isBossSpecies =
       globalScene.getEncounterBossSegments(waveIndex, level) > 0
@@ -585,18 +579,13 @@ export class Arena {
         || globalScene.gameMode.isWaveFinal(waveIndex));
 
     let tier: BiomePoolTier;
-    const forcedTier = getDailyForcedWaveBiomePoolTier(waveIndex);
-    if (forcedTier === null) {
-      const rollMax = isBossSpecies ? 64 : 512;
+    const rollMax = isBossSpecies ? 64 : 512;
 
-      // Luck reduces the RNG ceiling by 0.5x for bosses or 2x otherwise
-      const luckModifier = luckValue * (isBossSpecies ? 0.5 : 2);
+    // Luck reduces the RNG ceiling by 0.5x for bosses or 2x otherwise
+    const luckModifier = luckValue * (isBossSpecies ? 0.5 : 2);
 
-      const rngRoll = randSeedInt(rollMax - luckModifier);
-      tier = (isBossSpecies ? this.generateBossBiomeTier : this.generateNonBossBiomeTier)(rngRoll);
-    } else {
-      tier = forcedTier;
-    }
+    const rngRoll = randSeedInt(rollMax - luckModifier);
+    tier = (isBossSpecies ? this.generateBossBiomeTier : this.generateNonBossBiomeTier)(rngRoll);
 
     console.log("Starting species pool tier:", BiomePoolTier[tier]);
 
@@ -614,7 +603,7 @@ export class Arena {
       species = speciesDataRegistry.getSpecies(randSeedItem(tierPool));
     }
 
-    const regen = this.checkLegendBST(species, globalScene.gameMode.getWaveForDifficulty(waveIndex, true));
+    const regen = this.checkLegendBST(species, globalScene.gameMode.getWaveForDifficulty(waveIndex));
     // Attempt to retry 10 times if generated a LegendLike with an incompatible level
     if (regen && attempt < 10) {
       console.log("Incompatible level: regenerating...");

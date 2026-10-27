@@ -1,5 +1,4 @@
 import { EVOLVE_MOVE, RELEARN_MOVE } from "#app/constants";
-import { globalScene } from "#app/global-scene";
 import { EvoCondKey, EvolutionItem, SpeciesEvolution } from "#balance/pokemon-evolutions";
 import { GrowthRate } from "#data/exp";
 import {
@@ -14788,14 +14787,14 @@ export function initGenerationFive(): SpeciesDataMapConfig {
         preFormKey: "ordinary",
         evoFormKey: "resolute",
         trigger: new SpeciesFormChangeMoveLearnedTrigger(MoveId.SECRET_SWORD),
-        conditions: [new SpeciesFormChangeCondition(() => globalScene.gameMode.isDaily !== true)],
+        conditions: [new SpeciesFormChangeCondition(() => true)],
       }),
       new SpeciesFormChange({
         speciesId: SpeciesId.KELDEO,
         preFormKey: "resolute",
         evoFormKey: "ordinary",
         trigger: new SpeciesFormChangeMoveLearnedTrigger(MoveId.SECRET_SWORD, false),
-        conditions: [new SpeciesFormChangeCondition(() => globalScene.gameMode.isDaily !== true)],
+        conditions: [new SpeciesFormChangeCondition(() => true)],
       }),
     ],
     eggTier: EggTier.EPIC,

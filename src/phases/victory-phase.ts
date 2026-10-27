@@ -89,11 +89,6 @@ export class VictoryPhase extends PokemonPhase {
             undefined,
             gameMode.getFixedBattle(currentWaveIndex)?.customModifierRewardSettings,
           );
-        } else if (gameMode.isDaily) {
-          globalScene.phaseManager.pushNew("ModifierRewardPhase", modifierTypes.EXP_CHARM);
-          if (currentWaveIndex > 10 && !gameMode.isWaveFinal(currentWaveIndex)) {
-            globalScene.phaseManager.pushNew("ModifierRewardPhase", modifierTypes.GOLDEN_POKEBALL);
-          }
         } else {
           const superExpWave = gameMode.isEndless ? 10 : globalScene.offsetGym ? 0 : 20;
           if (gameMode.isEndless && currentWaveIndex === 10) {

@@ -7,8 +7,6 @@ export class GameStats {
   public classicSessionsPlayed: number;
   public sessionsWon: number;
   public ribbonsOwned: number;
-  public dailyRunSessionsPlayed: number;
-  public dailyRunSessionsWon: number;
   public endlessSessionsPlayed: number;
   public highestEndlessWave: number;
   public highestLevel: number;
@@ -45,8 +43,6 @@ export class GameStats {
     this.classicSessionsPlayed = source?.classicSessionsPlayed || 0;
     this.sessionsWon = source?.sessionsWon || 0;
     this.ribbonsOwned = source?.ribbonsOwned || 0;
-    this.dailyRunSessionsPlayed = source?.dailyRunSessionsPlayed || 0;
-    this.dailyRunSessionsWon = source?.dailyRunSessionsWon || 0;
     this.endlessSessionsPlayed = source?.endlessSessionsPlayed || 0;
     this.highestEndlessWave = source?.highestEndlessWave || 0;
     this.highestLevel = source?.highestLevel || 0;

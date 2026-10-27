@@ -287,7 +287,7 @@ export function getEvilGruntPartyTemplate(): TrainerPartyTemplate {
 
 export function getWavePartyTemplate(...templates: TrainerPartyTemplate[]) {
   const { currentBattle, gameMode } = globalScene;
-  const wave = gameMode.getWaveForDifficulty(currentBattle?.waveIndex || STARTING_WAVE, true);
+  const wave = gameMode.getWaveForDifficulty(currentBattle?.waveIndex || STARTING_WAVE);
   const templateIndex = Math.ceil((wave - 20) / 30);
   return templates[Phaser.Math.Clamp(templateIndex, 0, templates.length - 1)];
 }
@@ -295,11 +295,6 @@ export function getWavePartyTemplate(...templates: TrainerPartyTemplate[]) {
 export function getGymLeaderPartyTemplate() {
   const { currentBattle, gameMode } = globalScene;
   switch (gameMode.modeId) {
-    case GameModes.DAILY:
-      if (currentBattle?.waveIndex <= 20) {
-        return trainerPartyTemplates.GYM_LEADER_2;
-      }
-      return trainerPartyTemplates.GYM_LEADER_3;
     case GameModes.CHALLENGE: // In the future, there may be a ChallengeType to call here. For now, use classic's.
     case GameModes.CLASSIC:
       if (currentBattle?.waveIndex <= 20) {

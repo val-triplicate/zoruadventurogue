@@ -80,14 +80,6 @@ const displayStats: DisplayStats = {
     label_key: "classicWins",
     sourceFunc: gameData => gameData.gameStats.sessionsWon.toString(),
   },
-  dailyRunSessionsPlayed: {
-    label_key: "dailyRunAttempts",
-    sourceFunc: gameData => gameData.gameStats.dailyRunSessionsPlayed.toString(),
-  },
-  dailyRunSessionsWon: {
-    label_key: "dailyRunWins",
-    sourceFunc: gameData => gameData.gameStats.dailyRunSessionsWon.toString(),
-  },
   endlessSessionsPlayed: {
     label_key: "endlessRuns",
     sourceFunc: gameData => gameData.gameStats.endlessSessionsPlayed.toString(),

@@ -27,7 +27,6 @@ import { VariantTier } from "#enums/variant-tier";
 import { WeatherType } from "#enums/weather-type";
 import type { ModifierOverride } from "#modifiers/modifier-type";
 import type { Variant } from "#sprites/variant";
-import type { CustomDailyRunConfig } from "#types/daily-run";
 import type { IntClosedRange, TupleOf } from "type-fest";
 
 /**
@@ -66,11 +65,6 @@ class DefaultOverrides {
   // -----------------
   /** a specific seed (default: a random string of 24 characters) */
   readonly SEED_OVERRIDE: string = "";
-  /**
-   * A {@linkcode CustomDailyRunConfig} or a stringified version thereof
-   * used to customize the daily run (such as to use custom starters or final boss).
-   */
-  readonly DAILY_RUN_SEED_OVERRIDE: CustomDailyRunConfig | string | null = null;
   readonly WEATHER_OVERRIDE: WeatherType = WeatherType.NONE;
   /**
    * If set, will override the in-game terrain at the start of each biome transition.

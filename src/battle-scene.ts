@@ -29,7 +29,6 @@ import { UiInputs } from "#app/ui-inputs";
 import { STARTING_WAVE } from "#balance/misc";
 import { FRIENDSHIP_GAIN_FROM_BATTLE } from "#balance/starters";
 import { initCommonAnims, initMoveAnim, loadCommonAnimAssets, loadMoveAnimAssets } from "#data/battle-anims";
-import { getDailyMysteryEncounter } from "#data/daily-run";
 import { allMoves, biomeDepths, modifierTypes } from "#data/data-lists";
 import { classicFinalBossDialogue } from "#data/dialogue";
 import type { SpeciesFormChangeTrigger } from "#data/form-change-triggers";
@@ -909,7 +908,7 @@ export class BattleScene extends SceneBase {
       pokemon.generateFusionSpecies();
     }
 
-    if (boss && !dataSource && !this.gameMode.dailyConfig?.boss?.ivs) {
+    if (boss && !dataSource) {
       const secondaryIvs = getIvsFromId(randSeedInt(4294967296));
 
       for (let s = 0; s < pokemon.ivs.length; s++) {
@@ -1247,7 +1246,7 @@ export class BattleScene extends SceneBase {
 
   isNewBiome(currentBattle = this.currentBattle) {
     const isWaveIndexMultipleOfTen = !(currentBattle.waveIndex % 10);
-    const isEndlessOrDaily = this.gameMode.hasShortBiomes || this.gameMode.isDaily;
+    const isEndlessOrDaily = this.gameMode.hasShortBiomes;
     const isEndlessFifthWave = this.gameMode.hasShortBiomes && currentBattle.waveIndex % 5 === 0;
     const isWaveIndexMultipleOfFiftyMinusOne = currentBattle.waveIndex % 50 === 49;
     return isWaveIndexMultipleOfTen || isEndlessFifthWave || (isEndlessOrDaily && isWaveIndexMultipleOfFiftyMinusOne);
@@ -1950,13 +1949,6 @@ export class BattleScene extends SceneBase {
       return 0;
     }
 
-    if (this.gameMode.isDaily && this.gameMode.isWaveFinal(waveIndex)) {
-      if (this.gameMode.dailyConfig?.boss?.segments != null) {
-        return this.gameMode.dailyConfig.boss.segments;
-      }
-      return 5;
-    }
-
     let isBoss: boolean | undefined;
     if (forceBoss || (species && (species.subLegendary || species.legendary || species.mythical))) {
       isBoss = true;
@@ -2191,7 +2183,7 @@ export class BattleScene extends SceneBase {
     const { score } = this;
     this.scoreText // formatting
       .setText(i18next.t("battleScene:score", { score }))
-      .setVisible(this.gameMode.isDaily);
+      .setVisible(false);
   }
 
   /**
@@ -3425,9 +3417,6 @@ export class BattleScene extends SceneBase {
    * @returns Whether a Mystery Encounter should be generated.
    */
   private isWaveMysteryEncounter(battleType: BattleType, waveIndex: number): boolean {
-    if (getDailyMysteryEncounter(waveIndex) != null) {
-      return true;
-    }
     if (!this.isMysteryEncounterValidForWave(battleType, waveIndex)) {
       return false;
     }
@@ -3506,10 +3495,8 @@ export class BattleScene extends SceneBase {
     } else if (canBypass) {
       encounter = allMysteryEncounters[encounterType ?? -1];
       return encounter;
-    } else if (getDailyMysteryEncounter(this.currentBattle.waveIndex) == null) {
-      encounter = encounterType == null ? null : allMysteryEncounters[encounterType];
     } else {
-      encounter = allMysteryEncounters[getDailyMysteryEncounter(this.currentBattle.waveIndex)!];
+      encounter = encounterType == null ? null : allMysteryEncounters[encounterType];
     }
 
     // Check for queued encounters first

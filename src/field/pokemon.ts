@@ -41,8 +41,6 @@ import {
   TarShotTag,
   TrappedTag,
 } from "#data/battler-tags";
-import { getDailyEventSeedBoss, isDailyForcedWaveHiddenAbility } from "#data/daily-run";
-import { isDailyEventSeed, isDailyFinalBoss } from "#data/daily-seed-utils";
 import { allAbilities, allMoves } from "#data/data-lists";
 import { getLevelTotalExp } from "#data/exp";
 import {
@@ -1943,7 +1941,7 @@ export abstract class Pokemon extends Phaser.GameObjects.Container {
     const allowEggMoves = new ValueHolder(true);
     applyChallenges(ChallengeType.EGG_MOVE_RELEARN_AVAILABILITY, this, allowEggMoves);
 
-    if (this.metBiome === -1 && allowEggMoves.value && !globalScene.gameMode.isDaily) {
+    if (this.metBiome === -1 && allowEggMoves.value) {
       const eggMoves: LearnableLevelMoves = this.getUnlockedEggMoves().map(em => [null, em, LearnableMoveSource.EGG]);
       learnableMoves.push(...eggMoves);
     }
@@ -2227,12 +2225,6 @@ export abstract class Pokemon extends Phaser.GameObjects.Container {
     if (this.customPokemonData.ability != null && this.customPokemonData.ability !== -1) {
       return allAbilities[this.customPokemonData.ability];
     }
-    if (this.isBoss() && isDailyFinalBoss()) {
-      const eventBoss = getDailyEventSeedBoss();
-      if (eventBoss?.ability != null) {
-        return allAbilities[eventBoss.ability];
-      }
-    }
     let abilityId = this.getSpeciesForm(ignoreOverride).getAbility(this.abilityIndex);
     if (abilityId === AbilityId.NONE) {
       abilityId = this.species.ability1;
@@ -2254,12 +2246,6 @@ export abstract class Pokemon extends Phaser.GameObjects.Container {
     }
     if (this.customPokemonData.passive != null && this.customPokemonData.passive !== -1) {
       return allAbilities[this.customPokemonData.passive];
-    }
-    if (this.isBoss() && isDailyFinalBoss()) {
-      const eventBoss = getDailyEventSeedBoss();
-      if (eventBoss?.passive != null) {
-        return allAbilities[eventBoss.passive];
-      }
     }
     if (activeOverrides.PASSIVE_ABILITY_OVERRIDE && this.isPlayer()) {
       return allAbilities[activeOverrides.PASSIVE_ABILITY_OVERRIDE];
@@ -2362,10 +2348,6 @@ export abstract class Pokemon extends Phaser.GameObjects.Container {
         || gameMode.isEndlessMajorBoss(waveIndex))
     ) {
       return false;
-    }
-
-    if (gameMode.isDaily && this.customPokemonData.passive != null && this.customPokemonData.passive !== -1) {
-      return true;
     }
 
     const hasPassive = new BooleanHolder(this.passive);
@@ -6041,10 +6023,7 @@ export class PlayerPokemon extends Pokemon {
     }
 
     if (!dataSource) {
-      if (
-        globalScene.gameMode.isDaily // Keldeo is excluded due to crashes involving its signature move and the associated form change
-        || (activeOverrides.STARTER_SPECIES_OVERRIDE && activeOverrides.STARTER_SPECIES_OVERRIDE !== SpeciesId.KELDEO)
-      ) {
+      if (activeOverrides.STARTER_SPECIES_OVERRIDE && activeOverrides.STARTER_SPECIES_OVERRIDE !== SpeciesId.KELDEO) {
         this.generateAndPopulateMoveset();
       } else {
         this.moveset = [];
@@ -6186,6 +6165,7 @@ export class PlayerPokemon extends Pokemon {
       );
     });
   }
+
   /**
    * Add friendship to this Pokemon
    *
@@ -6379,13 +6359,9 @@ export class PlayerPokemon extends Pokemon {
           globalScene.removeModifier(evotracker);
         }
       }
-      if (!globalScene.gameMode.isDaily || this.metBiome > -1) {
-        globalScene.gameData.updateSpeciesDexIvs(this.species.speciesId, this.ivs);
-        globalScene.gameData.setPokemonSeen(this, false);
-        globalScene.gameData.setPokemonCaught(this, false).then(() => updateAndResolve());
-      } else {
-        updateAndResolve();
-      }
+      globalScene.gameData.updateSpeciesDexIvs(this.species.speciesId, this.ivs);
+      globalScene.gameData.setPokemonSeen(this, false);
+      globalScene.gameData.setPokemonCaught(this, false).then(() => updateAndResolve());
     });
   }
 
@@ -6487,12 +6463,8 @@ export class PlayerPokemon extends Pokemon {
           this.updateInfo(true).then(() => resolve());
         });
       };
-      if (!globalScene.gameMode.isDaily || this.metBiome > -1) {
-        globalScene.gameData.setPokemonSeen(this, false);
-        globalScene.gameData.setPokemonCaught(this, false).then(() => updateAndResolve());
-      } else {
-        updateAndResolve();
-      }
+      globalScene.gameData.setPokemonSeen(this, false);
+      globalScene.gameData.setPokemonCaught(this, false).then(() => updateAndResolve());
     });
   }
 
@@ -6697,12 +6669,6 @@ export class EnemyPokemon extends Pokemon {
 
       this.luck = (this.shiny ? this.variant + 1 : 0) + (this.fusionShiny ? this.fusionVariant + 1 : 0);
 
-      if (isDailyFinalBoss()) {
-        this.applyCustomDailyBossConfig();
-      } else {
-        this.applyCustomDailyConfig();
-      }
-
       if (this.hasTrainer() && globalScene.currentBattle) {
         const { waveIndex } = globalScene.currentBattle;
         const ivs: number[] = [];
@@ -6751,54 +6717,6 @@ export class EnemyPokemon extends Pokemon {
       bossSegments
       ?? globalScene.getEncounterBossSegments(globalScene.currentBattle.waveIndex, this.level, this.species, true);
     this.bossSegmentIndex = this.bossSegments - 1;
-  }
-
-  /**
-   * Helper method to apply the custom daily config to this pokemon.
-   */
-  private applyCustomDailyConfig(): void {
-    if (!isDailyEventSeed()) {
-      return;
-    }
-
-    if (isDailyForcedWaveHiddenAbility() && this.species.abilityHidden) {
-      this.abilityIndex = 2;
-    }
-  }
-
-  /**
-   * Helper method to apply the custom daily boss config to this pokemon.
-   */
-  private applyCustomDailyBossConfig(): void {
-    if (!isDailyFinalBoss()) {
-      return;
-    }
-
-    const bossConfig = getDailyEventSeedBoss();
-    if (!bossConfig) {
-      return;
-    }
-
-    if (bossConfig.formIndex != null) {
-      this.formIndex = bossConfig.formIndex;
-    }
-
-    if (bossConfig.variant != null) {
-      this.shiny = true;
-      this.variant = bossConfig.variant;
-    }
-
-    if (bossConfig.nature != null) {
-      this.setNature(bossConfig.nature);
-    }
-
-    if (bossConfig.moveset != null) {
-      this.tryPopulateMoveset(bossConfig.moveset, true);
-    }
-
-    if (bossConfig.ivs != null) {
-      this.ivs = bossConfig.ivs;
-    }
   }
 
   override generateAndPopulateMoveset(useRivalSignatures = false, formIndex?: number): void {

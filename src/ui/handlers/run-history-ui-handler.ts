@@ -354,9 +354,6 @@ class RunEntryContainer extends Phaser.GameObjects.Container {
     const gameModeLabel = addTextObject(8, 19, "", TextStyle.WINDOW);
     let mode = "";
     switch (data.gameMode) {
-      case GameModes.DAILY:
-        mode = i18next.t("gameMode:dailyRun");
-        break;
       case GameModes.SPLICED_ENDLESS:
       case GameModes.ENDLESS:
         mode = i18next.t("gameMode:endless");

@@ -596,10 +596,7 @@ export class EncounterPhase extends BattlePhase {
         globalScene.phaseManager.pushNew("ToggleDoublePositionPhase", false);
       }
 
-      if (
-        globalScene.currentBattle.battleType !== BattleType.TRAINER
-        && (globalScene.currentBattle.waveIndex > 1 || !globalScene.gameMode.isDaily)
-      ) {
+      if (globalScene.currentBattle.battleType !== BattleType.TRAINER) {
         const minPartySize = globalScene.currentBattle.double ? 2 : 1;
         if (availablePartyMembers.length > minPartySize) {
           globalScene.phaseManager.pushNew("CheckSwitchPhase", 0, globalScene.currentBattle.double);
