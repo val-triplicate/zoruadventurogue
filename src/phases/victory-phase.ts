@@ -55,7 +55,6 @@ export class VictoryPhase extends PokemonPhase {
       const currentWaveIndex = globalScene.currentBattle.waveIndex;
 
       if (gameMode.isEndless || !gameMode.isWaveFinal(currentWaveIndex)) {
-        globalScene.phaseManager.pushNew("EggLapsePhase");
         if (gameMode.isClassic) {
           switch (currentWaveIndex) {
             case ClassicFixedBossWaves.EVIL_BOSS_2:

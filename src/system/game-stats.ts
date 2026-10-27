@@ -56,16 +56,12 @@ export class GameStats {
     // Currently handled by migration
     this.subLegendaryPokemonSeen = source?.subLegendaryPokemonSeen ?? 0;
     this.subLegendaryPokemonCaught = source?.subLegendaryPokemonCaught ?? 0;
-    this.subLegendaryPokemonHatched = source?.subLegendaryPokemonHatched ?? 0;
     this.legendaryPokemonSeen = source?.legendaryPokemonSeen || 0;
     this.legendaryPokemonCaught = source?.legendaryPokemonCaught || 0;
-    this.legendaryPokemonHatched = source?.legendaryPokemonHatched || 0;
     this.mythicalPokemonSeen = source?.mythicalPokemonSeen || 0;
     this.mythicalPokemonCaught = source?.mythicalPokemonCaught || 0;
-    this.mythicalPokemonHatched = source?.mythicalPokemonHatched || 0;
     this.shinyPokemonSeen = source?.shinyPokemonSeen || 0;
     this.shinyPokemonCaught = source?.shinyPokemonCaught || 0;
-    this.shinyPokemonHatched = source?.shinyPokemonHatched || 0;
     this.pokemonFused = source?.pokemonFused || 0;
     this.trainersDefeated = source?.trainersDefeated || 0;
     this.eggsPulled = source?.eggsPulled || 0;

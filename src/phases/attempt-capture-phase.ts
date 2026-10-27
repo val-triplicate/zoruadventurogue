@@ -310,7 +310,7 @@ export class AttemptCapturePhase extends PokemonPhase {
             }
           });
         };
-        Promise.all([pokemon.hideInfo(), gameData.setPokemonCaught(pokemon)]).then(() => {
+        Promise.all([pokemon.hideInfo(), gameData.setPokemonCaught()]).then(() => {
           if (!addStatus.value) {
             removePokemon();
             end();

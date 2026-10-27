@@ -698,7 +698,7 @@ export async function catchPokemon(
           }
         });
       };
-      Promise.all([pokemon.hideInfo(), gameData.setPokemonCaught(pokemon)]).then(() => {
+      Promise.all([pokemon.hideInfo(), gameData.setPokemonCaught()]).then(() => {
         if (!(isObtain || addStatus.value)) {
           removePokemon();
           end();
@@ -998,7 +998,7 @@ export async function addPokemonDataToDexAndValidateAchievements(pokemon: Player
   }
 
   globalScene.gameData.updateSpeciesDexIvs(pokemon.species.getRootSpeciesId(true), pokemon.ivs);
-  return globalScene.gameData.setPokemonCaught(pokemon, true, false, false);
+  return globalScene.gameData.setPokemonCaught();
 }
 
 /**

@@ -299,10 +299,6 @@ export const achvs = {
   CATCH_SUB_LEGENDARY: new Achv("catchSubLegendary", "rb", 50).setSecret(),
   CATCH_MYTHICAL: new Achv("catchMythical", "strange_ball", 75).setSecret(),
   CATCH_LEGENDARY: new Achv("catchLegendary", "mb", 100).setSecret(),
-  HATCH_SUB_LEGENDARY: new Achv("hatchSubLegendary", "epic_egg", 50).setSecret(),
-  HATCH_MYTHICAL: new Achv("hatchMythical", "manaphy_egg", 50).setSecret(),
-  HATCH_LEGENDARY: new Achv("hatchLegendary", "legendary_egg", 100).setSecret(),
-  HATCH_SHINY: new Achv("hatchShiny", "rogue_egg", 100).setSecret(),
   FRESH_START: new ChallengeAchv(
     "freshStart",
     "fresh_start_ribbon",

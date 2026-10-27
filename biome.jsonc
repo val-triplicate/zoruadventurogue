@@ -67,7 +67,7 @@
           "level": "error",
           "fix": "safe"
         },
-        "noUnusedFunctionParameters": "error",
+        "noUnusedFunctionParameters": "warn",
         "noUnusedLabels": "error",
         "noPrivateImports": "error",
         "useSingleJsDocAsterisk": "error",

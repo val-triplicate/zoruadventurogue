@@ -12,7 +12,6 @@ import type { MysteryEncounterSaveData } from "#mystery-encounters/mystery-encou
 import type { Variant } from "#sprites/variant";
 import type { ArenaData } from "#system/arena-data";
 import type { ChallengeData } from "#system/challenge-data";
-import type { EggData } from "#system/egg-data";
 import type { GameStats } from "#system/game-stats";
 import type { ModifierData } from "#system/modifier-data";
 import type { PokemonData } from "#system/pokemon-data";
@@ -32,10 +31,8 @@ export interface SystemSaveData {
   achvUnlocks: AchvUnlocks;
   voucherUnlocks: VoucherUnlocks;
   voucherCounts: VoucherCounts;
-  eggs: EggData[];
   gameVersion: string;
   timestamp: number;
-  eggPity: number[];
   unlockPity: number[];
   appliedMigrators: AppliedMigrators;
 }

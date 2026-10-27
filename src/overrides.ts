@@ -8,7 +8,6 @@ import { BerryType } from "#enums/berry-type";
 import { BiomeId } from "#enums/biome-id";
 import { BiomePoolTier } from "#enums/biome-pool-tier";
 import { Challenges } from "#enums/challenges";
-import { EggTier } from "#enums/egg-type";
 import { FormChangeItem } from "#enums/form-change-item";
 import { MoveId } from "#enums/move-id";
 import { MysteryEncounterTier } from "#enums/mystery-encounter-tier";
@@ -23,7 +22,6 @@ import { TimeOfDay } from "#enums/time-of-day";
 import { TrainerType } from "#enums/trainer-type";
 import { TrainerVariant } from "#enums/trainer-variant";
 import { Unlockables } from "#enums/unlockables";
-import { VariantTier } from "#enums/variant-tier";
 import { WeatherType } from "#enums/weather-type";
 import type { ModifierOverride } from "#modifiers/modifier-type";
 import type { Variant } from "#sprites/variant";
@@ -248,17 +246,6 @@ class DefaultOverrides {
    * - `2+`: the Pokemon will be a boss with the given number of health segments
    */
   readonly ENEMY_HEALTH_SEGMENTS_OVERRIDE: number = 0;
-
-  // -------------
-  // EGG OVERRIDES
-  // -------------
-  readonly EGG_IMMEDIATE_HATCH_OVERRIDE: boolean = false;
-  readonly EGG_TIER_OVERRIDE: EggTier | null = null;
-  readonly EGG_SHINY_OVERRIDE: boolean = false;
-  readonly EGG_VARIANT_OVERRIDE: VariantTier | null = null;
-  readonly EGG_FREE_GACHA_PULLS_OVERRIDE: boolean = false;
-  readonly EGG_GACHA_PULL_COUNT_OVERRIDE: number = 0;
-  readonly UNLIMITED_EGG_COUNT_OVERRIDE: boolean = false;
 
   // -------------------------
   // MYSTERY ENCOUNTER OVERRIDES

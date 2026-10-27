@@ -1741,14 +1741,10 @@ export class BattleScene extends SceneBase {
       return 0;
     }
 
-    const isEggPhase =
-      this.phaseManager.getCurrentPhase().is("EggLapsePhase")
-      || this.phaseManager.getCurrentPhase().is("EggHatchPhase");
-
     const isTrainerBattle = this.currentBattle?.battleType === BattleType.TRAINER;
 
     // Give trainers with specialty types an appropriately-typed form for Wormadam, Rotom, Arceus, Oricorio, Silvally, or Paldean Tauros.
-    if (!isEggPhase && isTrainerBattle && this.currentBattle.trainer?.config.hasSpecialtyType()) {
+    if (isTrainerBattle && this.currentBattle.trainer?.config.hasSpecialtyType()) {
       if (species.speciesId === SpeciesId.WORMADAM) {
         switch (this.currentBattle.trainer.config.specialtyType) {
           case PokemonType.GROUND:
@@ -1838,7 +1834,7 @@ export class BattleScene extends SceneBase {
         }
         return randSeedInt(8);
       case SpeciesId.EEVEE:
-        if (isTrainerBattle && this.currentBattle?.waveIndex < 30 && !isEggPhase) {
+        if (isTrainerBattle && this.currentBattle?.waveIndex < 30) {
           return 0; // No Partner Eevee for Wave 12 Preschoolers
         }
         return randSeedInt(2);
@@ -1881,7 +1877,7 @@ export class BattleScene extends SceneBase {
       case SpeciesId.GIMMIGHOUL:
         // In game modes with MEs (currently Classic only),
         // chest form Gimmighoul is only allowed to appear in the Mysterious Chest Encounter
-        if (this.gameMode.hasMysteryEncounters && !isEggPhase) {
+        if (this.gameMode.hasMysteryEncounters) {
           return 1; // Wandering form
         }
         return randSeedInt(species.forms.length);

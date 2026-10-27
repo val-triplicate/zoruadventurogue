@@ -1,9 +1,6 @@
 import { CLASSIC_MODE_MYSTERY_ENCOUNTER_WAVES } from "#app/constants";
 import { globalScene } from "#app/global-scene";
 import { modifierTypes } from "#data/data-lists";
-import type { IEggOptions } from "#data/egg";
-import { EggSourceType } from "#enums/egg-source-types";
-import { EggTier } from "#enums/egg-type";
 import { ModifierTier } from "#enums/modifier-tier";
 import { MysteryEncounterTier } from "#enums/mystery-encounter-tier";
 import { MysteryEncounterType } from "#enums/mystery-encounter-type";
@@ -99,12 +96,6 @@ export const ATrainersTestEncounter: MysteryEncounter = MysteryEncounterBuilder.
     ];
 
     encounter.setDialogueToken("statTrainerName", i18next.t(`trainerNames:${trainerNameKey}`));
-    const eggDescription = `${i18next.t(`${namespace}:title`)}:\n${i18next.t(`trainerNames:${trainerNameKey}`)}`;
-    encounter.misc = {
-      trainerType,
-      trainerNameKey,
-      trainerEggDescription: eggDescription,
-    };
 
     // Trainer config
     const trainerConfig = trainerConfigs[trainerType].clone();
@@ -150,26 +141,16 @@ export const ATrainersTestEncounter: MysteryEncounter = MysteryEncounterBuilder.
     },
     async () => {
       const encounter = globalScene.currentBattle.mysteryEncounter!;
-      // Battle the stat trainer for an Egg and great rewards
+      // Battle the stat trainer for a Nothing!! and great rewards
       const config: EnemyPartyConfig = encounter.enemyPartyConfigs[0];
 
       await transitionMysteryEncounterIntroVisuals();
 
-      const eggOptions: IEggOptions = {
-        pulled: false,
-        sourceType: EggSourceType.EVENT,
-        eggDescriptor: encounter.misc.trainerEggDescription,
-        tier: EggTier.EPIC,
-      };
-      encounter.setDialogueToken("eggType", i18next.t(`${namespace}:eggTypes.epic`));
-      setEncounterRewards(
-        {
-          guaranteedModifierTypeFuncs: [modifierTypes.RELIC_GOLD],
-          guaranteedModifierTiers: [ModifierTier.ROGUE, ModifierTier.ROGUE],
-          fillRemaining: true,
-        },
-        [eggOptions],
-      );
+      setEncounterRewards({
+        guaranteedModifierTypeFuncs: [modifierTypes.RELIC_GOLD],
+        guaranteedModifierTiers: [ModifierTier.ROGUE, ModifierTier.ROGUE],
+        fillRemaining: true,
+      });
       await initBattleWithEnemyConfig(config);
     },
   )
@@ -179,18 +160,10 @@ export const ATrainersTestEncounter: MysteryEncounter = MysteryEncounterBuilder.
       buttonTooltip: `${namespace}:option.2.tooltip`,
     },
     async () => {
-      const encounter = globalScene.currentBattle.mysteryEncounter!;
       // Full heal party
       globalScene.phaseManager.unshiftNew("PartyHealPhase", true);
 
-      const eggOptions: IEggOptions = {
-        pulled: false,
-        sourceType: EggSourceType.EVENT,
-        eggDescriptor: encounter.misc.trainerEggDescription,
-        tier: EggTier.RARE,
-      };
-      encounter.setDialogueToken("eggType", i18next.t(`${namespace}:eggTypes.rare`));
-      setEncounterRewards({ fillRemaining: false, rerollMultiplier: -1 }, [eggOptions]);
+      setEncounterRewards({ fillRemaining: false, rerollMultiplier: -1 });
       leaveEncounterWithoutBattle();
     },
   )

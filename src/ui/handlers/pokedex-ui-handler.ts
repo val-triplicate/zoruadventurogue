@@ -12,8 +12,6 @@ import { AbilityAttr } from "#enums/ability-attr";
 import { AbilityId } from "#enums/ability-id";
 import { BiomeId } from "#enums/biome-id";
 import { Button } from "#enums/buttons";
-import { CandyUpgradeDisplayMode } from "#enums/candy-upgrade-display-mode";
-import { CandyUpgradeNotificationMode } from "#enums/candy-upgrade-notification-mode";
 import { DexAttr } from "#enums/dex-attr";
 import { DropDownColumn } from "#enums/drop-down-column";
 import type { Nature } from "#enums/nature";
@@ -35,10 +33,9 @@ import { MessageUiHandler } from "#ui/message-ui-handler";
 import { PokedexMonContainer } from "#ui/pokedex-mon-container";
 import { PokemonIconAnimHelper } from "#ui/pokemon-icon-anim-helper";
 import { ScrollBar } from "#ui/scroll-bar";
-import { isPassiveAvailable, isSameSpeciesEggAvailable, isValueReductionAvailable } from "#ui/starter-select-ui-utils";
 import { addTextObject, getTextColor } from "#ui/text";
 import { addWindow } from "#ui/ui-theme";
-import { BooleanHolder, fixedInt, getLocalizedSpriteKey, padInt, randIntRange } from "#utils/common";
+import { BooleanHolder, getLocalizedSpriteKey, padInt } from "#utils/common";
 import { loadStarterPreferences } from "#utils/data";
 import { enumValueToKey } from "#utils/enums";
 import { getDexNumber, getPokerusStarters } from "#utils/pokemon-utils";
@@ -639,7 +636,7 @@ export class PokedexUiHandler extends MessageUiHandler {
 
       this.starterPreferences[species.speciesId] = this.initStarterPrefs(species);
 
-      this.setUpgradeAnimation(icon, species);
+      globalScene.tweens.killTweensOf(icon);
     });
 
     this.resetFilters();
@@ -800,73 +797,6 @@ export class PokedexUiHandler extends MessageUiHandler {
 
   isEncountered(_species: PokemonSpecies, dexEntry: DexEntry, _seenFilter?: boolean): boolean {
     return !!dexEntry.seenCount;
-  }
-
-  /**
-   * Determines if 'Animation' based upgrade notifications should be shown
-   * @returns true if upgrade notifications are enabled and set to display an 'Animation'
-   */
-  isUpgradeAnimationEnabled(): boolean {
-    return (
-      settings.display.candyUpgradeNotificationMode !== CandyUpgradeNotificationMode.OFF
-      && settings.display.candyUpgradeDisplayMode === CandyUpgradeDisplayMode.ANIMATION
-    );
-  }
-
-  /**
-   * Sets a bounce animation if enabled and the Pokemon has an upgrade
-   * @param icon {@linkcode Phaser.GameObjects.GameObject} to animate
-   * @param species {@linkcode PokemonSpecies} of the icon used to check for upgrades
-   * @param startPaused Should this animation be paused after it is added?
-   */
-  setUpgradeAnimation(icon: Phaser.GameObjects.Sprite, species: PokemonSpecies, startPaused = false): void {
-    globalScene.tweens.killTweensOf(icon);
-    // Skip animations if they are disabled
-    if (
-      settings.display.candyUpgradeDisplayMode === CandyUpgradeDisplayMode.ICON
-      || species.speciesId !== species.getRootSpeciesId(false)
-    ) {
-      return;
-    }
-
-    icon.y = 2;
-
-    const tweenChain: Phaser.Types.Tweens.TweenChainBuilderConfig = {
-      targets: icon,
-      loop: -1,
-      paused: startPaused,
-      // Make the initial bounce a little randomly delayed
-      delay: randIntRange(0, 50) * 5,
-      loopDelay: 1000,
-      tweens: [
-        {
-          targets: icon,
-          y: 2 - 5,
-          duration: fixedInt(125),
-          ease: "Cubic.easeOut",
-          yoyo: true,
-        },
-        {
-          targets: icon,
-          y: 2 - 3,
-          duration: fixedInt(150),
-          ease: "Cubic.easeOut",
-          yoyo: true,
-        },
-      ],
-    };
-
-    if (
-      isPassiveAvailable(species.speciesId, this.gameData)
-      || (settings.display.candyUpgradeNotificationMode === CandyUpgradeNotificationMode.ON
-        && (isValueReductionAvailable(species.speciesId, this.gameData)
-          || isSameSpeciesEggAvailable(species.speciesId, this.gameData)))
-    ) {
-      const chain = globalScene.tweens.chain(tweenChain);
-      if (!startPaused) {
-        chain.play();
-      }
-    }
   }
 
   processInput(button: Button): boolean {
@@ -1782,12 +1712,6 @@ export class PokedexUiHandler extends MessageUiHandler {
   startIconAnimation(cursor: number) {
     const container = this.pokemonContainers[cursor];
     const icon = container.icon;
-    if (this.isUpgradeAnimationEnabled()) {
-      globalScene.tweens.getTweensOf(icon).forEach(tween => tween.pause());
-      // Reset the position of the icon
-      icon.x = -2;
-      icon.y = 2;
-    }
     // Initiates the small up and down idle animation
     this.iconAnimHandler.addOrUpdate(icon, PokemonIconAnimMode.PASSIVE);
   }

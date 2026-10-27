@@ -21,10 +21,6 @@ import { ChangePasswordFormUiHandler } from "#ui/change-password-form-ui-handler
 import { CommandUiHandler } from "#ui/command-ui-handler";
 import { ConfirmUiHandler } from "#ui/confirm-ui-handler";
 import { SettingsDisplayUiHandler } from "#ui/display-settings-ui-handler";
-import { EggGachaUiHandler } from "#ui/egg-gacha-ui-handler";
-import { EggHatchSceneUiHandler } from "#ui/egg-hatch-scene-ui-handler";
-import { EggListUiHandler } from "#ui/egg-list-ui-handler";
-import { EggSummaryUiHandler } from "#ui/egg-summary-ui-handler";
 import { EvolutionSceneUiHandler } from "#ui/evolution-scene-ui-handler";
 import { FightUiHandler } from "#ui/fight-ui-handler";
 import { GameStatsUiHandler } from "#ui/game-stats-ui-handler";
@@ -71,8 +67,6 @@ const transitionModes = [
   UiMode.STARTER_SELECT,
   UiMode.EVOLUTION_SCENE,
   UiMode.EGG_HATCH_SCENE,
-  UiMode.EGG_LIST,
-  UiMode.EGG_GACHA,
   UiMode.POKEDEX,
   UiMode.POKEDEX_PAGE,
   UiMode.CHALLENGE_SELECT,
@@ -145,8 +139,6 @@ export class UI extends Phaser.GameObjects.Container {
       new SummaryUiHandler(),
       new StarterSelectUiHandler(),
       new EvolutionSceneUiHandler(),
-      new EggHatchSceneUiHandler(),
-      new EggSummaryUiHandler(),
       new ConfirmUiHandler(),
       new OptionSelectUiHandler(),
       new MenuUiHandler(),
@@ -162,8 +154,6 @@ export class UI extends Phaser.GameObjects.Container {
       // end settings
       new AchvsUiHandler(),
       new GameStatsUiHandler(),
-      new EggListUiHandler(),
-      new EggGachaUiHandler(),
       new PokedexUiHandler(),
       new PokedexScanUiHandler(),
       new PokedexPageUiHandler(),

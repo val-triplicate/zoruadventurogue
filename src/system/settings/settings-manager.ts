@@ -5,7 +5,6 @@ import { PlayerGender } from "#enums/player-gender";
 import { SpriteSet } from "#enums/sprite-set";
 import { UiTheme } from "#enums/ui-theme";
 import { version } from "#package.json";
-import { applySettingsVersionMigration } from "#system/version-converter";
 import type { Settings, SettingsCategory, UserFacingSettings } from "#types/settings";
 
 /** Manages game settings */
@@ -122,9 +121,6 @@ export class SettingsManager {
     if (lsItem) {
       try {
         const lsSettings: Partial<Settings> = JSON.parse(lsItem);
-
-        applySettingsVersionMigration(lsSettings);
-
         const { general, audio, display, gamepad } = lsSettings;
 
         if (general) {

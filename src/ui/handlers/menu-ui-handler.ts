@@ -15,7 +15,7 @@ import { BgmBar } from "#ui/bgm-bar";
 import { OptionSelectUiHandler } from "#ui/option-select-ui-handler";
 import { addTextObject } from "#ui/text";
 import { addWindow, WindowVariant } from "#ui/ui-theme";
-import { fixedInt, sessionIdKey } from "#utils/common";
+import { sessionIdKey } from "#utils/common";
 import { getCookie } from "#utils/cookies";
 import { getEnumValues } from "#utils/enums";
 import { toCamelCase } from "#utils/strings";
@@ -42,8 +42,6 @@ enum MenuOptions {
   GAME_SETTINGS,
   ACHIEVEMENTS,
   STATS,
-  EGG_LIST,
-  EGG_GACHA,
   POKEDEX,
   MANAGE_DATA,
   COMMUNITY,
@@ -78,7 +76,7 @@ export class MenuUiHandler extends OptionSelectUiHandler {
       [
         {
           dimmed: globalScene.phaseManager.getCurrentPhase().is("SelectModifierPhase"),
-          options: [MenuOptions.EGG_GACHA, MenuOptions.EGG_LIST],
+          options: [],
         },
         { excluded: bypassLogin, options: [MenuOptions.LOG_OUT] },
         { excluded: !globalScene.currentBattle, options: [MenuOptions.SAVE_AND_QUIT] },
@@ -582,20 +580,6 @@ export class MenuUiHandler extends OptionSelectUiHandler {
         break;
       case MenuOptions.STATS:
         ui.setOverlayMode(UiMode.GAME_STATS);
-        success = true;
-        break;
-      case MenuOptions.EGG_LIST:
-        if (globalScene.gameData.eggs.length > 0) {
-          ui.revertMode();
-          ui.setOverlayMode(UiMode.EGG_LIST);
-          success = true;
-        } else {
-          ui.showText(i18next.t("menuUiHandler:noEggs"), null, () => ui.showText(""), fixedInt(1500));
-        }
-        break;
-      case MenuOptions.EGG_GACHA:
-        ui.revertMode();
-        ui.setOverlayMode(UiMode.EGG_GACHA);
         success = true;
         break;
       case MenuOptions.POKEDEX:

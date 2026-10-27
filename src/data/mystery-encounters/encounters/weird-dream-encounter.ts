@@ -48,7 +48,6 @@ import { TrainerPartyTemplate } from "#trainers/trainer-party-template";
 import type { HeldModifierConfig } from "#types/held-modifier-config";
 import { NumberHolder, randSeedInt, randSeedShuffle } from "#utils/common";
 import { getRandomRegularPokemonType } from "#utils/pokemon-utils";
-import i18next from "i18next";
 
 /** i18n namespace for encounter */
 const namespace = "mysteryEncounters/weirdDream";
@@ -538,7 +537,7 @@ async function postProcessTransformedPokemon(
   speciesRootForm: SpeciesId,
   forBattle = false,
 ): Promise<boolean> {
-  let isNewStarter = false;
+  const isNewStarter = false;
   // Roll HA a second time
   if (newPokemon.species.abilityHidden) {
     const hiddenIndex = newPokemon.species.ability2 ? 2 : 1;
@@ -588,15 +587,6 @@ async function postProcessTransformedPokemon(
     }
 
     globalScene.gameData.updateSpeciesDexIvs(newPokemon.species.getRootSpeciesId(true), newPokemon.ivs);
-    const newStarterUnlocked = await globalScene.gameData.setPokemonCaught(newPokemon, true, false, false);
-    if (newStarterUnlocked) {
-      isNewStarter = true;
-      await showEncounterText(
-        i18next.t("battle:addedAsAStarter", {
-          pokemonName: speciesDataRegistry.getSpecies(speciesRootForm).getName(),
-        }),
-      );
-    }
   }
 
   // If the previous pokemon had pokerus, transfer to new pokemon
@@ -810,11 +800,6 @@ async function addEggMoveToNewPokemonMoveset(
 
       // For pokemon that the player owns (including ones just caught), unlock the egg move
       if (!forBattle && randomEggMoveIndex != null && globalScene.gameData.dexData[speciesRootForm].caughtAttr) {
-        await globalScene.gameData.setEggMoveUnlocked(
-          speciesDataRegistry.getSpecies(speciesRootForm),
-          randomEggMoveIndex,
-          true,
-        );
       }
     }
   }

@@ -4,7 +4,6 @@ import { activeOverrides } from "#app/overrides";
 import { SceneBase } from "#app/scene-base";
 import { isMobile } from "#app/touch-controls";
 import { BiomeId } from "#enums/biome-id";
-import { GachaType } from "#enums/gacha-types";
 import { getBiomeHasProps } from "#field/arena";
 import { initializeGame } from "#init/init";
 import { CacheBustedLoaderPlugin } from "#plugins/cache-busted-loader-plugin";
@@ -299,18 +298,6 @@ export class LoadingScene extends SceneBase {
       // egg gacha stuff
       .loadEventImages(lang)
       .loadAtlas("categories", "")
-      .loadAtlas("egg", "egg")
-      .loadAtlas("egg_crack", "egg")
-      .loadAtlas("egg_icons", "egg")
-      .loadAtlas("egg_shard", "egg")
-      .loadAtlas("egg_lightrays", "egg")
-      .loadEggGachaImages()
-      .loadImage("gacha_glass", "egg")
-      .loadImage("gacha_eggs", "egg")
-      .loadAtlas("gacha_hatch", "egg")
-      .loadImage("gacha_knob", "egg")
-      .loadImage("egg_list_bg", "ui")
-      .loadImage("egg_summary_bg", "ui")
 
       .loadImage("end_m", "cg")
       .loadImage("end_f", "cg")
@@ -358,11 +345,6 @@ export class LoadingScene extends SceneBase {
       .loadSe("pb_tray_enter")
       .loadSe("pb_tray_ball")
       .loadSe("pb_tray_empty")
-      .loadSe("egg_crack")
-      .loadSe("egg_hatch")
-      .loadSe("gacha_dial")
-      .loadSe("gacha_running")
-      .loadSe("gacha_dispense")
       .loadSe("item_fanfare")
       .loadSe("level_up_fanfare")
 
@@ -599,14 +581,6 @@ export class LoadingScene extends SceneBase {
     }
     if (timedEventManager.getLogoKey() !== "logo") {
       this.loadImage(timedEventManager.getLogoKey(), "events");
-    }
-    return this;
-  }
-
-  private loadEggGachaImages(): this {
-    for (const gt of Object.keys(GachaType)) {
-      const key = gt.toLowerCase();
-      this.loadImage(`gacha_${key}`, "egg").loadAtlas(`gacha_underlay_${key}`, "egg");
     }
     return this;
   }

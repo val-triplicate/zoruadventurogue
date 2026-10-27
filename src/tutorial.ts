@@ -83,11 +83,6 @@ const tutorialHandlers = {
       });
     });
   },
-  [Tutorial.EGG_GACHA]: () => {
-    return new Promise<void>(resolve => {
-      showTutorialDialogue("tutorial:eggGacha", () => globalScene.ui.showText("", null, () => resolve()));
-    });
-  },
 };
 
 /**

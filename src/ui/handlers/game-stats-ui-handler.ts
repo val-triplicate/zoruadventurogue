@@ -110,27 +110,9 @@ const displayStats: DisplayStats = {
     label_key: "pokemonDefeated",
     sourceFunc: gameData => gameData.gameStats.pokemonDefeated.toString(),
   },
-  pokemonCaught: {
-    label_key: "pokemonCaught",
-    sourceFunc: gameData => gameData.gameStats.pokemonCaught.toString(),
-  },
-  pokemonHatched: {
-    label_key: "eggsHatched",
-    sourceFunc: gameData => gameData.gameStats.pokemonHatched.toString(),
-  },
   subLegendaryPokemonSeen: {
     label_key: "subLegendsSeen",
     sourceFunc: gameData => gameData.gameStats.subLegendaryPokemonSeen.toString(),
-    hidden: true,
-  },
-  subLegendaryPokemonCaught: {
-    label_key: "subLegendsCaught",
-    sourceFunc: gameData => gameData.gameStats.subLegendaryPokemonCaught.toString(),
-    hidden: true,
-  },
-  subLegendaryPokemonHatched: {
-    label_key: "subLegendsHatched",
-    sourceFunc: gameData => gameData.gameStats.subLegendaryPokemonHatched.toString(),
     hidden: true,
   },
   legendaryPokemonSeen: {
@@ -138,44 +120,14 @@ const displayStats: DisplayStats = {
     sourceFunc: gameData => gameData.gameStats.legendaryPokemonSeen.toString(),
     hidden: true,
   },
-  legendaryPokemonCaught: {
-    label_key: "legendsCaught",
-    sourceFunc: gameData => gameData.gameStats.legendaryPokemonCaught.toString(),
-    hidden: true,
-  },
-  legendaryPokemonHatched: {
-    label_key: "legendsHatched",
-    sourceFunc: gameData => gameData.gameStats.legendaryPokemonHatched.toString(),
-    hidden: true,
-  },
   mythicalPokemonSeen: {
     label_key: "mythicalsSeen",
     sourceFunc: gameData => gameData.gameStats.mythicalPokemonSeen.toString(),
     hidden: true,
   },
-  mythicalPokemonCaught: {
-    label_key: "mythicalsCaught",
-    sourceFunc: gameData => gameData.gameStats.mythicalPokemonCaught.toString(),
-    hidden: true,
-  },
-  mythicalPokemonHatched: {
-    label_key: "mythicalsHatched",
-    sourceFunc: gameData => gameData.gameStats.mythicalPokemonHatched.toString(),
-    hidden: true,
-  },
   shinyPokemonSeen: {
     label_key: "shiniesSeen",
     sourceFunc: gameData => gameData.gameStats.shinyPokemonSeen.toString(),
-    hidden: true,
-  },
-  shinyPokemonCaught: {
-    label_key: "shiniesCaught",
-    sourceFunc: gameData => gameData.gameStats.shinyPokemonCaught.toString(),
-    hidden: true,
-  },
-  shinyPokemonHatched: {
-    label_key: "shiniesHatched",
-    sourceFunc: gameData => gameData.gameStats.shinyPokemonHatched.toString(),
     hidden: true,
   },
   pokemonFused: {
@@ -186,31 +138,6 @@ const displayStats: DisplayStats = {
   trainersDefeated: {
     label_key: "trainersDefeated",
     sourceFunc: gameData => gameData.gameStats.trainersDefeated.toString(),
-  },
-  eggsPulled: {
-    label_key: "eggsPulled",
-    sourceFunc: gameData => gameData.gameStats.eggsPulled.toString(),
-    hidden: true,
-  },
-  rareEggsPulled: {
-    label_key: "rareEggsPulled",
-    sourceFunc: gameData => gameData.gameStats.rareEggsPulled.toString(),
-    hidden: true,
-  },
-  epicEggsPulled: {
-    label_key: "epicEggsPulled",
-    sourceFunc: gameData => gameData.gameStats.epicEggsPulled.toString(),
-    hidden: true,
-  },
-  legendaryEggsPulled: {
-    label_key: "legendaryEggsPulled",
-    sourceFunc: gameData => gameData.gameStats.legendaryEggsPulled.toString(),
-    hidden: true,
-  },
-  manaphyEggsPulled: {
-    label_key: "manaphyEggsPulled",
-    sourceFunc: gameData => gameData.gameStats.manaphyEggsPulled.toString(),
-    hidden: true,
   },
 };
 

@@ -152,7 +152,7 @@ export const TrainingSessionEncounter: MysteryEncounter = MysteryEncounterBuilde
           if (improvedCount > 0) {
             playerPokemon.calculateStats();
             globalScene.gameData.updateSpeciesDexIvs(playerPokemon.species.getRootSpeciesId(true), playerPokemon.ivs);
-            globalScene.gameData.setPokemonCaught(playerPokemon, false);
+            globalScene.gameData.setPokemonCaught();
           }
 
           // Add pokemon and mods back
@@ -346,7 +346,7 @@ export const TrainingSessionEncounter: MysteryEncounter = MysteryEncounterBuilde
           }
 
           playerPokemon.calculateStats();
-          globalScene.gameData.setPokemonCaught(playerPokemon, false);
+          globalScene.gameData.setPokemonCaught();
 
           // Add pokemon and mods back
           globalScene.getPlayerParty().push(playerPokemon);

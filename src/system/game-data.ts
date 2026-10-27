@@ -2,20 +2,15 @@ import { pokerogueApi } from "#api/api";
 import { clientSessionId, getSessionDataLocalStorageKey, loggedInUser, updateUserInfo } from "#app/account";
 import { defaultStarterSpecies, saveKey } from "#app/constants";
 import { getGameMode } from "#app/game-mode";
-import { audioManager } from "#app/global-audio-manager";
-import { timedEventManager } from "#app/global-event-manager";
 import { globalScene } from "#app/global-scene";
 import { settings } from "#app/global-settings-manager";
 import { speciesDataRegistry } from "#app/global-species-data-registry";
 import { activeOverrides } from "#app/overrides";
 import { isIos } from "#app/touch-controls";
 import { Tutorial } from "#app/tutorial";
-import { speciesEggMoves } from "#balance/egg-moves";
 import { bypassLogin, isBeta, isDev, systemSaveShortKeyMap } from "#constants/app-constants";
 import { MAX_STARTER_CANDY_COUNT } from "#constants/game-constants";
 import { EntryHazardTag } from "#data/arena-tag";
-import { allMoves } from "#data/data-lists";
-import type { Egg } from "#data/egg";
 import type { PokemonSpecies } from "#data/pokemon-species";
 import { loadPositionalTag } from "#data/positional-tags/load-positional-tag";
 import { AbilityAttr } from "#enums/ability-attr";
@@ -27,7 +22,7 @@ import { GameDataType } from "#enums/game-data-type";
 import { GameModes } from "#enums/game-modes";
 import type { Nature } from "#enums/nature";
 import { PlayerGender } from "#enums/player-gender";
-import { SpeciesId } from "#enums/species-id";
+import type { SpeciesId } from "#enums/species-id";
 import { StatusEffect } from "#enums/status-effect";
 import { TrainerVariant } from "#enums/trainer-variant";
 import { UiMode } from "#enums/ui-mode";
@@ -43,13 +38,11 @@ import type { Variant } from "#sprites/variant";
 import { achvs } from "#system/achv";
 import { ArenaData, type SerializedArenaData } from "#system/arena-data";
 import { ChallengeData } from "#system/challenge-data";
-import { EggData } from "#system/egg-data";
 import { GameStats } from "#system/game-stats";
 import { ModifierData as PersistentModifierData } from "#system/modifier-data";
 import { PokemonData } from "#system/pokemon-data";
 import { RibbonData } from "#system/ribbon-data";
 import { TrainerData } from "#system/trainer-data";
-import { applySessionVersionMigration, applySystemVersionMigration } from "#system/version-converter";
 import { vouchers } from "#system/voucher";
 import type { DexData, DexEntry } from "#types/dex-data";
 import type {
@@ -106,8 +99,6 @@ export class GameData {
 
   public voucherUnlocks: VoucherUnlocks;
   public voucherCounts: VoucherCounts;
-  public eggs: Egg[];
-  public eggPity: number[];
   public unlockPity: number[];
 
   public appliedMigrators: AppliedMigrators = {};
@@ -142,8 +133,6 @@ export class GameData {
       [VoucherType.PREMIUM]: 0,
       [VoucherType.GOLDEN]: 0,
     };
-    this.eggs = [];
-    this.eggPity = [0, 0, 0, 0];
     this.unlockPity = [0, 0, 0, 0];
     this.initDexData();
     this.initStarterData();
@@ -162,10 +151,8 @@ export class GameData {
       achvUnlocks: this.achvUnlocks,
       voucherUnlocks: this.voucherUnlocks,
       voucherCounts: this.voucherCounts,
-      eggs: this.eggs.map(e => new EggData(e)),
       gameVersion: globalScene.game.config.gameVersion,
       timestamp: Date.now(),
-      eggPity: this.eggPity.slice(0),
       unlockPity: this.unlockPity.slice(0),
       appliedMigrators: this.appliedMigrators,
     };
@@ -299,10 +286,6 @@ export class GameData {
    * @param systemData - The parsed `SystemSaveData` to initialize from
    */
   private initParsedSystem(systemData: SystemSaveData): void {
-    applySystemVersionMigration(systemData);
-
-    this.appliedMigrators = systemData.appliedMigrators;
-
     this.trainerId = systemData.trainerId;
     this.secretId = systemData.secretId;
 
@@ -343,10 +326,7 @@ export class GameData {
       }
     }
 
-    this.eggs = systemData.eggs?.map(e => e.toEgg()) ?? [];
-
-    this.eggPity = systemData.eggPity?.slice(0) ?? [0, 0, 0, 0];
-    this.unlockPity = systemData.unlockPity?.slice(0) ?? [0, 0, 0, 0];
+    this.unlockPity = [0, 0, 0, 0];
 
     this.dexData = Object.assign(this.dexData, systemData.dexData);
     this.consolidateDexData(this.dexData);
@@ -470,16 +450,6 @@ export class GameData {
     const parsedData = JSON.parse(dataStr, (k: string, v: any) => {
       if (k === "gameStats") {
         return new GameStats(v);
-      }
-      if (k === "eggs") {
-        const ret: EggData[] = [];
-        if (v === null) {
-          v = [];
-        }
-        for (const e of v) {
-          ret.push(new EggData(e));
-        }
-        return ret;
       }
       if (k === "ribbons") {
         return RibbonData.fromJSON(v);
@@ -1044,7 +1014,6 @@ export class GameData {
     // (or prevent them from being null)
     // If the value is able to *not exist*, it should say so in the code
     const rawData = JSON.parse(dataStr);
-    applySessionVersionMigration(rawData);
 
     for (const [k, v] of Object.entries(rawData)) {
       switch (k) {
@@ -1508,166 +1477,7 @@ export class GameData {
   // TODO: This return value is exclusively used inside Weird Dream (which manually displays the "new starter unlocked" message),
   // all for the purposes of playing a level up fanfare if 1+ species were unlocked.
   // Given its only use is effectively useless, we should consider removing this return value at a future date
-  async setPokemonCaught(
-    pokemon: Pokemon,
-    incrementCount = true,
-    fromEgg = false,
-    showMessage = true,
-  ): Promise<boolean> {
-    // If incrementCount === false (not a catch scenario), only update the pokemon's dex data if the Pokemon has already been marked as caught in dex
-    // Prevents form changes, nature changes, etc. from unintentionally updating the dex data of a "rental" pokemon
-    const speciesRootForm = pokemon.species.getRootSpeciesId();
-    if (!incrementCount && !globalScene.gameData.dexData[speciesRootForm].caughtAttr) {
-      return Promise.resolve(false);
-    }
-    return this.setPokemonSpeciesCaught(pokemon, pokemon.species, incrementCount, fromEgg, showMessage);
-  }
-
-  /**
-   *
-   * @param pokemon
-   * @param species
-   * @param incrementCount
-   * @param fromEgg
-   * @param showMessage
-   * @returns `true` if Pokemon catch unlocked a new starter, `false` if Pokemon catch did not unlock a starter
-   */
-  // TODO: This logic should emphatically go somewhere else
-  private async setPokemonSpeciesCaught(
-    pokemon: Pokemon,
-    species: PokemonSpecies,
-    incrementCount = true,
-    fromEgg = false,
-    showMessage = true,
-  ): Promise<boolean> {
-    const dexEntry = this.dexData[species.speciesId];
-    const caughtAttr = dexEntry.caughtAttr;
-    const formIndex = pokemon.formIndex;
-
-    // This makes sure that we do not try to unlock data which cannot be unlocked
-    const dexAttr = pokemon.getDexAttr() & species.getFullUnlocksData();
-
-    // Mark as caught
-    dexEntry.caughtAttr |= dexAttr;
-
-    // If the caught form is a battleform, we want to also mark the base form as caught.
-    // This snippet assumes that the base form has formIndex equal to 0, which should be
-    // always true except for the case of Urshifu.
-    const formKey = pokemon.getFormKey();
-    if (formIndex > 0) {
-      // In case a Pikachu with formIndex > 0 was unlocked, base form Pichu is also unlocked
-      if (pokemon.species.speciesId === SpeciesId.PIKACHU && species.speciesId === SpeciesId.PICHU) {
-        dexEntry.caughtAttr |= globalScene.gameData.getFormAttr(0);
-      }
-      if (pokemon.species.speciesId === SpeciesId.URSHIFU) {
-        if (formIndex === 2) {
-          dexEntry.caughtAttr |= globalScene.gameData.getFormAttr(0);
-        } else if (formIndex === 3) {
-          dexEntry.caughtAttr |= globalScene.gameData.getFormAttr(1);
-        }
-      } else if (pokemon.species.speciesId === SpeciesId.ZYGARDE) {
-        if (formIndex === 4) {
-          dexEntry.caughtAttr |= globalScene.gameData.getFormAttr(2);
-        } else if (formIndex === 5) {
-          dexEntry.caughtAttr |= globalScene.gameData.getFormAttr(3);
-        }
-      } else {
-        const allFormChanges = speciesDataRegistry.getFormChanges(species.speciesId);
-        const toCurrentFormChanges = allFormChanges.filter(f => f.formKey === formKey);
-        if (toCurrentFormChanges.length > 0) {
-          // Needs to do this or Castform can unlock the wrong form, etc.
-          dexEntry.caughtAttr |= globalScene.gameData.getFormAttr(0);
-        }
-      }
-    }
-
-    // Unlock ability
-    if (speciesDataRegistry.isStarter(species.speciesId)) {
-      this.starterData[species.speciesId].abilityAttr |=
-        pokemon.abilityIndex !== 1 || pokemon.species.ability2 ? 1 << pokemon.abilityIndex : AbilityAttr.ABILITY_HIDDEN;
-    }
-
-    // Unlock nature
-    dexEntry.natureAttr |= 1 << (pokemon.nature + 1);
-
-    const prevolution = speciesDataRegistry.getPrevolution(species.speciesId);
-    const hasPrevolution = prevolution != null;
-    const newCatch = !caughtAttr;
-
-    if (incrementCount) {
-      if (fromEgg) {
-        dexEntry.hatchedCount++;
-        this.gameStats.pokemonHatched++;
-        if (pokemon.species.subLegendary) {
-          this.gameStats.subLegendaryPokemonHatched++;
-        } else if (pokemon.species.legendary) {
-          this.gameStats.legendaryPokemonHatched++;
-        } else if (pokemon.species.mythical) {
-          this.gameStats.mythicalPokemonHatched++;
-        }
-        if (pokemon.isShiny()) {
-          this.gameStats.shinyPokemonHatched++;
-        }
-      } else {
-        dexEntry.caughtCount++;
-        this.gameStats.pokemonCaught++;
-        if (pokemon.species.subLegendary) {
-          this.gameStats.subLegendaryPokemonCaught++;
-        } else if (pokemon.species.legendary) {
-          this.gameStats.legendaryPokemonCaught++;
-        } else if (pokemon.species.mythical) {
-          this.gameStats.mythicalPokemonCaught++;
-        }
-        if (pokemon.isShiny()) {
-          this.gameStats.shinyPokemonCaught++;
-        }
-      }
-
-      if (!hasPrevolution) {
-        // TODO: remove `?? 0`, `pokemon.variant` shouldn't be able to be nullish
-        const shinyBonus = pokemon.isShiny() ? 5 * Math.pow(2, pokemon.variant ?? 0) : 1;
-        const eggOrBossBonus = fromEgg || pokemon.isBoss() ? 2 : 1;
-        const eventBonus = timedEventManager.getExtraCatchCandy();
-        const totalCandy = shinyBonus * eggOrBossBonus + eventBonus;
-        this.addStarterCandy(species.speciesId, totalCandy);
-      }
-    }
-
-    const checkPrevolution = async (newStarter: boolean) => {
-      if (prevolution == null) {
-        return newStarter;
-      }
-      return await this.setPokemonSpeciesCaught(
-        pokemon,
-        speciesDataRegistry.getSpecies(prevolution),
-        incrementCount,
-        fromEgg,
-        showMessage,
-      );
-    };
-
-    if (!newCatch || !speciesDataRegistry.isStarter(species.speciesId)) {
-      return await checkPrevolution(false);
-    }
-    // TODO: This will skip unlocking a pre-evolution if the player catches an evolved form that is itself a starter.
-    // (This only affects Pikachu, which is the only evolved starter Pokemon, but should be fixed anyways)
-    // Better yet, rework this entire function to not do 10 different things at once
-    if (!showMessage) {
-      return true;
-    }
-    audioManager.playSound("se/level_up_fanfare");
-
-    // TODO: Remove and replace with a simpler check if the return value is found to be unnecessary
-    return new Promise(resolve =>
-      globalScene.ui.showText(
-        i18next.t("battle:addedAsAStarter", { pokemonName: species.name }),
-        null,
-        async () => resolve(await checkPrevolution(true)),
-        null,
-        true,
-      ),
-    );
-  }
+  async setPokemonCaught(): Promise<void> {}
 
   /**
    * Increase the number of classic ribbons won with this species.
@@ -1726,46 +1536,6 @@ export class GameData {
     globalScene.candyBar.showStarterSpeciesCandy(speciesId, numCandiesToAdd);
 
     return true;
-  }
-
-  /**
-   * @param showMessage - (Default `true`) Whether to display a message for the unlocked egg move
-   * @param prependSpeciesToMessage - (Default `false`) Whether to change the message from "X Egg Move Unlocked!" to "Bulbasaur X Egg Move Unlocked!"
-   */
-  async setEggMoveUnlocked(
-    species: PokemonSpecies,
-    eggMoveIndex: number,
-    showMessage = true,
-    prependSpeciesToMessage = false,
-  ): Promise<boolean> {
-    const { speciesId } = species;
-    if (!Object.hasOwn(speciesEggMoves, speciesId) || !speciesEggMoves[speciesId][eggMoveIndex]) {
-      return false;
-    }
-
-    if (!this.starterData[speciesId].eggMoves) {
-      this.starterData[speciesId].eggMoves = 0;
-    }
-
-    const value = 1 << eggMoveIndex;
-
-    if (this.starterData[speciesId].eggMoves & value) {
-      return false;
-    }
-
-    this.starterData[speciesId].eggMoves |= value;
-    if (!showMessage) {
-      return true;
-    }
-    audioManager.playSound("se/level_up_fanfare");
-    const moveName = allMoves[speciesEggMoves[speciesId][eggMoveIndex]].name;
-    let message = prependSpeciesToMessage ? species.getName() + " " : "";
-    message +=
-      eggMoveIndex === 3
-        ? i18next.t("egg:rareEggMoveUnlock", { moveName })
-        : i18next.t("egg:eggMoveUnlock", { moveName });
-
-    return new Promise(resolve => globalScene.ui.showText(message, null, () => resolve(true), null, true));
   }
 
   /** Return whether the root species of a given `PokemonSpecies` has been unlocked in the dex */

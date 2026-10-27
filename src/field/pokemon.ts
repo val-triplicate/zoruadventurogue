@@ -6361,7 +6361,7 @@ export class PlayerPokemon extends Pokemon {
       }
       globalScene.gameData.updateSpeciesDexIvs(this.species.speciesId, this.ivs);
       globalScene.gameData.setPokemonSeen(this, false);
-      globalScene.gameData.setPokemonCaught(this, false).then(() => updateAndResolve());
+      globalScene.gameData.setPokemonCaught().then(() => updateAndResolve());
     });
   }
 
@@ -6464,7 +6464,7 @@ export class PlayerPokemon extends Pokemon {
         });
       };
       globalScene.gameData.setPokemonSeen(this, false);
-      globalScene.gameData.setPokemonCaught(this, false).then(() => updateAndResolve());
+      globalScene.gameData.setPokemonCaught().then(() => updateAndResolve());
     });
   }
 
